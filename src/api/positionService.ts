@@ -1,5 +1,4 @@
 // src/api/positionService.ts
-import { v4 as uuidv4 } from "uuid";
 
 export interface Position {
   id: string;
@@ -9,42 +8,44 @@ export interface Position {
   isActive: boolean;
 }
 
-// Mock data for demonstration
-let positions: Position[] = [
-  { id: uuidv4(), name: "Yönetici", code: "YON", departmentId: undefined, isActive: true },
-  { id: uuidv4(), name: "İK Uzmanı", code: "IKU", departmentId: undefined, isActive: true },
-  { id: uuidv4(), name: "Muhasebe Sorumlusu", code: "MUHS", departmentId: undefined, isActive: false },
-];
+const API_URL = "https://localhost:44363/api/Positions";
 
-export const getPositions = (filter: { search?: string; departmentId?: string; isActive?: boolean | null } = {}) => {
-  let result = [...positions];
-  if (filter.search) {
-    const s = filter.search.toLowerCase();
-    result = result.filter(
-      (p) => p.name.toLowerCase().includes(s) || (p.code && p.code.toLowerCase().includes(s))
-    );
-  }
-  if (filter.departmentId) {
-    result = result.filter((p) => p.departmentId === filter.departmentId);
-  }
-  if (filter.isActive !== undefined && filter.isActive !== null) {
-    result = result.filter((p) => p.isActive === filter.isActive);
-  }
-  return Promise.resolve(result);
+export const getPositions = async (filter: { search?: string; departmentId?: string; isActive?: boolean | null } = {}) => {
+  const params = new URLSearchParams();
+  if (filter.search) params.append("search", filter.search);
+  if (filter.departmentId) params.append("departmentId", filter.departmentId);
+  if (filter.isActive !== undefined && filter.isActive !== null) params.append("isActive", String(filter.isActive));
+  const res = await fetch(`${API_URL}${params.toString() ? `?${params}` : ""}`);
+  if (!res.ok) throw new Error("Pozisyonlar alınamadı");
+  return res.json();
 };
 
-export const addPosition = (pos: Omit<Position, "id">) => {
-  const newPos = { ...pos, id: uuidv4() };
-  positions.push(newPos);
-  return Promise.resolve(newPos);
+export const addPosition = async (pos: Omit<Position, "id">) => {
+  const res = await fetch(API_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(pos),
+  });
+  if (!res.ok) throw new Error("Pozisyon eklenemedi");
+  return res.json();
 };
 
-export const updatePosition = (id: string, pos: Partial<Position>) => {
-  positions = positions.map((p) => (p.id === id ? { ...p, ...pos } : p));
-  return Promise.resolve();
+export const updatePosition = async (id: string, pos: Partial<Position>) => {
+  const res = await fetch(API_URL, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ ...pos, id }),
+  });
+  if (!res.ok) throw new Error("Pozisyon güncellenemedi");
+  return res.json();
 };
 
-export const softDeletePosition = (id: string) => {
-  positions = positions.map((p) => (p.id === id ? { ...p, isActive: false } : p));
-  return Promise.resolve();
+export const softDeletePosition = async (id: string) => {
+  const res = await fetch(API_URL, {
+    method: "DELETE",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ id }),
+  });
+  if (!res.ok) throw new Error("Pozisyon silinemedi");
+  return res.json();
 };

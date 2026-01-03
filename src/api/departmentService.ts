@@ -1,5 +1,4 @@
 // src/api/departmentService.ts
-import { v4 as uuidv4 } from "uuid";
 
 export interface Department {
   id: string;
@@ -9,39 +8,43 @@ export interface Department {
   isActive: boolean;
 }
 
-// Mock data for demonstration
-let departments: Department[] = [
-  { id: uuidv4(), name: "Yönetim", code: "YON", isActive: true },
-  { id: uuidv4(), name: "İK", code: "IK", isActive: true },
-  { id: uuidv4(), name: "Muhasebe", code: "MUH", isActive: false },
-];
+const API_URL = "https://localhost:44363/api/Departments";
 
-export const getDepartments = (filter: { search?: string; isActive?: boolean | null } = {}) => {
-  let result = [...departments];
-  if (filter.search) {
-    const s = filter.search.toLowerCase();
-    result = result.filter(
-      (d) => d.name.toLowerCase().includes(s) || (d.code && d.code.toLowerCase().includes(s))
-    );
-  }
-  if (filter.isActive !== undefined && filter.isActive !== null) {
-    result = result.filter((d) => d.isActive === filter.isActive);
-  }
-  return Promise.resolve(result);
+export const getDepartments = async (filter: { search?: string; isActive?: boolean | null } = {}) => {
+  const params = new URLSearchParams();
+  if (filter.search) params.append("search", filter.search);
+  if (filter.isActive !== undefined && filter.isActive !== null) params.append("isActive", String(filter.isActive));
+  const res = await fetch(`${API_URL}${params.toString() ? `?${params}` : ""}`);
+  if (!res.ok) throw new Error("Departmanlar alınamadı");
+  return res.json();
 };
 
-export const addDepartment = (dep: Omit<Department, "id">) => {
-  const newDep = { ...dep, id: uuidv4() };
-  departments.push(newDep);
-  return Promise.resolve(newDep);
+export const addDepartment = async (dep: Omit<Department, "id">) => {
+  const res = await fetch(API_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(dep),
+  });
+  if (!res.ok) throw new Error("Departman eklenemedi");
+  return res.json();
 };
 
-export const updateDepartment = (id: string, dep: Partial<Department>) => {
-  departments = departments.map((d) => (d.id === id ? { ...d, ...dep } : d));
-  return Promise.resolve();
+export const updateDepartment = async (id: string, dep: Partial<Department>) => {
+  const res = await fetch(API_URL, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ ...dep, id }),
+  });
+  if (!res.ok) throw new Error("Departman güncellenemedi");
+  return res.json();
 };
 
-export const softDeleteDepartment = (id: string) => {
-  departments = departments.map((d) => (d.id === id ? { ...d, isActive: false } : d));
-  return Promise.resolve();
+export const softDeleteDepartment = async (id: string) => {
+  const res = await fetch(API_URL, {
+    method: "DELETE",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ id }),
+  });
+  if (!res.ok) throw new Error("Departman silinemedi");
+  return res.json();
 };

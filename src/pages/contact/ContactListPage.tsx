@@ -18,6 +18,7 @@ export default function ContactListPage(): JSX.Element {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
+
         const fetchContacts = async () => {
             setLoading(true);
           try {
