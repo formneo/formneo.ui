@@ -515,12 +515,13 @@ export default function WorkflowRuntime(): JSX.Element {
       // ✅ BMP Modülü için: Action kodunu normalize et (büyük harf, underscore ile ayır)
       const normalizedAction = button.action.trim().toUpperCase().replace(/\s+/g, "_");
 
-      // ✅ WorkFlowInfo oluştur
+      // ✅ WorkFlowInfo oluştur (defination dahil)
       const workFlowInfo = JSON.stringify({
         formData: formValues,
         buttonAction: normalizedAction, // ✅ BMP modülü için normalize edilmiş action kodu
         buttonLabel: button.label,
         formId: workflowInstance.formId,
+        defination: workflowInstance.defination || null, // ✅ Defination'ı da gönder
         timestamp: new Date().toISOString(),
       });
 
@@ -570,7 +571,7 @@ export default function WorkflowRuntime(): JSX.Element {
           userName: currentUser || undefined,
           workFlowInfo: workFlowInfo,
           action: normalizedAction, // ✅ BMP modülü için action kodu (doğrudan alan olarak)
-          formData: JSON.stringify(formValues), // ✅ Form verileri (ayrı bir alan olarak da gönderiliyor)
+          formData: JSON.stringify(formValues) || "{}", // ✅ Form verileri (null olmaması için boş obje)
         };
 
         const response = await workflowApi.apiWorkFlowStartPost(startDto);

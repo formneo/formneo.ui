@@ -215,75 +215,31 @@ function WorkflowMyTasks() {
    * ✅ Mevcut workflow'ları çek (yeni süreç başlatmak için)
    * 
    * Workflow tablosundaki tüm workflow'ları listeler.
-   * Her workflow için form bilgisini çeker (eğer varsa).
+   * Sadece temel bilgileri çeker, detay tıklayınca çekilecek.
    */
   const fetchAvailableWorkflows = async () => {
     setLoadingWorkflows(true);
     try {
       const conf = getConfiguration();
       const workflowApi = new WorkFlowDefinationApi(conf);
-      const formApi = new FormDataApi(conf);
 
-      // ✅ Tüm workflow'ları çek
+      // ✅ Sadece temel workflow listesini çek (defination çekilmiyor)
       const workflowsResponse = await workflowApi.apiWorkFlowDefinationGet();
       const workflows = workflowsResponse.data || [];
 
       console.log("📋 Toplam workflow sayısı:", workflows.length);
 
-      // Her workflow için detay ve form bilgisini paralel çek
-      const workflowPromises = workflows.map(async (workflow: any) => {
-        let formId: string | null = null;
-        let formName: string = "";
-
-        // Workflow detayını çek (formId için)
-        try {
-          const workflowDetail = await workflowApi.apiWorkFlowDefinationIdGet(workflow.id || "");
-          formId = (workflowDetail.data as any)?.formId || null;
-        } catch (error) {
-          // Detay çekilemezse devam et
-        }
-
-        // Eğer workflow'da formId yoksa, defination'dan node'lardan bul
-        if (!formId && workflow.defination) {
-          try {
-            const parsedDefination = JSON.parse(workflow.defination);
-            const formNode = parsedDefination.nodes?.find(
-              (n: any) => n.type === "formNode" && n.data?.selectedFormId
-            );
-            if (formNode?.data?.selectedFormId) {
-              formId = formNode.data.selectedFormId;
-              formName = formNode.data.selectedFormName || formNode.data.name || "";
-            }
-          } catch (error) {
-            // Parse hatası varsa devam et
-          }
-        }
-
-        // Form bilgisini çek
-        if (formId) {
-          try {
-            const formResponse = await formApi.apiFormDataIdGet(formId);
-            formName = formResponse.data?.formName || formName;
-          } catch (error) {
-            console.warn(`Form ${formId} çekilemedi:`, error);
-          }
-        }
-
-        return {
+      // Sadece temel bilgileri döndür (formId ve formName tıklayınca çekilecek)
+      const workflowsList = workflows.map((workflow: any) => ({
           id: workflow.id,
           workflowName: workflow.workflowName || "İsimsiz Workflow",
-          formId: formId || null,
-          formName: formName || (formId ? "İsimsiz Form" : "Form bulunamadı"),
-          defination: workflow.defination,
-          hasForm: !!formId,
-        };
-      });
+        formId: null as string | null, // Tıklayınca çekilecek
+        formName: null as string | null, // Tıklayınca çekilecek
+        hasForm: null as boolean | null, // Tıklayınca belirlenecek
+      }));
 
-      // Tümünü paralel olarak bekle
-      const workflowsWithForms = await Promise.all(workflowPromises);
-
-      console.log(`📊 Toplam ${workflowsWithForms.length} workflow listelendi`);
-      setAvailableWorkflows(workflowsWithForms);
+      console.log(`📊 Toplam ${workflowsList.length} workflow listelendi`);
+      setAvailableWorkflows(workflowsList);
     } catch (error) {
       console.error("Workflow'lar çekilirken hata:", error);
     } finally {
@@ -402,28 +358,69 @@ function WorkflowMyTasks() {
   /**
    * ✅ Yeni workflow için form göster
    * 
-   * Workflow instance oluşturmaz, sadece form sayfasına yönlendirir.
-   * Workflow, form butonuna basınca başlatılacak.
+   * Tıklayınca workflow detayını çeker, formId'yi bulur ve başlatır.
    */
   const handleStartNewWorkflow = async (workflow: any) => {
-    if (!workflow.formId) {
+    try {
+      const conf = getConfiguration();
+      const workflowApi = new WorkFlowDefinationApi(conf);
+      const formApi = new FormDataApi(conf);
+
+      // ✅ Workflow detayını çek (defination dahil)
+      const workflowDetail = await workflowApi.apiWorkFlowDefinationIdGet(workflow.id);
+      const workflowData = workflowDetail.data as any;
+      
+      let formId: string | null = workflowData?.formId || null;
+      let formName: string = "";
+
+      // Eğer workflow'da formId yoksa, defination'dan node'lardan bul
+      if (!formId && workflowData?.defination) {
+        try {
+          const parsedDefination = JSON.parse(workflowData.defination);
+          const formNode = parsedDefination.nodes?.find(
+            (n: any) => n.type === "formNode" && n.data?.selectedFormId
+          );
+          if (formNode?.data?.selectedFormId) {
+            formId = formNode.data.selectedFormId;
+            formName = formNode.data.selectedFormName || formNode.data.name || "";
+          }
+        } catch (error) {
+          console.warn("Defination parse edilemedi:", error);
+        }
+      }
+
+      // Form bilgisini çek
+      if (formId) {
+        try {
+          const formResponse = await formApi.apiFormDataIdGet(formId);
+          formName = formResponse.data?.formName || formName;
+        } catch (error) {
+          console.warn(`Form ${formId} çekilemedi:`, error);
+        }
+      }
+
+      if (!formId) {
       alert("Bu workflow için form tanımlanmamış!");
       return;
     }
 
-    // ✅ Sadece form sayfasına yönlendir (instance ID yok, workflow başlatılmadı)
-    // Form butonuna basınca workflow başlatılacak
+      // ✅ Form sayfasına yönlendir
     navigate(`/workflows/runtime/new`, {
       state: {
         workflowInstance: {
           workflowId: workflow.id,
           workflowName: workflow.workflowName,
-          formId: workflow.formId,
-          formName: workflow.formName,
+          formId: formId,
+          formName: formName,
+          defination: workflowData?.defination || null, // ✅ Defination'ı da gönder
         },
         isNewInstance: true,
       },
     });
+    } catch (error) {
+      console.error("Workflow başlatılırken hata:", error);
+      alert("Workflow başlatılırken bir hata oluştu. Lütfen tekrar deneyin.");
+    }
   };
 
   /**
@@ -533,7 +530,7 @@ function WorkflowMyTasks() {
             </Box>
 
             {/* Workflow Görev Listesi - DataGrid */}
-            <Card>
+              <Card>
               <CardContent>
                 <div style={{ height: 600, width: "100%" }}>
                   <DataGrid
@@ -547,7 +544,7 @@ function WorkflowMyTasks() {
                         renderCell: (params) => (
                           <Typography variant="body2" fontWeight={600}>
                             {params.value || "Görev"}
-                          </Typography>
+                  </Typography>
                         ),
                       },
                       {
@@ -561,9 +558,9 @@ function WorkflowMyTasks() {
                         headerName: "Tip",
                         width: 150,
                         renderCell: (params) => (
-                          <Chip
+                              <Chip 
                             label={params.value === "formTask" ? "Form Görevi" : "Kullanıcı Görevi"}
-                            size="small"
+                                size="small" 
                             color={params.value === "formTask" ? "primary" : "secondary"}
                           />
                         ),
@@ -573,10 +570,10 @@ function WorkflowMyTasks() {
                         headerName: "Durum",
                         width: 150,
                         renderCell: (params) => (
-                          <Chip
+                              <Chip 
                             label={getStatusText(params.value)}
                             color={getStatusColor(params.value) as any}
-                            size="small"
+                                size="small" 
                           />
                         ),
                       },
@@ -602,7 +599,7 @@ function WorkflowMyTasks() {
                               <Typography variant="body2" color="textSecondary">
                                 {format(new Date(params.value), "dd MMM yyyy HH:mm", { locale: tr })}
                               </Typography>
-                            </Box>
+                          </Box>
                           ) : (
                             "-"
                           ),
@@ -615,10 +612,10 @@ function WorkflowMyTasks() {
                           params.value ? (
                             <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
                               <PlayArrowIcon sx={{ fontSize: 14, color: "text.secondary" }} />
-                              <Typography variant="body2" color="textSecondary">
+                            <Typography variant="body2" color="textSecondary">
                                 {params.value}
-                              </Typography>
-                            </Box>
+                            </Typography>
+                          </Box>
                           ) : (
                             "-"
                           ),
@@ -651,17 +648,17 @@ function WorkflowMyTasks() {
                         width: 150,
                         sortable: false,
                         renderCell: (params) => (
-                          <MDButton
-                            variant="gradient"
-                            color="info"
+                        <MDButton
+                          variant="gradient"
+                          color="info"
                             size="small"
-                            onClick={(e) => {
-                              e.stopPropagation();
+                          onClick={(e) => {
+                            e.stopPropagation();
                               handleWorkflowClick(params.row);
-                            }}
-                          >
+                          }}
+                        >
                             {params.row.type === "formTask" ? "Formu Aç" : "Görüntüle"}
-                          </MDButton>
+                        </MDButton>
                         ),
                       },
                     ]}
@@ -689,7 +686,7 @@ function WorkflowMyTasks() {
                   />
                 </div>
               </CardContent>
-            </Card>
+                    </Card>
           </>
         )}
 
@@ -720,7 +717,7 @@ function WorkflowMyTasks() {
             {loadingWorkflows ? (
               <Card>
                 <CardContent sx={{ textAlign: "center", py: 4 }}>
-                  <Typography>Yükleniyor...</Typography>
+                <Typography>Yükleniyor...</Typography>
                 </CardContent>
               </Card>
             ) : availableWorkflows.length === 0 ? (
@@ -763,7 +760,7 @@ function WorkflowMyTasks() {
                         <React.Fragment key={workflow.id}>
                           <ListItem
                             disablePadding
-                            sx={{
+                      sx={{
                               position: "relative",
                               "&:hover": {
                                 "&::before": {
@@ -777,7 +774,7 @@ function WorkflowMyTasks() {
                                 top: 0,
                                 bottom: 0,
                                 width: 4,
-                                backgroundColor: workflow.hasForm ? "success.main" : "grey.400",
+                                backgroundColor: "success.main",
                                 opacity: 0,
                                 transition: "opacity 0.2s ease",
                               },
@@ -785,11 +782,8 @@ function WorkflowMyTasks() {
                           >
                             <ListItemButton
                               onClick={() => {
-                                if (workflow.hasForm) {
-                                  handleStartNewWorkflow(workflow);
-                                }
+                                handleStartNewWorkflow(workflow);
                               }}
-                              disabled={!workflow.hasForm}
                               sx={{
                                 py: 2,
                                 px: 3,
@@ -810,21 +804,19 @@ function WorkflowMyTasks() {
                                     width: 48,
                                     height: 48,
                                     borderRadius: 2,
-                                    display: "flex",
+                        display: "flex",
                                     alignItems: "center",
                                     justifyContent: "center",
-                                    backgroundColor: workflow.hasForm
-                                      ? "success.lighter"
-                                      : "grey.100",
-                                    transition: "all 0.2s ease",
-                                    "&:hover": {
+                                    backgroundColor: "success.lighter",
+                        transition: "all 0.2s ease",
+                        "&:hover": {
                                       transform: "scale(1.05)",
                                     },
                                   }}
                                 >
                                   <DescriptionIcon
                                     sx={{
-                                      color: workflow.hasForm ? "success.main" : "text.disabled",
+                                      color: "success.main",
                                       fontSize: 24,
                                     }}
                                   />
@@ -847,47 +839,30 @@ function WorkflowMyTasks() {
                                       fontWeight={600}
                                       sx={{
                                         fontSize: "1rem",
-                                        color: workflow.hasForm ? "text.primary" : "text.disabled",
+                                        color: "text.primary",
                                       }}
                                     >
-                                      {workflow.workflowName}
-                                    </Typography>
-                                    {workflow.hasForm ? (
-                                      <Chip
-                                        label="Başlatılabilir"
-                                        size="small"
-                                        color="success"
-                                        sx={{
-                                          height: 22,
-                                          fontSize: "0.7rem",
-                                          fontWeight: 600,
-                                          "& .MuiChip-label": {
-                                            px: 1,
-                                          },
-                                        }}
-                                      />
-                                    ) : (
-                                      <Chip
-                                        label="Form Yok"
-                                        size="small"
-                                        variant="outlined"
-                                        sx={{
-                                          height: 22,
-                                          fontSize: "0.7rem",
-                                          borderColor: "grey.300",
-                                          color: "text.secondary",
-                                          "& .MuiChip-label": {
-                                            px: 1,
-                                          },
-                                        }}
-                                      />
-                                    )}
-                                  </Box>
+                              {workflow.workflowName}
+                            </Typography>
+                          <Chip 
+                              label="Başlatılabilir"
+                            size="small" 
+                              color="success"
+                              sx={{
+                                height: 22,
+                                fontSize: "0.7rem",
+                                fontWeight: 600,
+                                "& .MuiChip-label": {
+                                  px: 1,
+                                },
+                              }}
+                          />
+                        </Box>
                                 }
                                 secondary={
                                   <Typography
                                     variant="body2"
-                                    color={workflow.hasForm ? "text.secondary" : "error.main"}
+                                    color="text.secondary"
                                     sx={{
                                       fontSize: "0.875rem",
                                       mt: 0.5,
@@ -896,45 +871,37 @@ function WorkflowMyTasks() {
                                       gap: 0.5,
                                     }}
                                   >
-                                    {workflow.hasForm ? (
-                                      <>
-                                        <DescriptionIcon sx={{ fontSize: 14 }} />
-                                        Form: {workflow.formName}
-                                      </>
-                                    ) : (
-                                      "Bu workflow için form tanımlanmamış"
-                                    )}
-                                  </Typography>
+                                    <DescriptionIcon sx={{ fontSize: 14 }} />
+                                    Tıklayarak başlatın
+                        </Typography>
                                 }
                               />
 
                               {/* Aksiyon Butonu */}
-                              {workflow.hasForm && (
-                                <Box sx={{ ml: 2 }}>
-                                  <MDButton
-                                    variant="gradient"
-                                    color="success"
-                                    size="small"
-                                    startIcon={<AddCircleIcon />}
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      handleStartNewWorkflow(workflow);
-                                    }}
-                                    sx={{
-                                      minWidth: 100,
-                                      fontWeight: 600,
-                                      textTransform: "none",
-                                      boxShadow: "none",
-                                      "&:hover": {
-                                        boxShadow: 2,
-                                        transform: "translateY(-1px)",
-                                      },
-                                    }}
-                                  >
-                                    Başlat
-                                  </MDButton>
-                                </Box>
-                              )}
+                              <Box sx={{ ml: 2 }}>
+                        <MDButton
+                          variant="gradient"
+                                  color="success"
+                                  size="small"
+                          startIcon={<AddCircleIcon />}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                              handleStartNewWorkflow(workflow);
+                                  }}
+                                  sx={{
+                                    minWidth: 100,
+                                    fontWeight: 600,
+                                    textTransform: "none",
+                                    boxShadow: "none",
+                                    "&:hover": {
+                                      boxShadow: 2,
+                                      transform: "translateY(-1px)",
+                                    },
+                                  }}
+                                >
+                                  Başlat
+                        </MDButton>
+                      </Box>
                             </ListItemButton>
                           </ListItem>
                           {index < filteredWorkflows.length - 1 && (
@@ -945,7 +912,7 @@ function WorkflowMyTasks() {
                     })()}
                   </List>
                 </CardContent>
-              </Card>
+                    </Card>
             )}
           </>
         )}
