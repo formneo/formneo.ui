@@ -179,6 +179,7 @@ function UserOrganization({ userId }: Props): JSX.Element {
   };
   
 
+
   const fetchOrganizationHistory = async (uid: string) => {
     try {
       const conf = getConfiguration();

@@ -59,6 +59,7 @@ import {
   Work as WorkIcon,
   SupervisorAccount as SupervisorAccountIcon,
   Business as BusinessIcon,
+  ChevronRight as ChevronRightIcon,
 } from "@mui/icons-material";
 import { Editor } from "@monaco-editor/react";
 import * as monaco from "monaco-editor";
@@ -95,6 +96,9 @@ const FormTaskModal = ({ open, onClose, initialValues, node, onSave, workflowFor
   const [selectedTemplate, setSelectedTemplate] = useState("");
   const [showFieldReference, setShowFieldReference] = useState(false);
   const dispatchBusy = useBusy();
+  
+  // Atama tipi için state
+  const [assignmentType, setAssignmentType] = useState("direct_manager"); // "direct_manager" | "department_manager" | "position" | "manual"
   
   // Organizasyon bazlı seçim için state'ler
   const [selectionMode, setSelectionMode] = useState("manual"); // "manual" | "organization"
@@ -1633,309 +1637,372 @@ if (gunSayisi && gunlukUcret) {
     </Dialog>
   );
 
+  const assignmentTypes = [
+    {
+      id: "direct_manager",
+      title: "Doğrudan Yönetici",
+      icon: SupervisorAccountIcon,
+      desc: "İşi başlatan kullanıcının doğrudan yöneticisine atar",
+      color: "primary",
+    },
+    {
+      id: "department_manager",
+      title: "Departman Müdürü",
+      icon: BusinessIcon,
+      desc: "Kullanıcının bağlı olduğu departmanın müdürüne atar",
+      color: "info",
+    },
+    {
+      id: "position",
+      title: "Pozisyon",
+      icon: WorkIcon,
+      desc: "Belirli bir pozisyondaki kullanıcılara atar",
+      color: "warning",
+    },
+    {
+      id: "manual",
+      title: "Manuel Kullanıcı",
+      icon: PersonIcon,
+      desc: "Belirli bir kullanıcıyı manuel olarak seçin",
+      color: "success",
+    },
+  ];
+
   const renderAssignmentContent = () => (
-    <div className="space-y-8">
-      <section className="bg-slate-50/50 p-6 lg:p-8 rounded-[2.5rem] border-2 border-slate-100 border-dashed">
-                      <div className="flex items-center gap-3 mb-6">
-          <LayersIcon fontSize="small" className="text-blue-600" />
-                        <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
-            Konfigürasyon Detayı
-                        </h4>
-                      </div>
-        <Box sx={{ pt: 0 }}>
-          <Box mb={3}>
-            <MDInput
-              label="Görev Adı"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              fullWidth
-            />
-          </Box>
+    <Box sx={{ display: "flex", flexDirection: "column", gap: 4 }}>
+      {/* Görev Adı */}
+      <Box>
+        <MDInput
+          label="Görev Adı"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          fullWidth
+        />
+      </Box>
 
-          <Divider sx={{ my: 3 }} />
+      <Divider />
 
-          <Box mb={3}>
-            <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-              <Typography variant="subtitle1" fontWeight={600}>
-                <PersonIcon sx={{ verticalAlign: "middle", mr: 1 }} />
-                Atanacak Kullanıcı
-              </Typography>
-              <ToggleButtonGroup
-                value={selectionMode}
-                exclusive
-                onChange={(e, newMode) => {
-                  if (newMode !== null) {
-                    setSelectionMode(newMode);
-                    if (newMode === "manual") {
+      {/* Atama Tipi Seçimi */}
+      <Box>
+        <Typography variant="h6" fontWeight={700} mb={3}>
+          Atama Tipi Seçin
+        </Typography>
+        <Grid container spacing={2}>
+          {assignmentTypes.map((type) => {
+            const Icon = type.icon;
+            const isSelected = assignmentType === type.id;
+            return (
+              <Grid item xs={12} sm={6} md={3} key={type.id}>
+                <Paper
+                  onClick={() => {
+                    setAssignmentType(type.id);
+                    if (type.id === "manual") {
                       setSelectedUser(null);
                       setSelectedOrgUnit("");
                       setSelectedPosition("");
                       setSelectedManager(null);
                     }
-                  }
-                }}
-                size="small"
-                sx={{ height: "32px" }}
-              >
-                <ToggleButton value="manual">
-                  <PersonIcon sx={{ fontSize: 16, mr: 0.5 }} />
-                  Manuel
-                </ToggleButton>
-                <ToggleButton value="organization">
-                  <AccountTreeIcon sx={{ fontSize: 16, mr: 0.5 }} />
-                  Organizasyon
-                </ToggleButton>
-              </ToggleButtonGroup>
-            </Box>
-
-            {selectionMode === "manual" ? (
-              <Autocomplete
-                options={searchByName}
-                getOptionLabel={(option) => {
-                  if (option.firstName && option.lastName) {
-                    return `${option.firstName} ${option.lastName}`;
-                  }
-                  return option.userAppName || option.userName || "";
-                }}
-                value={selectedUser}
-                inputValue={inputValue}
-                isOptionEqualToValue={(option, value) => {
-                  if (!option || !value) return false;
-                  return (
-                    option.id === value.id ||
-                    option.id === value.userAppId ||
-                    option.userAppId === value.id
-                  );
-                }}
-                onChange={(event, newValue) => {
-                  setSelectedUser(newValue);
-                  if (newValue) {
-                    setInputValue(
-                      newValue.firstName && newValue.lastName
-                        ? `${newValue.firstName} ${newValue.lastName}`
-                        : newValue.userAppName || newValue.userName || ""
-                    );
-                  }
-                }}
-                onInputChange={(event, newInputValue, reason) => {
-                  setInputValue(newInputValue);
-                  if (reason === "input" && newInputValue.trim().length > 0) {
-                    handleSearchByName(newInputValue);
-                  } else if (reason === "clear" || newInputValue.trim().length === 0) {
-                    setSearchByName([]);
-                  }
-                }}
-                renderInput={(params) => (
-                  <MDInput
-                    {...params}
-                    label="Kullanıcı ara..."
-                    placeholder="Kullanıcı adı veya email ile ara"
-                  />
-                )}
-                renderOption={(props, option) => (
-                  <li {...props} key={option.id || option.userAppId}>
-                    <Box>
-                      <Typography fontWeight={600}>
-                        {option.firstName && option.lastName
-                          ? `${option.firstName} ${option.lastName}`
-                          : option.userAppName || option.userName}
-                      </Typography>
-                      {option.email && (
-                        <Typography variant="caption" color="textSecondary">
-                          {option.email}
-                        </Typography>
-                      )}
-                      {option.userName && (
-                        <Typography variant="caption" color="textSecondary">
-                          @{option.userName}
-                        </Typography>
-                      )}
-                    </Box>
-                  </li>
-                )}
-              />
-            ) : (
-              <Box>
-                <Grid container spacing={2} mb={2}>
-                  <Grid item xs={12} md={4}>
-                    <FormControl fullWidth>
-                      <InputLabel>Organizasyon Birimi</InputLabel>
-                      <Select
-                        value={selectedOrgUnit}
-                        label="Organizasyon Birimi"
-                        onChange={(e) => setSelectedOrgUnit(e.target.value)}
-                        startAdornment={<BusinessIcon sx={{ mr: 1, color: "text.secondary" }} />}
-                      >
-                        <MenuItem value="">
-                          <em>Tümü</em>
-                        </MenuItem>
-                        {orgUnits.map((orgUnit) => (
-                          <MenuItem key={orgUnit.id} value={orgUnit.id}>
-                            {orgUnit.name}
-                          </MenuItem>
-                        ))}
-                      </Select>
-                    </FormControl>
-                  </Grid>
-                  <Grid item xs={12} md={4}>
-                    <FormControl fullWidth>
-                      <InputLabel>Pozisyon</InputLabel>
-                      <Select
-                        value={selectedPosition}
-                        label="Pozisyon"
-                        onChange={(e) => setSelectedPosition(e.target.value)}
-                        startAdornment={<WorkIcon sx={{ mr: 1, color: "text.secondary" }} />}
-                      >
-                        <MenuItem value="">
-                          <em>Tümü</em>
-                        </MenuItem>
-                        {positions.map((position) => (
-                          <MenuItem key={position.id} value={position.id}>
-                            {position.name}
-                          </MenuItem>
-                        ))}
-                      </Select>
-                    </FormControl>
-                  </Grid>
-                  <Grid item xs={12} md={4}>
-                    <Autocomplete
-                      options={managers}
-                      getOptionLabel={(option) => {
-                        if (option.firstName && option.lastName) {
-                          return `${option.firstName} ${option.lastName}`;
-                        }
-                        return option.userAppName || option.userName || "";
-                      }}
-                      value={selectedManager}
-                      onChange={(event, newValue) => setSelectedManager(newValue)}
-                      renderInput={(params) => (
-                        <MDInput
-                          {...params}
-                          label="Yönetici"
-                          placeholder="Yönetici seçin..."
-                          InputProps={{
-                            ...params.InputProps,
-                            startAdornment: (
-                              <>
-                                <SupervisorAccountIcon sx={{ mr: 1, color: "text.secondary" }} />
-                                {params.InputProps.startAdornment}
-                              </>
-                            ),
-                          }}
-                        />
-                      )}
-                      renderOption={(props, option) => (
-                        <li {...props} key={option.id}>
-                          <Box>
-                            <Typography fontWeight={600}>
-                              {option.firstName && option.lastName
-                                ? `${option.firstName} ${option.lastName}`
-                                : option.userAppName || option.userName}
-                            </Typography>
-                            {option.email && (
-                              <Typography variant="caption" color="textSecondary">
-                                {option.email}
-                              </Typography>
-                            )}
-                          </Box>
-                        </li>
-                      )}
-                    />
-                  </Grid>
-                </Grid>
-
-                {filteredUsersByOrg.length > 0 ? (
-                  <Box>
-                    <Typography variant="body2" color="textSecondary" mb={1}>
-                      Seçilen kriterlere göre {filteredUsersByOrg.length} kullanıcı bulundu:
-                    </Typography>
-                    <Autocomplete
-                      options={filteredUsersByOrg}
-                      getOptionLabel={(option) => {
-                        if (option.firstName && option.lastName) {
-                          return `${option.firstName} ${option.lastName}`;
-                        }
-                        return option.userAppName || option.userName || "";
-                      }}
-                      value={selectedUser}
-                      onChange={(event, newValue) => {
-                        setSelectedUser(newValue);
-                        if (newValue) {
-                          setInputValue(
-                            newValue.firstName && newValue.lastName
-                              ? `${newValue.firstName} ${newValue.lastName}`
-                              : newValue.userAppName || newValue.userName || ""
-                          );
-                        }
-                      }}
-                      renderInput={(params) => (
-                        <MDInput
-                          {...params}
-                          label="Kullanıcı seçin..."
-                          placeholder="Listeden kullanıcı seçin"
-                        />
-                      )}
-                      renderOption={(props, option) => (
-                        <li {...props} key={option.id}>
-                          <Box>
-                            <Typography fontWeight={600}>
-                              {option.firstName && option.lastName
-                                ? `${option.firstName} ${option.lastName}`
-                                : option.userAppName || option.userName}
-                            </Typography>
-                            {option.email && (
-                              <Typography variant="caption" color="textSecondary">
-                                {option.email}
-                              </Typography>
-                            )}
-                          </Box>
-                        </li>
-                      )}
-                    />
+                  }}
+                  sx={{
+                    p: 3,
+                    borderRadius: 3,
+                    border: 2,
+                    borderColor: isSelected ? `${type.color}.main` : "grey.300",
+                    bgcolor: isSelected ? `${type.color}.light` : "white",
+                    cursor: "pointer",
+                    transition: "all 0.2s",
+                    "&:hover": {
+                      borderColor: `${type.color}.main`,
+                      transform: "translateY(-4px)",
+                      boxShadow: 4,
+                    },
+                    height: "100%",
+                    display: "flex",
+                    flexDirection: "column",
+                  }}
+                >
+                  <Box
+                    sx={{
+                      width: 48,
+                      height: 48,
+                      borderRadius: 2,
+                      bgcolor: isSelected ? `${type.color}.main` : "grey.200",
+                      color: isSelected ? "white" : "grey.600",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      mb: 2,
+                    }}
+                  >
+                    <Icon />
                   </Box>
-                ) : (
-                  <Paper sx={{ p: 2, textAlign: "center", bgcolor: "grey.50" }}>
-                      <Typography variant="body2" color="textSecondary">
-                      {selectedOrgUnit || selectedPosition || selectedManager
-                        ? "Seçilen kriterlere uygun kullanıcı bulunamadı"
-                        : "Lütfen organizasyon birimi, pozisyon veya yönetici seçin"}
-                      </Typography>
-                  </Paper>
-                )}
+                  <Typography variant="h6" fontWeight={700} color={isSelected ? `${type.color}.dark` : "text.primary"} mb={1}>
+                    {type.title}
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary" sx={{ fontSize: "0.75rem" }}>
+                    {type.desc}
+                  </Typography>
+                </Paper>
+              </Grid>
+            );
+          })}
+        </Grid>
+      </Box>
+
+      {/* Seçilen Tipe Göre Form Alanları */}
+      <Box>
+        {assignmentType === "direct_manager" && (
+          <Paper sx={{ p: 3, borderRadius: 2, bgcolor: "grey.50", border: 1, borderColor: "divider" }}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 2 }}>
+              <SupervisorAccountIcon color="primary" />
+              <Box>
+                <Typography variant="h6" fontWeight={700}>
+                  Doğrudan Yönetici Ataması
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  İşi başlatan kullanıcının organizasyon şemasındaki doğrudan yöneticisine otomatik olarak atanacaktır.
+                </Typography>
+              </Box>
+            </Box>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 2, p: 2, bgcolor: "white", borderRadius: 2 }}>
+              <Box sx={{ flex: 1, textAlign: "center", p: 1.5, bgcolor: "grey.100", borderRadius: 2 }}>
+                <Typography variant="caption" fontWeight={700} textTransform="uppercase" color="text.secondary">
+                  Başlatıcı
+                </Typography>
+              </Box>
+              <ChevronRightIcon sx={{ color: "grey.400" }} />
+              <Box sx={{ flex: 1, textAlign: "center", p: 1.5, bgcolor: "primary.main", borderRadius: 2, color: "white" }}>
+                <Typography variant="caption" fontWeight={700} textTransform="uppercase">
+                  Doğrudan Yönetici
+                </Typography>
+              </Box>
+              <ChevronRightIcon sx={{ color: "grey.400" }} />
+              <Box sx={{ flex: 1, textAlign: "center", p: 1.5, bgcolor: "success.light", borderRadius: 2, border: 1, borderColor: "success.main" }}>
+                <Typography variant="caption" fontWeight={700} textTransform="uppercase" color="success.main">
+                  ONAY ADIMI
+                </Typography>
+              </Box>
+            </Box>
+          </Paper>
+        )}
+
+        {assignmentType === "department_manager" && (
+          <Paper sx={{ p: 3, borderRadius: 2, bgcolor: "grey.50", border: 1, borderColor: "divider" }}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 3 }}>
+              <BusinessIcon color="info" />
+              <Box>
+                <Typography variant="h6" fontWeight={700}>
+                  Departman Müdürü Ataması
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  İşi başlatan kullanıcının departmanının müdürüne otomatik olarak atanacaktır.
+                </Typography>
+              </Box>
+            </Box>
+            <FormControl fullWidth>
+              <InputLabel>Departman Seçimi (Opsiyonel)</InputLabel>
+              <Select
+                value={selectedOrgUnit}
+                label="Departman Seçimi (Opsiyonel)"
+                onChange={(e) => setSelectedOrgUnit(e.target.value)}
+              >
+                <MenuItem value="">
+                  <em>Otomatik (Kullanıcının Departmanı)</em>
+                </MenuItem>
+                {orgUnits.map((orgUnit) => (
+                  <MenuItem key={orgUnit.id} value={orgUnit.id}>
+                    {orgUnit.name}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </Paper>
+        )}
+
+        {assignmentType === "position" && (
+          <Paper sx={{ p: 3, borderRadius: 2, bgcolor: "grey.50", border: 1, borderColor: "divider" }}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 3 }}>
+              <WorkIcon color="warning" />
+              <Box>
+                <Typography variant="h6" fontWeight={700}>
+                  Pozisyon Bazlı Atama
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  Belirli bir pozisyondaki tüm kullanıcılara atanacaktır.
+                </Typography>
+              </Box>
+            </Box>
+            <FormControl fullWidth>
+              <InputLabel>Pozisyon Seçin</InputLabel>
+              <Select
+                value={selectedPosition}
+                label="Pozisyon Seçin"
+                onChange={(e) => setSelectedPosition(e.target.value)}
+              >
+                <MenuItem value="">
+                  <em>Pozisyon seçin</em>
+                </MenuItem>
+                {positions.map((position) => (
+                  <MenuItem key={position.id} value={position.id}>
+                    {position.name}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            {selectedPosition && filteredUsersByOrg.length > 0 && (
+              <Box sx={{ mt: 2 }}>
+                <Typography variant="body2" color="text.secondary" mb={1}>
+                  Bu pozisyonda {filteredUsersByOrg.length} kullanıcı bulundu:
+                </Typography>
+                <Autocomplete
+                  options={filteredUsersByOrg}
+                  getOptionLabel={(option) => {
+                    if (option.firstName && option.lastName) {
+                      return `${option.firstName} ${option.lastName}`;
+                    }
+                    return option.userAppName || option.userName || "";
+                  }}
+                  value={selectedUser}
+                  onChange={(event, newValue) => {
+                    setSelectedUser(newValue);
+                    if (newValue) {
+                      setInputValue(
+                        newValue.firstName && newValue.lastName
+                          ? `${newValue.firstName} ${newValue.lastName}`
+                          : newValue.userAppName || newValue.userName || ""
+                      );
+                    }
+                  }}
+                  renderInput={(params) => (
+                    <MDInput
+                      {...params}
+                      label="Kullanıcı seçin (opsiyonel)"
+                      placeholder="Belirli bir kullanıcı seçmek için arayın"
+                    />
+                  )}
+                  renderOption={(props, option) => (
+                    <li {...props} key={option.id}>
+                      <Box>
+                        <Typography fontWeight={600}>
+                          {option.firstName && option.lastName
+                            ? `${option.firstName} ${option.lastName}`
+                            : option.userAppName || option.userName}
+                        </Typography>
+                        {option.email && (
+                          <Typography variant="caption" color="text.secondary">
+                            {option.email}
+                          </Typography>
+                        )}
+                      </Box>
+                    </li>
+                  )}
+                />
               </Box>
             )}
-          </Box>
+          </Paper>
+        )}
 
-          <Divider sx={{ my: 3 }} />
-
-          <Box mb={3}>
-            <Typography variant="subtitle1" fontWeight={600} mb={1}>
-              <MessageIcon sx={{ verticalAlign: "middle", mr: 1 }} />
-              Kullanıcıya Gösterilecek Mesaj
-            </Typography>
-            <TextField
-              multiline
-              rows={3}
-              value={message}
-              onChange={(e) => setMessage(e.target.value)}
-              placeholder="Kullanıcıya gösterilecek mesajı buraya yazın..."
-              fullWidth
-              helperText="Bu mesaj kullanıcıya form gösterildiğinde görüntülenecektir"
-            />
-          </Box>
-
-          <Divider sx={{ my: 3 }} />
-
-          {workflowFormName && (
-            <Box mb={1}>
-              <Typography variant="subtitle1" fontWeight={600} mb={1}>
-                Form: {workflowFormName}
-              </Typography>
+        {assignmentType === "manual" && (
+          <Paper sx={{ p: 3, borderRadius: 2, bgcolor: "grey.50", border: 1, borderColor: "divider" }}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 3 }}>
+              <PersonIcon color="success" />
+              <Box>
+                <Typography variant="h6" fontWeight={700}>
+                  Manuel Kullanıcı Seçimi
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  Belirli bir kullanıcıyı manuel olarak seçin.
+                </Typography>
+              </Box>
             </Box>
-          )}
-        </Box>
-                    </section>
-                  </div>
+            <Autocomplete
+              options={searchByName}
+              getOptionLabel={(option) => {
+                if (option.firstName && option.lastName) {
+                  return `${option.firstName} ${option.lastName}`;
+                }
+                return option.userAppName || option.userName || "";
+              }}
+              value={selectedUser}
+              inputValue={inputValue}
+              isOptionEqualToValue={(option, value) => {
+                if (!option || !value) return false;
+                return (
+                  option.id === value.id ||
+                  option.id === value.userAppId ||
+                  option.userAppId === value.id
+                );
+              }}
+              onChange={(event, newValue) => {
+                setSelectedUser(newValue);
+                if (newValue) {
+                  setInputValue(
+                    newValue.firstName && newValue.lastName
+                      ? `${newValue.firstName} ${newValue.lastName}`
+                      : newValue.userAppName || newValue.userName || ""
+                  );
+                }
+              }}
+              onInputChange={(event, newInputValue, reason) => {
+                setInputValue(newInputValue);
+                if (reason === "input" && newInputValue.trim().length > 0) {
+                  handleSearchByName(newInputValue);
+                } else if (reason === "clear" || newInputValue.trim().length === 0) {
+                  setSearchByName([]);
+                }
+              }}
+              renderInput={(params) => (
+                <MDInput
+                  {...params}
+                  label="Kullanıcı ara..."
+                  placeholder="Kullanıcı adı veya email ile ara"
+                />
+              )}
+              renderOption={(props, option) => (
+                <li {...props} key={option.id || option.userAppId}>
+                  <Box>
+                    <Typography fontWeight={600}>
+                      {option.firstName && option.lastName
+                        ? `${option.firstName} ${option.lastName}`
+                        : option.userAppName || option.userName}
+                    </Typography>
+                    {option.email && (
+                      <Typography variant="caption" color="text.secondary">
+                        {option.email}
+                      </Typography>
+                    )}
+                    {option.userName && (
+                      <Typography variant="caption" color="text.secondary">
+                        @{option.userName}
+                      </Typography>
+                    )}
+                  </Box>
+                </li>
+              )}
+            />
+          </Paper>
+        )}
+      </Box>
+
+      <Divider />
+
+      {/* Mesaj Alanı */}
+      <Box>
+        <Typography variant="subtitle1" fontWeight={600} mb={1}>
+          <MessageIcon sx={{ verticalAlign: "middle", mr: 1 }} />
+          Kullanıcıya Gösterilecek Mesaj
+        </Typography>
+        <TextField
+          multiline
+          rows={3}
+          value={message}
+          onChange={(e) => setMessage(e.target.value)}
+          placeholder="Kullanıcıya gösterilecek mesajı buraya yazın..."
+          fullWidth
+          helperText="Bu mesaj kullanıcıya form gösterildiğinde görüntülenecektir"
+        />
+      </Box>
+    </Box>
   );
 
   const renderTimingContent = () => (
