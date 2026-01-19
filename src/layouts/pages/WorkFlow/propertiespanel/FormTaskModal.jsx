@@ -33,6 +33,7 @@ import {
   ToggleButton,
   ToggleButtonGroup,
 } from "@mui/material";
+import { createFilterOptions } from "@mui/material/Autocomplete";
 import {
   Close as CloseIcon,
   Save as SaveIcon,
@@ -81,6 +82,7 @@ import { useBusy } from "layouts/pages/hooks/useBusy";
 const FormTaskModal = ({ open, onClose, initialValues, node, onSave, workflowFormId, workflowFormName }) => {
   const [name, setName] = useState(initialValues?.name || "Form Görevi");
   const [searchByName, setSearchByName] = useState([]);
+  const [allUsers, setAllUsers] = useState([]);
   const [selectedUser, setSelectedUser] = useState(null);
   const [formFields, setFormFields] = useState([]);
   const [formButtons, setFormButtons] = useState([]);
@@ -109,6 +111,18 @@ const FormTaskModal = ({ open, onClose, initialValues, node, onSave, workflowFor
   const [selectedPosition, setSelectedPosition] = useState("");
   const [selectedManager, setSelectedManager] = useState(null);
   const [filteredUsersByOrg, setFilteredUsersByOrg] = useState([]);
+  const userFilterOptions = createFilterOptions({
+    stringify: (option) =>
+      [
+        option?.firstName,
+        option?.lastName,
+        option?.userAppName,
+        option?.userName,
+        option?.email,
+      ]
+        .filter(Boolean)
+        .join(" "),
+  });
 
   // Script şablonları
   const scriptTemplates = {
@@ -415,9 +429,9 @@ declare var formValues: Record<string, any>;
         dispatchBusy({ isBusy: true });
         const conf = getConfiguration();
         const api = new UserApi(conf);
-        // Boş string veya "*" ile tüm kullanıcıları getirmeyi dene
-        const data = await api.apiUserGetAllUsersWithNameNameGet("*");
-        const pureData = data?.data || [];
+        const data = await api.apiUserGetAllWithOuthPhotoGet();
+        const pureData = Array.isArray(data?.data) ? data.data : [];
+        setAllUsers(pureData);
         setSearchByName(pureData);
       } catch (error) {
         console.error("Kullanıcılar yüklenirken hata:", error);
@@ -433,6 +447,7 @@ declare var formValues: Record<string, any>;
     } else {
       // Modal kapandığında listeyi temizle
       setSearchByName([]);
+      setAllUsers([]);
     }
   }, [open, dispatchBusy]);
 
@@ -701,7 +716,7 @@ declare var formValues: Record<string, any>;
   // Kullanıcı arama
   const handleSearchByName = async (value) => {
     if (!value || value.trim() === "") {
-      setSearchByName([]);
+      setSearchByName(allUsers);
       return;
     }
     
@@ -714,7 +729,7 @@ declare var formValues: Record<string, any>;
       setSearchByName(pureData);
     } catch (error) {
       console.error("Kullanıcı arama hatası:", error);
-      setSearchByName([]);
+      setSearchByName(allUsers);
     } finally {
       dispatchBusy({ isBusy: false });
     }
@@ -915,6 +930,10 @@ declare var formValues: Record<string, any>;
                 }}
                 value={selectedUser}
                 inputValue={inputValue}
+                openOnFocus
+                autoHighlight
+                noOptionsText="Kullanıcı bulunamadı"
+                filterOptions={userFilterOptions}
                 isOptionEqualToValue={(option, value) => {
                   if (!option || !value) return false;
                   return (
@@ -937,7 +956,7 @@ declare var formValues: Record<string, any>;
                   if (reason === "input" && newInputValue.trim().length > 0) {
                     handleSearchByName(newInputValue);
                   } else if (reason === "clear" || newInputValue.trim().length === 0) {
-                    setSearchByName([]);
+                    setSearchByName(allUsers);
                   }
                 }}
                 renderInput={(params) => (
@@ -973,44 +992,60 @@ declare var formValues: Record<string, any>;
               <Box>
                 <Grid container spacing={2} mb={2}>
                   <Grid item xs={12} md={4}>
-                    <FormControl fullWidth>
-                      <InputLabel>Organizasyon Birimi</InputLabel>
-                      <Select
-                        value={selectedOrgUnit}
-                        label="Organizasyon Birimi"
-                        onChange={(e) => setSelectedOrgUnit(e.target.value)}
-                        startAdornment={<BusinessIcon sx={{ mr: 1, color: "text.secondary" }} />}
-                      >
-                        <MenuItem value="">
-                          <em>Tümü</em>
-                        </MenuItem>
-                        {orgUnits.map((orgUnit) => (
-                          <MenuItem key={orgUnit.id} value={orgUnit.id}>
-                            {orgUnit.name}
-                          </MenuItem>
-                        ))}
-                      </Select>
-                    </FormControl>
+                    <Autocomplete
+                      options={orgUnits}
+                      value={orgUnits.find((orgUnit) => orgUnit.id === selectedOrgUnit) || null}
+                      getOptionLabel={(option) => option?.name || ""}
+                      isOptionEqualToValue={(option, value) => option.id === value.id}
+                      openOnFocus
+                      autoHighlight
+                      noOptionsText="Organizasyon birimi bulunamadı"
+                      onChange={(event, newValue) => setSelectedOrgUnit(newValue?.id || "")}
+                      renderInput={(params) => (
+                        <MDInput
+                          {...params}
+                          label="Organizasyon Birimi"
+                          placeholder="Tümü"
+                          InputProps={{
+                            ...params.InputProps,
+                            startAdornment: (
+                              <>
+                                <BusinessIcon sx={{ mr: 1, color: "text.secondary" }} />
+                                {params.InputProps.startAdornment}
+                              </>
+                            ),
+                          }}
+                        />
+                      )}
+                    />
                   </Grid>
                   <Grid item xs={12} md={4}>
-                    <FormControl fullWidth>
-                      <InputLabel>Pozisyon</InputLabel>
-                      <Select
-                        value={selectedPosition}
-                        label="Pozisyon"
-                        onChange={(e) => setSelectedPosition(e.target.value)}
-                        startAdornment={<WorkIcon sx={{ mr: 1, color: "text.secondary" }} />}
-                      >
-                        <MenuItem value="">
-                          <em>Tümü</em>
-                        </MenuItem>
-                        {positions.map((position) => (
-                          <MenuItem key={position.id} value={position.id}>
-                            {position.name}
-                          </MenuItem>
-                        ))}
-                      </Select>
-                    </FormControl>
+                    <Autocomplete
+                      options={positions}
+                      value={positions.find((position) => position.id === selectedPosition) || null}
+                      getOptionLabel={(option) => option?.name || ""}
+                      isOptionEqualToValue={(option, value) => option.id === value.id}
+                      openOnFocus
+                      autoHighlight
+                      noOptionsText="Pozisyon bulunamadı"
+                      onChange={(event, newValue) => setSelectedPosition(newValue?.id || "")}
+                      renderInput={(params) => (
+                        <MDInput
+                          {...params}
+                          label="Pozisyon"
+                          placeholder="Tümü"
+                          InputProps={{
+                            ...params.InputProps,
+                            startAdornment: (
+                              <>
+                                <WorkIcon sx={{ mr: 1, color: "text.secondary" }} />
+                                {params.InputProps.startAdornment}
+                              </>
+                            ),
+                          }}
+                        />
+                      )}
+                    />
                   </Grid>
                   <Grid item xs={12} md={4}>
                     <Autocomplete
@@ -1022,6 +1057,11 @@ declare var formValues: Record<string, any>;
                         return option.userAppName || option.userName || "";
                       }}
                       value={selectedManager}
+                      openOnFocus
+                      autoHighlight
+                      noOptionsText="Yönetici bulunamadı"
+                      filterOptions={userFilterOptions}
+                      isOptionEqualToValue={(option, value) => option.id === value.id}
                       onChange={(event, newValue) => setSelectedManager(newValue)}
                       renderInput={(params) => (
                         <MDInput
@@ -1074,6 +1114,11 @@ declare var formValues: Record<string, any>;
                         return option.userAppName || option.userName || "";
                       }}
                       value={selectedUser}
+                      openOnFocus
+                      autoHighlight
+                      noOptionsText="Kullanıcı bulunamadı"
+                      filterOptions={userFilterOptions}
+                      isOptionEqualToValue={(option, value) => option.id === value.id}
                       onChange={(event, newValue) => {
                         setSelectedUser(newValue);
                         if (newValue) {
@@ -1799,23 +1844,23 @@ if (gunSayisi && gunlukUcret) {
                 </Typography>
               </Box>
             </Box>
-            <FormControl fullWidth>
-              <InputLabel>Departman Seçimi (Opsiyonel)</InputLabel>
-              <Select
-                value={selectedOrgUnit}
-                label="Departman Seçimi (Opsiyonel)"
-                onChange={(e) => setSelectedOrgUnit(e.target.value)}
-              >
-                <MenuItem value="">
-                  <em>Otomatik (Kullanıcının Departmanı)</em>
-                </MenuItem>
-                {orgUnits.map((orgUnit) => (
-                  <MenuItem key={orgUnit.id} value={orgUnit.id}>
-                    {orgUnit.name}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
+            <Autocomplete
+              options={orgUnits}
+              value={orgUnits.find((orgUnit) => orgUnit.id === selectedOrgUnit) || null}
+              getOptionLabel={(option) => option?.name || ""}
+              isOptionEqualToValue={(option, value) => option.id === value.id}
+              openOnFocus
+              autoHighlight
+              noOptionsText="Departman bulunamadı"
+              onChange={(event, newValue) => setSelectedOrgUnit(newValue?.id || "")}
+              renderInput={(params) => (
+                <MDInput
+                  {...params}
+                  label="Departman Seçimi (Opsiyonel)"
+                  placeholder="Otomatik (Kullanıcının Departmanı)"
+                />
+              )}
+            />
           </Paper>
         )}
 
@@ -1832,23 +1877,23 @@ if (gunSayisi && gunlukUcret) {
                 </Typography>
               </Box>
             </Box>
-            <FormControl fullWidth>
-              <InputLabel>Pozisyon Seçin</InputLabel>
-              <Select
-                value={selectedPosition}
-                label="Pozisyon Seçin"
-                onChange={(e) => setSelectedPosition(e.target.value)}
-              >
-                <MenuItem value="">
-                  <em>Pozisyon seçin</em>
-                </MenuItem>
-                {positions.map((position) => (
-                  <MenuItem key={position.id} value={position.id}>
-                    {position.name}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
+            <Autocomplete
+              options={positions}
+              value={positions.find((position) => position.id === selectedPosition) || null}
+              getOptionLabel={(option) => option?.name || ""}
+              isOptionEqualToValue={(option, value) => option.id === value.id}
+              openOnFocus
+              autoHighlight
+              noOptionsText="Pozisyon bulunamadı"
+              onChange={(event, newValue) => setSelectedPosition(newValue?.id || "")}
+              renderInput={(params) => (
+                <MDInput
+                  {...params}
+                  label="Pozisyon Seçin"
+                  placeholder="Pozisyon seçin"
+                />
+              )}
+            />
             {selectedPosition && filteredUsersByOrg.length > 0 && (
               <Box sx={{ mt: 2 }}>
                 <Typography variant="body2" color="text.secondary" mb={1}>
@@ -1863,6 +1908,11 @@ if (gunSayisi && gunlukUcret) {
                     return option.userAppName || option.userName || "";
                   }}
                   value={selectedUser}
+                  openOnFocus
+                  autoHighlight
+                  noOptionsText="Kullanıcı bulunamadı"
+                  filterOptions={userFilterOptions}
+                  isOptionEqualToValue={(option, value) => option.id === value.id}
                   onChange={(event, newValue) => {
                     setSelectedUser(newValue);
                     if (newValue) {
@@ -1925,6 +1975,10 @@ if (gunSayisi && gunlukUcret) {
               }}
               value={selectedUser}
               inputValue={inputValue}
+              openOnFocus
+              autoHighlight
+              noOptionsText="Kullanıcı bulunamadı"
+              filterOptions={userFilterOptions}
               isOptionEqualToValue={(option, value) => {
                 if (!option || !value) return false;
                 return (
@@ -1948,7 +2002,7 @@ if (gunSayisi && gunlukUcret) {
                 if (reason === "input" && newInputValue.trim().length > 0) {
                   handleSearchByName(newInputValue);
                 } else if (reason === "clear" || newInputValue.trim().length === 0) {
-                  setSearchByName([]);
+                  setSearchByName(allUsers);
                 }
               }}
               renderInput={(params) => (
