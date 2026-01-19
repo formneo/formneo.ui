@@ -97,18 +97,21 @@ const FormTaskModal = ({ open, onClose, initialValues, node, onSave, workflowFor
   const [monacoInstance, setMonacoInstance] = useState(null);
   const [selectedTemplate, setSelectedTemplate] = useState("");
   const [showFieldReference, setShowFieldReference] = useState(false);
+  const initialSelectedManagerId = initialValues?.selectedManagerId || null;
   const dispatchBusy = useBusy();
   
   // Atama tipi için state
-  const [assignmentType, setAssignmentType] = useState("direct_manager"); // "direct_manager" | "department_manager" | "position" | "manual"
+  const [assignmentType, setAssignmentType] = useState(
+    initialValues?.assignmentType || "direct_manager"
+  ); // "direct_manager" | "department_manager" | "position" | "manual"
   
   // Organizasyon bazlı seçim için state'ler
-  const [selectionMode, setSelectionMode] = useState("manual"); // "manual" | "organization"
+  const [selectionMode, setSelectionMode] = useState(initialValues?.selectionMode || "manual"); // "manual" | "organization"
   const [orgUnits, setOrgUnits] = useState([]);
   const [positions, setPositions] = useState([]);
   const [managers, setManagers] = useState([]);
-  const [selectedOrgUnit, setSelectedOrgUnit] = useState("");
-  const [selectedPosition, setSelectedPosition] = useState("");
+  const [selectedOrgUnit, setSelectedOrgUnit] = useState(initialValues?.selectedOrgUnit || "");
+  const [selectedPosition, setSelectedPosition] = useState(initialValues?.selectedPosition || "");
   const [selectedManager, setSelectedManager] = useState(null);
   const [filteredUsersByOrg, setFilteredUsersByOrg] = useState([]);
   const userFilterOptions = createFilterOptions({
@@ -494,6 +497,56 @@ declare var formValues: Record<string, any>;
     }
   }, [open, dispatchBusy]);
 
+  useEffect(() => {
+    if (!selectedManager && initialSelectedManagerId && managers.length > 0) {
+      const match = managers.find(
+        (manager) => manager.id === initialSelectedManagerId || manager.userAppId === initialSelectedManagerId
+      );
+      if (match) {
+        setSelectedManager(match);
+      }
+    }
+  }, [managers, initialSelectedManagerId, selectedManager]);
+
+  useEffect(() => {
+    if (!open) return;
+
+    if (assignmentType === "manual") {
+      setSelectedOrgUnit("");
+      setSelectedPosition("");
+      setSelectedManager(null);
+      return;
+    }
+
+    if (assignmentType === "position") {
+      setSelectedOrgUnit("");
+      setSelectedManager(null);
+      setSelectedUser(null);
+      return;
+    }
+
+    if (assignmentType === "department_manager") {
+      setSelectedPosition("");
+      setSelectedManager(null);
+      setSelectedUser(null);
+      return;
+    }
+
+    if (assignmentType === "department_all") {
+      setSelectedPosition("");
+      setSelectedManager(null);
+      setSelectedUser(null);
+      return;
+    }
+
+    if (assignmentType === "direct_manager") {
+      setSelectedOrgUnit("");
+      setSelectedPosition("");
+      setSelectedManager(null);
+      setSelectedUser(null);
+    }
+  }, [assignmentType, open]);
+
   // Organizasyon kriterlerine göre kullanıcıları filtrele
   useEffect(() => {
     const filterUsersByOrganization = async () => {
@@ -747,8 +800,23 @@ declare var formValues: Record<string, any>;
 
   // Kaydet
   const handleSave = () => {
-    if (!selectedUser) {
+    const isManualSelection = assignmentType ? assignmentType === "manual" : selectionMode === "manual";
+    const hasOrgCriteria = Boolean(selectedOrgUnit || selectedPosition || selectedManager);
+    const requiresOrgCriteria = !assignmentType && selectionMode === "organization";
+    const requiresOrgUnit = assignmentType === "department_all";
+
+    if (isManualSelection && !selectedUser) {
       alert("Lütfen bir kullanıcı seçin");
+      return;
+    }
+
+    if (requiresOrgUnit && !selectedOrgUnit) {
+      alert("Lütfen bir departman seçin");
+      return;
+    }
+
+    if (requiresOrgCriteria && !hasOrgCriteria && !selectedUser) {
+      alert("Lütfen organizasyon birimi, pozisyon veya yönetici seçin");
       return;
     }
 
@@ -785,15 +853,69 @@ declare var formValues: Record<string, any>;
     const formId = initialValues?.formId || node?.data?.formId || workflowFormId;
     const formName = initialValues?.formName || node?.data?.formName || workflowFormName;
 
+    const selectedUserId = selectedUser?.id || selectedUser?.userAppId || null;
+    const selectedUserName = selectedUser?.userName || null;
+    const selectedUserFirstName = selectedUser?.firstName || null;
+    const selectedUserLastName = selectedUser?.lastName || null;
+    const assignedUserName = selectedUser
+      ? selectedUser.firstName && selectedUser.lastName
+        ? `${selectedUser.firstName} ${selectedUser.lastName}`
+        : selectedUser.userAppName || selectedUser.userName
+      : null;
+    const selectedManagerId = selectedManager?.id || selectedManager?.userAppId || null;
+    const selectedManagerName = selectedManager
+      ? selectedManager.firstName && selectedManager.lastName
+        ? `${selectedManager.firstName} ${selectedManager.lastName}`
+        : selectedManager.userAppName || selectedManager.userName
+      : null;
+
+    let selectionData = {};
+
+    if (assignmentType) {
+      selectionData.assignmentType = assignmentType;
+      if (assignmentType === "manual") {
+        selectionData = {
+          ...selectionData,
+          userId: selectedUserId,
+          userName: selectedUserName,
+          userFirstName: selectedUserFirstName,
+          userLastName: selectedUserLastName,
+          assignedUserName,
+        };
+      } else if (assignmentType === "position") {
+        selectionData = {
+          ...selectionData,
+          selectedPosition,
+        };
+      } else if (assignmentType === "department_manager") {
+        selectionData = {
+          ...selectionData,
+          selectedOrgUnit,
+        };
+      } else if (assignmentType === "department_all") {
+        selectionData = {
+          ...selectionData,
+          selectedOrgUnit,
+        };
+      }
+    } else {
+      selectionData = {
+        selectionMode,
+        selectedOrgUnit,
+        selectedPosition,
+        selectedManagerId,
+        selectedManagerName,
+        userId: selectedUserId,
+        userName: selectedUserName,
+        userFirstName: selectedUserFirstName,
+        userLastName: selectedUserLastName,
+        assignedUserName,
+      };
+    }
+
     const taskData = {
       name,
-      userId: selectedUser.id || selectedUser.userAppId,
-      userName: selectedUser.userName,
-      userFirstName: selectedUser.firstName,
-      userLastName: selectedUser.lastName,
-      assignedUserName: selectedUser.firstName && selectedUser.lastName
-        ? `${selectedUser.firstName} ${selectedUser.lastName}`
-        : selectedUser.userAppName || selectedUser.userName,
+      ...selectionData,
       formId: formId, // ✅ Önce mevcut data'dan, yoksa workflowFormId'den al
       formName: formName, // ✅ Önce mevcut data'dan, yoksa workflowFormName'den al
       message,
@@ -1698,6 +1820,13 @@ if (gunSayisi && gunlukUcret) {
       color: "info",
     },
     {
+      id: "department_all",
+      title: "Departman (Tüm Kullanıcılar)",
+      icon: BusinessIcon,
+      desc: "Seçilen departmandaki tüm kullanıcılara atar",
+      color: "warning",
+    },
+    {
       id: "position",
       title: "Pozisyon",
       icon: WorkIcon,
@@ -1737,54 +1866,75 @@ if (gunSayisi && gunlukUcret) {
             const Icon = type.icon;
             const isSelected = assignmentType === type.id;
             return (
-              <Grid item xs={12} sm={6} md={3} key={type.id}>
+                <Grid item xs={12} sm={6} md={3} key={type.id}>
                 <Paper
                   onClick={() => {
                     setAssignmentType(type.id);
                     if (type.id === "manual") {
-                      setSelectedUser(null);
                       setSelectedOrgUnit("");
                       setSelectedPosition("");
                       setSelectedManager(null);
                     }
+                    if (type.id === "position") {
+                      setSelectedOrgUnit("");
+                      setSelectedManager(null);
+                      setSelectedUser(null);
+                    }
+                    if (type.id === "department_manager") {
+                      setSelectedPosition("");
+                      setSelectedManager(null);
+                      setSelectedUser(null);
+                    }
+                    if (type.id === "department_all") {
+                      setSelectedPosition("");
+                      setSelectedManager(null);
+                      setSelectedUser(null);
+                    }
+                    if (type.id === "direct_manager") {
+                      setSelectedOrgUnit("");
+                      setSelectedPosition("");
+                      setSelectedManager(null);
+                      setSelectedUser(null);
+                    }
                   }}
                   sx={{
-                    p: 3,
-                    borderRadius: 3,
-                    border: 2,
+                    p: 1.5,
+                    borderRadius: 1.5,
+                    border: 1,
                     borderColor: isSelected ? `${type.color}.main` : "grey.300",
                     bgcolor: isSelected ? `${type.color}.light` : "white",
                     cursor: "pointer",
                     transition: "all 0.2s",
                     "&:hover": {
                       borderColor: `${type.color}.main`,
-                      transform: "translateY(-4px)",
-                      boxShadow: 4,
+                      transform: "translateY(-1px)",
+                      boxShadow: 2,
                     },
                     height: "100%",
                     display: "flex",
                     flexDirection: "column",
+                    minHeight: 112,
                   }}
                 >
                   <Box
                     sx={{
-                      width: 48,
-                      height: 48,
-                      borderRadius: 2,
+                      width: 28,
+                      height: 28,
+                      borderRadius: 1,
                       bgcolor: isSelected ? `${type.color}.main` : "grey.200",
                       color: isSelected ? "white" : "grey.600",
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
-                      mb: 2,
+                      mb: 0.75,
                     }}
                   >
-                    <Icon />
+                    <Icon sx={{ fontSize: 16 }} />
                   </Box>
-                  <Typography variant="h6" fontWeight={700} color={isSelected ? `${type.color}.dark` : "text.primary"} mb={1}>
+                  <Typography variant="body2" fontWeight={700} color={isSelected ? `${type.color}.dark` : "text.primary"} mb={0.25}>
                     {type.title}
                   </Typography>
-                  <Typography variant="caption" color="text.secondary" sx={{ fontSize: "0.75rem" }}>
+                  <Typography variant="caption" color="text.secondary" sx={{ fontSize: "0.6rem", lineHeight: 1.25 }}>
                     {type.desc}
                   </Typography>
                 </Paper>
@@ -1858,6 +2008,39 @@ if (gunSayisi && gunlukUcret) {
                   {...params}
                   label="Departman Seçimi (Opsiyonel)"
                   placeholder="Otomatik (Kullanıcının Departmanı)"
+                />
+              )}
+            />
+          </Paper>
+        )}
+
+        {assignmentType === "department_all" && (
+          <Paper sx={{ p: 3, borderRadius: 2, bgcolor: "grey.50", border: 1, borderColor: "divider" }}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 3 }}>
+              <BusinessIcon color="warning" />
+              <Box>
+                <Typography variant="h6" fontWeight={700}>
+                  Departman (Tüm Kullanıcılar)
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  Seçilen departmandaki tüm kullanıcılara atanacaktır.
+                </Typography>
+              </Box>
+            </Box>
+            <Autocomplete
+              options={orgUnits}
+              value={orgUnits.find((orgUnit) => orgUnit.id === selectedOrgUnit) || null}
+              getOptionLabel={(option) => option?.name || ""}
+              isOptionEqualToValue={(option, value) => option.id === value.id}
+              openOnFocus
+              autoHighlight
+              noOptionsText="Departman bulunamadı"
+              onChange={(event, newValue) => setSelectedOrgUnit(newValue?.id || "")}
+              renderInput={(params) => (
+                <MDInput
+                  {...params}
+                  label="Departman Seçin"
+                  placeholder="Departman seçin"
                 />
               )}
             />
