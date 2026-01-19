@@ -1,64 +1,274 @@
-
-import React, { useEffect, useState } from "react";
-import { Card, Grid, Typography, Divider, Chip, Button, Dialog, DialogTitle, DialogContent, DialogActions, MenuItem, Select, FormControl, InputLabel } from "@mui/material";
+import React, { useEffect, useState, useMemo } from "react";
+import { Card, Grid, Typography, Divider, Chip, Button, Dialog, DialogTitle, DialogContent, DialogActions, MenuItem, Select, FormControl, InputLabel, Autocomplete, TextField } from "@mui/material";
 import DashboardLayout from "examples/LayoutContainers/DashboardLayout";
 import DashboardNavbar from "examples/Navbars/DashboardNavbar";
 import Footer from "examples/Footer";
-import { useLocation } from "react-router-dom";
-import { getDepartments, Department } from "api/departmentService";
-import { getPositions, Position } from "api/positionService";
-
-const mockUser = {
-  firstName: "Ali",
-  lastName: "Kaan",
-  email: "ali.kaan@example.com",
-  status: "Active",
-  department: { name: "Satış", isActive: true },
-  position: { name: "Müdür", isActive: true },
-  departmentHistory: [
-    { name: "Satış", isActive: true, assignedAt: "2024-01-01" },
-    { name: "Pazarlama", isActive: false, assignedAt: "2023-01-01" },
-  ],
-  positionHistory: [
-    { name: "Müdür", isActive: true, assignedAt: "2024-01-01" },
-    { name: "Genel Müdür", isActive: false, assignedAt: "2023-01-01" },
-  ],
-};
+import { useParams, useSearchParams, useLocation } from "react-router-dom";
+import { OrgUnitsApi, OrgUnitListDto } from "api/generated";
+import { PositionsApi, PositionListDto } from "api/generated";
+import { UserApi, UserAppDto, UserAppDtoWithoutPhoto, EmployeeAssignmentsApi, EmployeeAssignmentListDto, EmployeeAssignmentInsertDto, EmployeeAssignmentUpdateDto } from "api/generated";
+import getConfiguration from "confiuration";
+import { useAlert } from "layouts/pages/hooks/useAlert";
+import { useBusy } from "layouts/pages/hooks/useBusy";
+import { MessageBoxType } from "@ui5/webcomponents-react";
 
 const UserDetail = () => {
-  const location = useLocation();
-  // const { userId } = location.state || {};
-  // TODO: userId ile API'den veri çekilecek
+  const [searchParams] = useSearchParams();
+  const location = useLocation() as any;
+  const { id: paramId } = useParams<{ id: string }>();
+  
+  // User ID'yi query param, location state veya route param'dan al
+  const userId = useMemo(() => {
+    const id = searchParams.get("id") || location.state?.userId || paramId || "";
+    console.log("User ID:", { 
+      searchParamsId: searchParams.get("id"), 
+      locationStateUserId: location.state?.userId, 
+      paramId, 
+      finalUserId: id 
+    });
+    return id;
+  }, [searchParams, location.state, paramId]);
 
-  const [user, setUser] = useState(mockUser);
-  const [departments, setDepartments] = useState<Department[]>([]);
-  const [positions, setPositions] = useState<Position[]>([]);
-  const [openAssign, setOpenAssign] = useState(false);
-  const [selectedDepartment, setSelectedDepartment] = useState<string>("");
-  const [selectedPosition, setSelectedPosition] = useState<string>("");
-
-  useEffect(() => {
-    getDepartments({ isActive: true }).then(setDepartments);
-    getPositions({ isActive: true }).then(setPositions);
+  // Tenant modu kontrolü - localStorage'dan kontrol et
+  const isTenantMode = useMemo(() => {
+    if (typeof window === "undefined") return false;
+    const tenantId = localStorage.getItem("selectedTenantId");
+    console.log("Tenant Mode Check:", { tenantId, isTenantMode: !!tenantId });
+    return Boolean(tenantId);
   }, []);
 
-  const handleAssign = () => {
-    // Eski atamaları pasif yap, yeni atamayı aktif olarak ekle
-    setUser((prev) => ({
-      ...prev,
-      department: { name: departments.find((d) => d.id === selectedDepartment)?.name || "", isActive: true },
-      position: { name: positions.find((p) => p.id === selectedPosition)?.name || "", isActive: true },
-      departmentHistory: [
-        { name: departments.find((d) => d.id === selectedDepartment)?.name || "", isActive: true, assignedAt: new Date().toISOString().slice(0, 10) },
-        ...prev.departmentHistory.map((d) => ({ ...d, isActive: false })),
-      ],
-      positionHistory: [
-        { name: positions.find((p) => p.id === selectedPosition)?.name || "", isActive: true, assignedAt: new Date().toISOString().slice(0, 10) },
-        ...prev.positionHistory.map((p) => ({ ...p, isActive: false })),
-      ],
-    }));
-    setOpenAssign(false);
+  const dispatchAlert = useAlert();
+  const dispatchBusy = useBusy();
+  
+  const [user, setUser] = useState<UserAppDto | null>(null);
+  const [orgUnits, setOrgUnits] = useState<OrgUnitListDto[]>([]);
+  const [positions, setPositions] = useState<PositionListDto[]>([]);
+  const [managers, setManagers] = useState<UserAppDtoWithoutPhoto[]>([]);
+  const [openAssign, setOpenAssign] = useState(false);
+  const [selectedOrgUnit, setSelectedOrgUnit] = useState<string>("");
+  const [selectedPosition, setSelectedPosition] = useState<string>("");
+  const [selectedManager, setSelectedManager] = useState<UserAppDtoWithoutPhoto | null>(null);
+  
+  // Mevcut atamayı tutmak için
+  const [currentAssignment, setCurrentAssignment] = useState<EmployeeAssignmentListDto | null>(null);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        dispatchBusy({ isBusy: true });
+        const conf = getConfiguration();
+        
+        // Fetch user data
+        let userData: UserAppDto | null = null;
+        if (userId) {
+          const userApi = new UserApi(conf);
+          const userResponse = await userApi.apiUserGet(userId);
+          userData = userResponse.data;
+          setUser(userData);
+        }
+        
+        // Fetch org units, positions, and managers
+        const [orgUnitsResponse, positionsResponse, managersResponse] = await Promise.all([
+          new OrgUnitsApi(conf).apiOrgUnitsGet(),
+          new PositionsApi(conf).apiPositionsGet(),
+          new UserApi(conf).apiUserGetAllWithOuthPhotoGet(),
+        ]);
+        
+        setOrgUnits(orgUnitsResponse.data || []);
+        setPositions(positionsResponse.data || []);
+        setManagers(managersResponse.data || []);
+
+        // Tenant modundaysa mevcut atamaları çek
+        if (isTenantMode && userId && userData) {
+          await fetchCurrentAssignments(userId, managersResponse.data || [], userData);
+        }
+      } catch (error) {
+        console.error("Veri yüklenirken hata oluştu:", error);
+        dispatchAlert({ 
+          message: "Veri yüklenirken hata oluştu: " + error, 
+          type: MessageBoxType.Error 
+        });
+      } finally {
+        dispatchBusy({ isBusy: false });
+      }
+    };
+    
+    fetchData();
+  }, [userId, isTenantMode]);
+
+  // Mevcut atamayı çek (EmployeeAssignmentsApi kullanarak)
+  const fetchCurrentAssignments = async (uid: string, managersList: UserAppDtoWithoutPhoto[], userData: UserAppDto) => {
+    try {
+      const conf = getConfiguration();
+      const tenantId = localStorage.getItem("selectedTenantId");
+      
+      if (!tenantId) return;
+
+      // EmployeeAssignmentsApi ile aktif atamayı al
+      const employeeAssignmentsApi = new EmployeeAssignmentsApi(conf);
+      const response = await employeeAssignmentsApi.apiEmployeeAssignmentsUserUserIdActiveGet(uid, {
+        headers: { 'X-Tenant-Id': tenantId }
+      } as any);
+      
+      const assignment: EmployeeAssignmentListDto = (response as any)?.data;
+      
+      if (assignment) {
+        setCurrentAssignment(assignment);
+        setSelectedOrgUnit(assignment.orgUnitId || "");
+        setSelectedPosition(assignment.positionId || "");
+        
+        if (assignment.managerId && managersList.length > 0) {
+          const manager = managersList.find(m => m.id === assignment.managerId);
+          if (manager) {
+            setSelectedManager(manager);
+          } else {
+            setSelectedManager(null);
+          }
+        } else {
+          setSelectedManager(null);
+        }
+      } else {
+        // Aktif atama yoksa, user'dan bilgileri al (fallback)
+        setSelectedOrgUnit(userData.orgUnitId || "");
+        setSelectedPosition(userData.positionId || "");
+        const managerId = (userData as any).mainManagerUserAppId;
+        if (managerId && managersList.length > 0) {
+          const manager = managersList.find(m => m.id === managerId);
+          if (manager) setSelectedManager(manager);
+        } else {
+          setSelectedManager(null);
+        }
+      }
+    } catch (error) {
+      console.error("Atama bilgileri yüklenirken hata:", error);
+      // Hata durumunda user'dan bilgileri al (fallback)
+      setSelectedOrgUnit(userData.orgUnitId || "");
+      setSelectedPosition(userData.positionId || "");
+    }
   };
+
+  const handleAssign = async () => {
+    if (!user || !selectedOrgUnit || !selectedPosition) {
+      dispatchAlert({ 
+        message: "Lütfen departman ve pozisyon seçiniz", 
+        type: MessageBoxType.Warning 
+      });
+      return;
+    }
+    
+    if (!isTenantMode) {
+      dispatchAlert({ 
+        message: "Bu işlem sadece tenant modunda yapılabilir", 
+        type: MessageBoxType.Warning 
+      });
+      return;
+    }
+    
+    try {
+      dispatchBusy({ isBusy: true });
+      const conf = getConfiguration();
+      const tenantId = localStorage.getItem("selectedTenantId");
+      
+      if (!tenantId) {
+        dispatchAlert({ 
+          message: "Tenant ID bulunamadı", 
+          type: MessageBoxType.Error 
+        });
+        return;
+      }
+
+      // EmployeeAssignmentsApi ile atama yap
+      const employeeAssignmentsApi = new EmployeeAssignmentsApi(conf);
+      
+      if (currentAssignment?.id) {
+        // Mevcut atama varsa güncelle
+        const updateDto: EmployeeAssignmentUpdateDto = {
+          id: currentAssignment.id,
+          orgUnitId: selectedOrgUnit || null,
+          positionId: selectedPosition || null,
+          managerId: selectedManager?.id || null,
+        };
+        
+        await employeeAssignmentsApi.apiEmployeeAssignmentsPut(updateDto, {
+          headers: { 'X-Tenant-Id': tenantId }
+        } as any);
+      } else {
+        // Yeni atama oluştur
+        const insertDto: EmployeeAssignmentInsertDto = {
+          userId: userId,
+          orgUnitId: selectedOrgUnit || null,
+          positionId: selectedPosition || null,
+          managerId: selectedManager?.id || null,
+        };
+        
+        await employeeAssignmentsApi.apiEmployeeAssignmentsPost(insertDto, {
+          headers: { 'X-Tenant-Id': tenantId }
+        } as any);
+      }
+      
+      // User bilgisini de güncelle (fallback için)
+      const userApi = new UserApi(conf);
+      const updateData = {
+        ...user,
+        orgUnitId: selectedOrgUnit,
+        positionId: selectedPosition,
+      } as any;
+      
+      try {
+        await userApi.apiUserPut(updateData);
+      } catch (userError) {
+        console.warn("User güncellemesi yapılamadı:", userError);
+      }
+      
+      // Local state güncelle
+      setUser(updateData);
+      
+      // Atama bilgilerini yeniden yükle
+      if (user) {
+        await fetchCurrentAssignments(userId, managers, user);
+      }
+      
+      dispatchAlert({ 
+        message: "Atama başarıyla yapıldı", 
+        type: MessageBoxType.Success 
+      });
+      
+      setOpenAssign(false);
+    } catch (error: any) {
+      console.error("Atama yapılırken hata oluştu:", error);
+      dispatchAlert({ 
+        message: "Atama yapılırken hata oluştu: " + (error?.response?.data?.message || error.message), 
+        type: MessageBoxType.Error 
+      });
+    } finally {
+      dispatchBusy({ isBusy: false });
+    }
+  };
+
+  if (!user) {
+    return (
+      <DashboardLayout>
+        <DashboardNavbar />
+        <Grid container spacing={3} sx={{ mt: 2 }}>
+          <Grid item xs={12}>
+            <Card sx={{ p: 3 }}>
+              <Typography>Kullanıcı yükleniyor...</Typography>
+            </Card>
+          </Grid>
+        </Grid>
+        <Footer />
+      </DashboardLayout>
+    );
+  }
+
+  const orgUnitName = currentAssignment?.orgUnitName || orgUnits.find(ou => ou.id === (currentAssignment?.orgUnitId || user.orgUnitId))?.name || "-";
+  const positionName = currentAssignment?.positionName || positions.find(p => p.id === (currentAssignment?.positionId || user.positionId))?.name || "-";
+  const managerName = currentAssignment?.managerFullName 
+    || (selectedManager 
+        ? `${selectedManager.firstName || ""} ${selectedManager.lastName || ""}`.trim() || selectedManager.userName || "-"
+        : (currentAssignment?.managerId 
+            ? managers.find(m => m.id === currentAssignment.managerId)?.userName || "-"
+            : "-"));
 
   return (
     <DashboardLayout>
@@ -69,10 +279,15 @@ const UserDetail = () => {
           <Card sx={{ p: 3 }}>
             <Typography variant="h6" gutterBottom>Profil</Typography>
             <Divider sx={{ mb: 2 }} />
-            <Typography><b>Ad Soyad:</b> {user.firstName} {user.lastName}</Typography>
-            <Typography><b>E-posta:</b> {user.email}</Typography>
+            <Typography><b>Ad Soyad:</b> {user.firstName || ""} {user.lastName || ""}</Typography>
+            <Typography><b>Kullanıcı Adı:</b> {user.userName || "-"}</Typography>
+            <Typography><b>E-posta:</b> {user.email || "-"}</Typography>
             <Typography>
-              <b>Durum:</b> <Chip label={user.status} color={user.status === "Active" ? "success" : "default"} size="small" />
+              <b>Durum:</b> <Chip 
+                label={user.isBlocked ? "Pasif" : "Aktif"} 
+                color={user.isBlocked ? "default" : "success"} 
+                size="small" 
+              />
             </Typography>
           </Card>
         </Grid>
@@ -81,44 +296,57 @@ const UserDetail = () => {
           <Card sx={{ p: 3 }}>
             <Typography variant="h6" gutterBottom>Organization</Typography>
             <Divider sx={{ mb: 2 }} />
-            <Typography><b>Departman:</b> {user.department?.name}</Typography>
-            <Typography><b>Pozisyon:</b> {user.position?.name}</Typography>
+            <Typography><b>Departman:</b> {orgUnitName}</Typography>
+            <Typography><b>Pozisyon:</b> {positionName}</Typography>
+            <Typography><b>Yönetici:</b> {managerName}</Typography>
             <Divider sx={{ my: 2 }} />
-            <Typography variant="subtitle1">Departman Geçmişi</Typography>
-            {user.departmentHistory.map((d, i) => (
-              <Typography key={i}>
-                {d.name} - {d.assignedAt} <Chip label={d.isActive ? "Aktif" : "Pasif"} size="small" color={d.isActive ? "success" : "default"} />
+            {/* Atama butonu sadece tenant modunda göster */}
+            {isTenantMode && (
+              <Button variant="contained" color="info" onClick={() => {
+                // Mevcut değerleri modal'a yükle
+                setSelectedOrgUnit(currentAssignment?.orgUnitId || user.orgUnitId || "");
+                setSelectedPosition(currentAssignment?.positionId || user.positionId || "");
+                if (currentAssignment?.managerId) {
+                  const manager = managers.find(m => m.id === currentAssignment.managerId);
+                  if (manager) {
+                    setSelectedManager(manager);
+                  } else {
+                    setSelectedManager(null);
+                  }
+                } else {
+                  setSelectedManager(null);
+                }
+                setOpenAssign(true);
+              }}>
+                Departman / Pozisyon / Yönetici Ata
+              </Button>
+            )}
+            {!isTenantMode && (
+              <Typography variant="caption" color="text.secondary">
+                Atama yapmak için tenant modunda olmanız gerekmektedir.
               </Typography>
-            ))}
-            <Divider sx={{ my: 2 }} />
-            <Typography variant="subtitle1">Pozisyon Geçmişi</Typography>
-            {user.positionHistory.map((p, i) => (
-              <Typography key={i}>
-                {p.name} - {p.assignedAt} <Chip label={p.isActive ? "Aktif" : "Pasif"} size="small" color={p.isActive ? "success" : "default"} />
-              </Typography>
-            ))}
-            <Divider sx={{ my: 2 }} />
-            <Button variant="contained" color="info" onClick={() => setOpenAssign(true)}>Pozisyon / Departman Ata</Button>
+            )}
           </Card>
         </Grid>
       </Grid>
-      {/* Atama Modalı */}
-      <Dialog open={openAssign} onClose={() => setOpenAssign(false)}>
-        <DialogTitle>Pozisyon / Departman Ata</DialogTitle>
+      {/* Atama Modalı - Sadece tenant modunda göster */}
+      {isTenantMode && (
+        <Dialog open={openAssign} onClose={() => setOpenAssign(false)} maxWidth="sm" fullWidth>
+          <DialogTitle>Departman / Pozisyon / Yönetici Ata</DialogTitle>
         <DialogContent>
-          <FormControl fullWidth sx={{ mb: 2 }}>
+            <FormControl fullWidth sx={{ mb: 2, mt: 2 }}>
             <InputLabel>Departman</InputLabel>
             <Select
-              value={selectedDepartment}
+              value={selectedOrgUnit}
               label="Departman"
-              onChange={(e) => setSelectedDepartment(e.target.value)}
+              onChange={(e) => setSelectedOrgUnit(e.target.value)}
             >
-              {departments.map((dep) => (
-                <MenuItem key={dep.id} value={dep.id}>{dep.name}</MenuItem>
+              {orgUnits.map((ou) => (
+                <MenuItem key={ou.id} value={ou.id || ""}>{ou.name || "-"}</MenuItem>
               ))}
             </Select>
           </FormControl>
-          <FormControl fullWidth>
+            <FormControl fullWidth sx={{ mb: 2 }}>
             <InputLabel>Pozisyon</InputLabel>
             <Select
               value={selectedPosition}
@@ -126,16 +354,49 @@ const UserDetail = () => {
               onChange={(e) => setSelectedPosition(e.target.value)}
             >
               {positions.map((pos) => (
-                <MenuItem key={pos.id} value={pos.id}>{pos.name}</MenuItem>
+                <MenuItem key={pos.id} value={pos.id || ""}>{pos.name || "-"}</MenuItem>
               ))}
             </Select>
           </FormControl>
+            <Autocomplete
+              options={managers}
+              getOptionLabel={(option) => 
+                `${option.firstName || ""} ${option.lastName || ""}`.trim() || option.userName || ""
+              }
+              value={selectedManager}
+              onChange={(event, newValue) => {
+                setSelectedManager(newValue);
+              }}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  label="Yönetici"
+                  placeholder="Yönetici seçiniz (opsiyonel)"
+                />
+              )}
+              sx={{ mb: 2 }}
+            />
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setOpenAssign(false)}>İptal</Button>
-          <Button onClick={handleAssign} variant="contained" color="info" disabled={!selectedDepartment || !selectedPosition}>Ata</Button>
+            <Button onClick={() => {
+              setOpenAssign(false);
+              setSelectedOrgUnit("");
+              setSelectedPosition("");
+              setSelectedManager(null);
+            }}>
+              İptal
+            </Button>
+            <Button 
+              onClick={handleAssign} 
+              variant="contained" 
+              color="info" 
+              disabled={!selectedOrgUnit || !selectedPosition}
+            >
+              Ata
+            </Button>
         </DialogActions>
       </Dialog>
+      )}
       <Footer />
     </DashboardLayout>
   );

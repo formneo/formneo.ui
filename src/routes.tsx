@@ -103,11 +103,8 @@ import profilePicture from "assets/images/team-3.jpg";
 import { useUser } from "layouts/pages/hooks/userName";
 const Logout = lazy(() => import("layouts/authentication/sign-in/cover/Logout"));
 const EditProject = lazy(() => import("layouts/pages/profile/all-projects/edit-product"));
-const TalepOlustur = lazy(() => import("layouts/pages/talepYonetimi/createTicket"));
-const CreateRequest = lazy(() => import("layouts/pages/talepYonetimi/createTicket"));
-const AllTickets = lazy(() => import("layouts/pages/talepYonetimi/allTickets"));
-const Departmens = lazy(() => import("layouts/pages/users/departments"));
-const CreateDepartment = lazy(() => import("layouts/pages/users/departments/createDepartment"));
+
+
 const MenuList = lazy(() => import("layouts/pages/menuDefination/MenuList"));
 const MenuDetail = lazy(() => import("layouts/pages/menuDefination/MenuDetail"));
 const ListForm = lazy(() => import("layouts/pages/FormManagement/listForm"));
@@ -116,8 +113,6 @@ const ParameterEdit = lazy(() => import("layouts/pages/FormManagement/ParameterE
 
 const UserFormList = lazy(() => import("layouts/pages/FormManagement/UsersForm/UserForms"));
 
-const Teams = lazy(() => import("layouts/pages/teams"));
-const CreateTeams = lazy(() => import("layouts/pages/teams/createTeam"));
 
 
 const RolesDefination = lazy(() => import("layouts/pages/roles/RoleList"));
@@ -126,12 +121,6 @@ const RolesList = lazy(() => import("layouts/pages/roles/RoleList"));
 const NotAuthorizationPage = lazy(() => import("layouts/pages/notAuthorizationPage"));
 const DataTables = lazy(() => import("layouts/pages/users/list-user"));
 const Settings = lazy(() => import("layouts/pages/users/userDetail/settings"));
-const WorkCompanyCE = lazy(() => import("layouts/pages/workCompany/ce"));
-const WorkCompany = lazy(() => import("layouts/pages/workCompany"));
-const WorkCompanySystem = lazy(() => import("layouts/pages/workCompanySystem"));
-const WorkCompanySystemCE = lazy(() => import("layouts/pages/workCompanySystem/ce"));
-const SolveTicket = lazy(() => import("layouts/pages/talepYonetimi/solveTicket"));
-const SolveAllTicket = lazy(() => import("layouts/pages/talepYonetimi/solveAllTicket"));
 
 const WorkFlowList = lazy(() => import("layouts/pages/WorkFlow/WorkFlowList"));
 const WorkFlowDetail = lazy(() => import("layouts/pages/WorkFlow/WorkFlowDetail.jsx"));
@@ -329,100 +318,6 @@ const routes = [
       },
     ],
   },
-  {
-    type: "collapse",
-    name: "Work Company System",
-    key: "workCompanySystemList",
-    icon: <Icon fontSize="medium">memory</Icon>,
-    collapse: [
-      {
-        name: "workCompanySystemList",
-        key: "workCompanySystemList",
-        route: "/workCompanySystem",
-        component: <WorkCompanySystem />,
-      },
-    ],
-  },
-
-  {
-    type: "collapse",
-    name: "Work Company System Edit Create",
-    key: "workCompanySystemEditCreate",
-    icon: <Icon fontSize="medium">memory</Icon>,
-    collapse: [
-      {
-        name: "Work Company System Edit Create",
-        key: "workCompanySystemEditCreate",
-        route: "/workCompanySystem/detail",
-        component: <WorkCompanySystemCE />,
-      },
-
-
-    ],
-  },
-  {
-    type: "collapse",
-    name: "Work Company System Edit ",
-    key: "workCompanySystemEdit",
-    icon: <Icon fontSize="medium">memory</Icon>,
-    collapse: [
-      {
-        name: "Work Company System Edit ",
-        key: "workCompanySystemEdit",
-        route: "/workCompanySystem/detail/:id",
-        component: <WorkCompanySystemCE />,
-
-      },
-
-
-
-    ],
-  },
-  {
-    type: "collapse",
-    name: "Work Company",
-    key: "workCompany",
-    icon: <Icon fontSize="medium">memory</Icon>,
-    collapse: [
-      {
-        name: "Work Company",
-        key: "workCompany",
-        route: "/workCompany",
-        component: <WorkCompany />,
-      },
-    ],
-  },
-  {
-    type: "collapse",
-    name: "Work Company Edit Create",
-    key: "workCompanyEditCreate",
-    icon: <Icon fontSize="medium">memory</Icon>,
-    collapse: [
-      {
-        name: "Work Company Edit Create",
-        key: "workCompanyEditCreate",
-        route: "/workCompany/detail",
-        component: <WorkCompanyCE />,
-      },
-
-    ],
-  },
-  {
-    type: "collapse",
-    name: "Work Company Edit Create",
-    key: "workCompanyEditCreate",
-    icon: <Icon fontSize="medium">memory</Icon>,
-    collapse: [
-      {
-        name: "Work Company Edit Create",
-        key: "workCompanyEditCreate",
-        route: "/workCompany/detail/:id",
-        component: <WorkCompanyCE />,
-      },
-    ],
-  },
-
-
 
   {
     type: "collapse",
@@ -664,166 +559,7 @@ const routes = [
       },
     ],
   },
-  {
-    type: "hidden",
-    name: "Departments",
-    key: "departments",
-    icon: <Icon fontSize="medium">memory</Icon>,
-    collapse: [
-      {
-        name: "Departments",
-        key: "departments",
-        route: "/departments",
-        component: <Departmens />,
-      },
-    ],
-  },
-  {
-    type: "hidden",
-    name: "Create Department",
-    key: "createDepartment",
-    icon: <Icon fontSize="medium">memory</Icon>,
-    collapse: [
-      {
-        name: "Create Department",
-        key: "Create-Department",
-        route: "/departments/detail",
-        component: <CreateDepartment />,
-      },
-    ],
-  },
-  {
-    type: "hidden",
-    name: "Create Department",
-    key: "createDepartmentWithParams",
-    icon: <Icon fontSize="medium">memory</Icon>,
-    collapse: [
-      {
-        name: "Create Department",
-        key: "Create-Department",
-        route: "/departments/detail/:id",
-        component: <CreateDepartment />,
 
-      },
-    ],
-  },
-  {
-    type: "hidden",
-    name: "Teams",
-    key: "teams",
-    icon: <Icon fontSize="medium">memory</Icon>,
-    collapse: [
-      {
-        name: "Teams",
-        key: "teams",
-        route: "/teams",
-        component: <Teams />,
-      },
-    ],
-  },
-
-  {
-    type: "hidden",
-    name: "Create Team",
-    key: "createTeam",
-    icon: <Icon fontSize="medium">memory</Icon>,
-    collapse: [
-      {
-        name: "Create Team",
-        key: "Create-Team",
-        route: "/teams/createTeam",
-        component: <CreateTeams />,
-      },
-    ],
-  },
-  {
-    type: "hidden",
-    name: "Create Team",
-    key: "createTeamWithParams",
-    icon: <Icon fontSize="medium">memory</Icon>,
-    collapse: [
-      {
-        name: "Create Team",
-        key: "Create-Team",
-        route: "/teams/createTeam/:id",
-        component: <CreateTeams />,
-      },
-    ],
-  },
-  {
-    type: "hidden",
-    name: "Solve All Ticket",
-    key: "solveAllTicket",
-    icon: <Icon fontSize="medium">memory</Icon>,
-    collapse: [
-      {
-        name: "Solve All Ticket",
-        key: "solveAllTicket",
-        route: "/solveAllTicket/",
-        component: <SolveAllTicket />,
-      },
-    ],
-  },
-  {
-    type: "hidden",
-    name: "Solve Ticket",
-    key: "solveTicket",
-    icon: <Icon fontSize="medium">memory</Icon>,
-    collapse: [
-      {
-        name: "Solve Ticket",
-        key: "solveTicket",
-        route: "/solveAllTicket/solveTicket/",
-        component: <SolveTicket />,
-      },
-    ],
-  },
-
-  {
-    type: "hidden",
-    name: "Create Ticket",
-    key: "createTicket",
-    icon: <Icon fontSize="medium">memory</Icon>,
-    collapse: [
-      {
-        name: "Create Request",
-        key: "Create-Request",
-        route: "/tickets/detail",
-        component: <CreateRequest />,
-      },
-    ],
-  },
-  {
-    type: "hidden",
-    name: "Edit Ticket",
-    key: "editTicket",
-    icon: <Icon fontSize="medium">memory</Icon>,
-    collapse: [
-      {
-        name: "Edit Ticket",
-        key: "Edit-Ticket",
-        route: "/tickets/detail/",
-        component: <CreateRequest />,
-      },
-    ],
-  },
-
-  {
-    type: "hidden",
-    name: "All Tickets",
-    key: "showTickets",
-    icon: <Icon fontSize="medium">memory</Icon>,
-    collapse: [
-      {
-        name: "All Tickets",
-        key: "All-Tickets",
-        route: "/tickets/",
-        component: <AllTickets />,
-
-
-      },
-    ],
-  },
   {
     type: "hidden",
     name: "User List",

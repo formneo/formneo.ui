@@ -42,7 +42,7 @@ function UserTenantsDetail(): JSX.Element {
             try {
                 dispatchBusy({ isBusy: true });
                 const [usersRes, tenantsRes] = await Promise.all([
-                    userApi.apiUserGetAllUsersNameIdOnlyGet(),
+                    userApi.apiUserGetAllWithOuthPhotoGet(),
                     clientApi.apiClientGet(),
                 ]);
                 const usersPayload: UserAppDtoOnlyNameId[] = (usersRes as any)?.data || [];

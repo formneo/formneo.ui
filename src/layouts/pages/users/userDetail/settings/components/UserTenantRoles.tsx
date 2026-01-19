@@ -4,7 +4,7 @@ import MDBox from "components/MDBox";
 import MDTypography from "components/MDTypography";
 import MDButton from "components/MDButton";
 import { Tree } from "primereact/tree";
-import { RoleTenantMenuApi } from "api/generated";
+import { RoleTenantMenuApi, UserRoleAssignmentGetDto, UserRoleAssignmentItemDto } from "api/generated";
 import getConfiguration from "confiuration";
 import { useAlert } from "layouts/pages/hooks/useAlert";
 import { MessageBoxType } from "@ui5/webcomponents-react";
@@ -76,27 +76,30 @@ function UserTenantRoles({ userId }: Props): JSX.Element {
 
                 // GetUserRoleAssignments: API'den dönen veri yapısı { userId, tenantId, roles: [...] }
                 const tenantId = localStorage.getItem("selectedTenantId");
-                console.log("UserTenantRoles - API çağrısı:", { userId, tenantId });
-                const res = (await api.apiRoleTenantMenuUserRoleAssignmentsGet(userId, tenantId)) as any;
-                console.log("UserTenantRoles - API yanıtı:", res);
-                const raw = (res?.data as any);
-                console.log("UserTenantRoles - Raw data:", raw);
-                const list: any[] = Array.isArray(raw)
-                    ? raw
-                    : (raw?.roles || raw?.items || raw?.roleAssignments || []);
-                console.log("UserTenantRoles - Processed list:", list);
+                if (!tenantId) {
+                    dispatchAlert({ message: "Tenant ID bulunamadı", type: MessageBoxType.Warning });
+                    return;
+                }
+                
+                const res = await api.apiRoleTenantMenuUserRoleAssignmentsGet(userId, tenantId);
+                const raw: UserRoleAssignmentGetDto = res?.data as UserRoleAssignmentGetDto;
+                
+                // API'den dönen veri yapısı: { userId, tenantId, roles: [...] }
+                const list: UserRoleAssignmentItemDto[] = Array.isArray(raw?.roles) 
+                    ? raw.roles 
+                    : [];
 
-                // Sadece rol düğümleri - API'den dönen alan adlarına göre güncellendi
-                const roleNodes: TreeNode[] = (list || []).map((r: any) => {
-                    const roleId = String(r.roleId || r.RoleId || r.Id || r.id || r.role?.id || "");
-                    const roleName = r.roleName || r.RoleName || r.role?.name || r.Name || r.name || r.title || roleId;
+                // Sadece rol düğümleri - UserRoleAssignmentItemDto yapısına göre
+                const roleNodes: TreeNode[] = (list || []).map((r: UserRoleAssignmentItemDto) => {
+                    const roleId = String(r.roleId || "");
+                    const roleName = r.roleName || roleId || "Bilinmeyen Rol";
                     return {
                         key: `role:${roleId}`,
                         label: roleName,
                         children: [],
                         data: {
-                            isLocked: Boolean(r.isLocked ?? r.IsLocked),
-                            isActive: r.isActive ?? r.IsActive ?? true,
+                            isLocked: Boolean(r.isLocked),
+                            isActive: r.isActive ?? true,
                         },
                         selectable: true,
                     } as TreeNode;
@@ -104,10 +107,12 @@ function UserTenantRoles({ userId }: Props): JSX.Element {
 
                 // Seçimler: isAssignedToUser alanına göre işaretle
                 const sel: any = {};
-                (list || []).forEach((r: any) => {
-                    const roleId = String(r.roleId || r.RoleId || r.Id || r.id || r.role?.id || "");
-                    const isAssigned = Boolean(r.isAssignedToUser ?? r.IsAssignedToUser ?? r.isAssigned ?? r.assigned ?? r.selected ?? r.shouldAssign);
-                    if (roleId && isAssigned) sel[`role:${roleId}`] = { checked: true };
+                (list || []).forEach((r: UserRoleAssignmentItemDto) => {
+                    const roleId = String(r.roleId || "");
+                    const isAssigned = Boolean(r.isAssignedToUser);
+                    if (roleId && isAssigned) {
+                        sel[`role:${roleId}`] = { checked: true };
+                    }
                 });
 
                 setNodes(roleNodes);

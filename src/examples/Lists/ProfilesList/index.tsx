@@ -72,7 +72,7 @@ function ProfilesList({
       settest(true);
       var conf = getConfiguration();
       var api = new UserApi(conf);
-      var data = await api.apiUserGetAllUsersAsyncWitNameGet(value);
+      var data = await api.apiUserGetAllUsersWithNameNameGet(value);
       var pureData = data.data;
       setSearchByName(pureData);
       settest(false);

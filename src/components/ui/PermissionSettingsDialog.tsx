@@ -56,10 +56,10 @@ export default function PermissionSettingsDialog({ open, onClose, screenId, reso
             const api = new UserApi(conf);
             let list: any[] = [];
             if (q && q.trim() !== "") {
-                const res = await api.apiUserGetAllUsersAsyncWitNameGet(q);
+                const res = await api.apiUserGetAllWithOuthPhotoGet();
                 list = (res as any)?.data || [];
             } else {
-                const res = await api.apiUserGetAllUsersNameIdOnlyGet();
+                const res = await api.apiUserGetAllWithOuthPhotoGet();
                 list = (res as any)?.data || [];
             }
             const items: SimpleUser[] = list.map((u: any) => ({ id: String(u.id || u.userId || ""), name: u.userName || u.name || u.fullName || u.label || "Kullanıcı" }));
@@ -73,7 +73,7 @@ export default function PermissionSettingsDialog({ open, onClose, screenId, reso
         try {
             const conf = getConfiguration();
             const api = new UserApi(conf);
-            const res = await api.apiUserGetAllUsersNameIdOnlyGet();
+            const res = await api.apiUserGetAllWithOuthPhotoGet();
             const list: any[] = (res as any)?.data || [];
             const items: SimpleUser[] = list.map((u: any) => ({ id: String(u.id || u.userId || ""), name: u.userName || u.name || u.fullName || u.label || "Kullanıcı" }));
             setUserOptions(items);

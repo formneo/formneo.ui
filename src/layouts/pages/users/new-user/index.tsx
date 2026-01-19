@@ -143,12 +143,10 @@ function NewUser(): JSX.Element {
       
       setFormValues((prevValues) => ({
         ...prevValues,
-        manager1: data.data.manager1 || "",
-        manager2: data.data.manager2 || "",
         userName: data.data.userName || "",
         firstName: data.data.firstName || "",
         lastName: data.data.lastName || "",
-        department: data.data.departmentId || "",
+        department: data.data.orgUnitId || "",
         title: data.data.title || "",
         email: data.data.email || "",
         linkedinUrl: data.data.linkedinUrl || "",

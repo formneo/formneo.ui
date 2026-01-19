@@ -81,8 +81,6 @@ import MDTypography from "components/MDTypography";
 import DashboardLayout from "examples/LayoutContainers/DashboardLayout";
 import {
   MenuApi,
-  TicketPermDto,
-  TicketApi,
   UserApi,
   ApproveItemsApi,
   ForgotPasswordApi,
@@ -133,7 +131,7 @@ function DashboardNavbar({ absolute, light, isMini }: Props): JSX.Element {
   const [menuData, setMenuData] = useState<any>(null);
   const [filteredMenuData, setFilteredMenuData] = useState<any>(null);
   const navigate = useNavigate();
-  const [userData, setUserData] = useState<TicketPermDto>();
+
   const [theme, setTheme] = useState<Theme>(
     (localStorage.getItem("themePreference") as Theme) || "light"
   );
@@ -224,34 +222,7 @@ function DashboardNavbar({ absolute, light, isMini }: Props): JSX.Element {
     const isSpecialRoute = currentPath.startsWith("/authentication") || currentPath.startsWith("/NotAuthorization");
     if (isSpecialRoute) return;
 
-    const fetchUserData = async () => {
-      try {
-        var conf = getConfiguration();
-        var api = new TicketApi(conf);
-        var data = await api.apiTicketCheckPermGet();
-        if (data?.data) {
-          setUserData(data.data);
-          if ((data.data as any)?.id) {
-            getApproveDetail((data.data as any).id);
-          }
-        }
-        var userApi = new UserApi(conf);
-        var xx = await userApi.apiUserGetLoginUserDetailGet();
-        setloginMail(xx?.data?.email || "");
-        setuserPhoto(xx?.data?.photo || "");
-        const fullName = `${xx?.data?.firstName || ""} ${xx?.data?.lastName || ""}`.trim();
-        if (fullName) {
-          setUserFullName(fullName);
-          localStorage.setItem("userFullName", fullName);
-        }
-        if (xx?.data?.photo) {
-          localStorage.setItem("userPhoto", xx?.data?.photo || "");
-        }
-      } catch (error) {
-        // ignore
-      }
-    };
-    fetchUserData();
+
     // Tenant options for ShellBar search field
     (async () => {
       try {
@@ -1030,7 +1001,7 @@ function DashboardNavbar({ absolute, light, isMini }: Props): JSX.Element {
           {/* Kullanıcı — Şirket bilgisi */}
           <MDBox mb={1}>
             <MDTypography variant="button" sx={{ fontWeight: 600, color: darkMode ? "#e2e8f0" : "#0f172a" }}>
-              {userData?.name || "Kullanıcı"}
+
             </MDTypography>
             <MDTypography variant="caption" sx={{ display: "block", color: darkMode ? "#94a3b8" : "#64748b" }}>
               {selectedTenant?.label || (isGlobalMode ? "Global Mod" : "")}

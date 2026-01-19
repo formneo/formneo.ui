@@ -10,7 +10,8 @@ import MDBox from "components/MDBox";
 import MDTypography from "components/MDTypography";
 import MDButton from "components/MDButton";
 import DataTable from "examples/Tables/DataTable";
-import GlobalCell from "layouts/pages/talepYonetimi/allTickets/tableData/globalCell";
+import GlobalCell from "components/GlobalCell";
+
 import { MessageBox, MessageBoxAction, MessageBoxType } from "@ui5/webcomponents-react";
 import { ClientApi } from "api/generated/api";
 import getConfiguration from "confiuration";

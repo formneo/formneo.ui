@@ -17,7 +17,7 @@ import {
   Box,
 } from "@mui/material";
 import MDButton from "components/MDButton";
-import ReusableQueryBuilder from "../../queryBuild/queryDetail/ReusableQueryBuilder";
+;
 
 type FieldOption = { label: string; value: string };
 
@@ -304,13 +304,7 @@ const SetFieldTab: React.FC<SetFieldTabProps> = ({ node, parsedFormDesign, selec
       <Dialog open={conditionOpenFor !== null} onClose={closeCondition} maxWidth="md" fullWidth>
         <DialogTitle>Koşul Tanımla</DialogTitle>
         <DialogContent>
-          {conditionOpenFor !== null && (
-            <ReusableQueryBuilder
-              initialQuery={actions[conditionOpenFor]?.when || { combinator: "and", rules: [] }}
-              onQueryChange={(q: any) => upsertAction(conditionOpenFor!, { when: q })}
-              parsedFormDesign={parsedFormDesign || node?.data?.parsedFormDesign}
-            />
-          )}
+    
         </DialogContent>
         <DialogActions>
           <MDButton color="info" onClick={closeCondition}>

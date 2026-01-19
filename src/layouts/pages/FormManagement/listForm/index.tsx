@@ -16,7 +16,8 @@ import Footer from "examples/Footer";
 import DashboardLayout from "examples/LayoutContainers/DashboardLayout";
 import DashboardNavbar from "examples/Navbars/DashboardNavbar";
 import DataTable from "examples/Tables/DataTable";
-import GlobalCell from "layouts/pages/talepYonetimi/allTickets/tableData/globalCell";
+import GlobalCell from "components/GlobalCell";
+
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useBusy } from "layouts/pages/hooks/useBusy";

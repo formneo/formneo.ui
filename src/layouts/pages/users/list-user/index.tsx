@@ -35,6 +35,7 @@ import MDButton from "components/MDButton";
 import { Grid, Icon, Typography } from "@mui/material";
 import { useBusy } from "layouts/pages/hooks/useBusy";
 import { useUser } from "layouts/pages/hooks/userName";
+import GlobalCell from "components/GlobalCell";
 import {
   Bar,
   Breadcrumbs,
@@ -50,7 +51,7 @@ import {
   Toolbar,
   ToolbarButton,
 } from "@ui5/webcomponents-react";
-import GlobalCell from "layouts/pages/talepYonetimi/allTickets/tableData/globalCell";
+
 
 import "../../../../assets/css/global.css";
 

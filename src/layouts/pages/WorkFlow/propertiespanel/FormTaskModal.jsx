@@ -402,7 +402,7 @@ declare var formValues: Record<string, any>;
         const conf = getConfiguration();
         const api = new UserApi(conf);
         // Boş string veya "*" ile tüm kullanıcıları getirmeyi dene
-        const data = await api.apiUserGetAllUsersAsyncWitNameGet("*");
+        const data = await api.apiUserGetAllUsersWithNameNameGet("*");
         const pureData = data?.data || [];
         setSearchByName(pureData);
       } catch (error) {
@@ -588,7 +588,7 @@ declare var formValues: Record<string, any>;
     try {
       const conf = getConfiguration();
       const api = new UserApi(conf);
-      const data = await api.apiUserGetAllUsersAsyncWitNameGet(value.trim());
+      const data = await api.apiUserGetAllUsersWithNameGet(value.trim());
       const pureData = data?.data || [];
       setSearchByName(pureData);
     } catch (error) {

@@ -7,7 +7,7 @@ import "primereact/resources/themes/lara-light-indigo/theme.css"; //theme
 import "primereact/resources/primereact.min.css"; //core css
 import "primeicons/primeicons.css"; //icons
 import "./index.css";
-import { MenuApi, MenuListDto, RoleMenuApi, TicketApi } from "api/generated";
+import { MenuApi, MenuListDto, RoleMenuApi } from "api/generated";
 import getConfiguration from "confiuration";
 import MDTypography from "components/MDTypography";
 import { Card, Grid } from "@mui/material";

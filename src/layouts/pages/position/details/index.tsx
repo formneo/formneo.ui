@@ -1,5 +1,5 @@
-import React, { useState, ChangeEvent, FormEvent, useEffect, useRef } from "react";
-import { Card, Grid, FormControl, FormControlLabel, Checkbox, Autocomplete } from "@mui/material";
+import React, { useState, ChangeEvent, useEffect } from "react";
+import { Card, Grid, Autocomplete } from "@mui/material";
 import DashboardLayout from "examples/LayoutContainers/DashboardLayout";
 import DashboardNavbar from "examples/Navbars/DashboardNavbar";
 import MDBox from "components/MDBox";
@@ -9,16 +9,16 @@ import MDInput from "components/MDInput";
 import Footer from "examples/Footer";
 import { useNavigate, useParams } from "react-router-dom";
 import getConfiguration from "confiuration";
-import { clientData } from "layouts/pages/calendar/controller";
-import { PositionListDto, WorkCompanyDto } from "api/generated/api";
+import { PositionListDto, CreatePositionDto, UpdatePositionDto } from "api/generated/api";
 import { PositionsApi } from "api/generated";
 import { useBusy } from "layouts/pages/hooks/useBusy";
 import { useAlert } from "layouts/pages/hooks/useAlert";
 import { MessageBoxType } from "@ui5/webcomponents-react";
+
 interface FormData {
-  positionName: string;
-  company: WorkCompanyDto | null;
+  name: string;
   description: string;
+  parentPositionId: string;
   id?: string;
 }
 
@@ -27,69 +27,52 @@ function PositionDetailPage() {
   const dispatchBusy = useBusy();
   const dispatchAlert = useAlert();
   const { id } = useParams();
-  const [formData, setFormData] = useState<PositionListDto>({
+  const [formData, setFormData] = useState<FormData>({
     name: "",
-    customerRefId: "",
-    customerName: "",
     description: "",
+    parentPositionId: "",
     id: "",
   });
 
-  const [selectedCompany, setSelectedCompany] = useState<WorkCompanyDto | null>(null);
-  const [companyOptions, setCompanyOptions] = useState<WorkCompanyDto[]>([]);
-  const [isCompanyDataLoaded, setIsCompanyDataLoaded] = useState(false);
+  const [positionOptions, setPositionOptions] = useState<PositionListDto[]>([]);
+  const [isPositionDataLoaded, setIsPositionDataLoaded] = useState(false);
 
   useEffect(() => {
-    const fetchCompanyOptions = async () => {
+    const fetchPositionOptions = async () => {
       try {
         dispatchBusy({ isBusy: true });
-        var data = await clientData();
-        setCompanyOptions(data);
-        setIsCompanyDataLoaded(true);
+        const conf = getConfiguration();
+        const api = new PositionsApi(conf);
+        const response = await api.apiPositionsGet();
+        setPositionOptions(response.data || []);
+        setIsPositionDataLoaded(true);
       } catch (error) {
         dispatchAlert({
-          message: "Şirket bilgileri alınamadı",
+          message: "Pozisyon listesi alınamadı",
           type: MessageBoxType.Error,
         });
+      } finally {
+        dispatchBusy({ isBusy: false });
       }
     };
-    fetchCompanyOptions();
+    fetchPositionOptions();
   }, []);
 
-  let idCount = useRef(0);
   useEffect(() => {
-    if (!isCompanyDataLoaded) return;
+    if (!isPositionDataLoaded || !id) return;
 
     const fetchData = async () => {
-      if (!id) {
-        dispatchBusy({ isBusy: false });
-        return;
-      }
-
       try {
         dispatchBusy({ isBusy: true });
-        let conf = getConfiguration();
-        let api = new PositionsApi(conf);
-        let response = await api.apiPositionsIdGet(id);
-        console.log(response.data);
-        setFormData((prev) => ({
-          ...prev,
-          name: response.data.name,
-          customerRefId: response.data.customerRefId,
-          customerName: response.data.customerName,
-          description: response.data.description,
+        const conf = getConfiguration();
+        const api = new PositionsApi(conf);
+        const response = await api.apiPositionsIdGet(id);
+        setFormData({
+          name: response.data.name || "",
+          description: response.data.description || "",
+          parentPositionId: response.data.parentPositionId || "",
           id: id,
-        }));
-
-        // Find the company in options and set it if available
-        if (response.data.customerRefId) {
-          const company = companyOptions.find((c) => c.id === response.data.customerRefId);
-          if (company) {
-            setSelectedCompany(company);
-          }
-        }
-
-        idCount.current++;
+        });
       } catch (error) {
         dispatchAlert({
           message: "Pozisyon bilgileri alınamadı",
@@ -100,7 +83,7 @@ function PositionDetailPage() {
       }
     };
     fetchData();
-  }, [id, isCompanyDataLoaded]);
+  }, [id, isPositionDataLoaded]);
 
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -113,27 +96,13 @@ function PositionDetailPage() {
   const handleSubmit = async () => {
     try {
       dispatchBusy({ isBusy: true });
-      let conf = getConfiguration();
-      let api = new PositionsApi(conf);
+      const conf = getConfiguration();
+      const api = new PositionsApi(conf);
 
       // validation
-      if (formData.customerName === "") {
-        dispatchAlert({
-          message: "Şirket Alanı Boş Bırakılamaz",
-          type: MessageBoxType.Error,
-        });
-        dispatchBusy({ isBusy: false });
-        return;
-      } else if (formData.name === "") {
+      if (!formData.name || formData.name.trim() === "") {
         dispatchAlert({
           message: "Pozisyon Adı Alanı Boş Bırakılamaz",
-          type: MessageBoxType.Error,
-        });
-        dispatchBusy({ isBusy: false });
-        return;
-      } else if (formData.description === "") {
-        dispatchAlert({
-          message: "Açıklama Alanı Boş Bırakılamaz",
           type: MessageBoxType.Error,
         });
         dispatchBusy({ isBusy: false });
@@ -141,39 +110,35 @@ function PositionDetailPage() {
       }
 
       // submit
-      try {
-        if (formData.id) {
-          await api.apiPositionsPut(formData);
-          dispatchAlert({
-            message: "Pozisyon bilgileri başarıyla güncellendi",
-            type: MessageBoxType.Success,
-          });
-        } else {
-          await api.apiPositionsPost({
-            name: formData.name,
-            customerRefId: formData.customerRefId,
-            description: formData.description,
-          });
-          dispatchAlert({
-            message: "Pozisyon bilgileri başarıyla oluşturuldu",
-            type: MessageBoxType.Success,
-          });
-        }
-
-        dispatchBusy({ isBusy: false });
-
-        navigate("/position", { replace: true });
-
-        return;
-      } catch (innerError) {
+      if (formData.id) {
+        const updateDto: UpdatePositionDto = {
+          id: formData.id,
+          name: formData.name || null,
+          description: formData.description || null,
+          parentPositionId: formData.parentPositionId || null,
+        };
+        await api.apiPositionsPut(updateDto);
         dispatchAlert({
-          message: "Pozisyon bilgileri güncellenemedi",
-          type: MessageBoxType.Error,
+          message: "Pozisyon bilgileri başarıyla güncellendi",
+          type: MessageBoxType.Success,
+        });
+      } else {
+        const createDto: CreatePositionDto = {
+          name: formData.name || null,
+          description: formData.description || null,
+          parentPositionId: formData.parentPositionId || null,
+        };
+        await api.apiPositionsPost(createDto);
+        dispatchAlert({
+          message: "Pozisyon bilgileri başarıyla oluşturuldu",
+          type: MessageBoxType.Success,
         });
       }
+
+      navigate("/position", { replace: true });
     } catch (error) {
       dispatchAlert({
-        message: "Pozisyon bilgileri güncellenemedi",
+        message: "Pozisyon bilgileri kaydedilemedi",
         type: MessageBoxType.Error,
       });
     } finally {
@@ -207,57 +172,11 @@ function PositionDetailPage() {
                 <Grid container spacing={3}>
                   {/* Left Column */}
                   <Grid item xs={12} sm={6} lg={6}>
-                    <Autocomplete
-                      renderInput={(params) => (
-                        <MDInput
-                          {...params}
-                          type="text"
-                          label="Şirket"
-                          placeholder="İsim aratınız..."
-                          fullWidth
-                          inputProps={{ ...params.inputProps, sx: { height: "12px" } }}
-                        />
-                      )}
-                      value={selectedCompany}
-                      getOptionLabel={(option) => option.name}
-                      isOptionEqualToValue={(option, value) => option.id === value.id}
-                      options={companyOptions}
-                      size="medium"
-                      sx={{
-                        "& .MuiOutlinedInput-root": {
-                          borderRadius: "10px",
-
-                          border: "1px solid #e2e8f0",
-                          transition: "all 0.2s ease",
-                          "&:hover": {
-                            borderColor: "#cbd5e1",
-                            boxShadow: "0 2px 5px rgba(0,0,0,0.05)",
-                          },
-                          "&.Mui-focused": {
-                            borderColor: "#3b82f6",
-                            boxShadow: "0 0 0 3px rgba(59, 130, 246, 0.1)",
-                          },
-                        },
-                      }}
-                      onChange={(event, newValue) => {
-                        setSelectedCompany(newValue);
-                        setFormData((prev) => ({
-                          ...prev,
-                          customerName: newValue?.name || "",
-                          customerRefId: newValue?.id || "",
-                        }));
-                      }}
-                    />
-                  </Grid>
-
-                  {/* Right Column */}
-                  <Grid item xs={12} sm={6} lg={6}>
                     <MDInput
                       fullWidth
                       sx={{
                         "& .MuiOutlinedInput-root": {
                           borderRadius: "10px",
-
                           border: "1px solid #e2e8f0",
                           transition: "all 0.2s ease",
                           "&:hover": {
@@ -274,6 +193,47 @@ function PositionDetailPage() {
                       name="name"
                       value={formData.name}
                       onChange={handleChange}
+                    />
+                  </Grid>
+                  {/* Right Column */}
+                  <Grid item xs={12} sm={6} lg={6}>
+                    <Autocomplete
+                      renderInput={(params) => (
+                        <MDInput
+                          {...params}
+                          type="text"
+                          label="Üst Pozisyon"
+                          placeholder="Pozisyon seçiniz..."
+                          fullWidth
+                          inputProps={{ ...params.inputProps, sx: { height: "12px" } }}
+                        />
+                      )}
+                      value={positionOptions.find(p => p.id === formData.parentPositionId) || null}
+                      getOptionLabel={(option) => option.name || ""}
+                      isOptionEqualToValue={(option, value) => option.id === value.id}
+                      options={positionOptions.filter(p => p.id !== formData.id)}
+                      size="medium"
+                      sx={{
+                        "& .MuiOutlinedInput-root": {
+                          borderRadius: "10px",
+                          border: "1px solid #e2e8f0",
+                          transition: "all 0.2s ease",
+                          "&:hover": {
+                            borderColor: "#cbd5e1",
+                            boxShadow: "0 2px 5px rgba(0,0,0,0.05)",
+                          },
+                          "&.Mui-focused": {
+                            borderColor: "#3b82f6",
+                            boxShadow: "0 0 0 3px rgba(59, 130, 246, 0.1)",
+                          },
+                        },
+                      }}
+                      onChange={(event, newValue) => {
+                        setFormData((prev) => ({
+                          ...prev,
+                          parentPositionId: newValue?.id || "",
+                        }));
+                      }}
                     />
                   </Grid>
                 </Grid>

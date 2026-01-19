@@ -53,7 +53,7 @@ import {
 
 import DataTable from "examples/Tables/DataTable";
 import { id } from "date-fns/locale";
-import GlobalCell from "../talepYonetimi/allTickets/tableData/globalCell";
+import GlobalCell from "components/GlobalCell";
 import { useAlert } from "../hooks/useAlert";
 import MessageBox from "../Components/MessageBox";
 import "@ui5/webcomponents-icons/dist/add.js";

@@ -2,7 +2,6 @@ import {
   DashboardsApi,
   GetSumTicketDto,
   TicketDepartmensListDto,
-  TicketDepartmentsApi,
 } from "api/generated";
 import getConfiguration from "confiuration";
 

@@ -50,7 +50,7 @@ import dataTableData from "layouts/dashboards/sales/data/dataTableData";
 import MDInput from "components/MDInput";
 import { Autocomplete } from "@mui/material";
 import MDAvatar from "components/MDAvatar";
-import { DashboardsApi, GetSumTicketDto, TicketApi, UserApi, UserAppDto } from "api/generated/api";
+import { DashboardsApi, GetSumTicketDto, UserApi, UserAppDto } from "api/generated/api";
 import getConfiguration from "confiuration";
 import { useBusy } from "layouts/pages/hooks/useBusy";
 import { useAlert } from "layouts/pages/hooks/useAlert";
@@ -132,137 +132,8 @@ function Sales(): JSX.Element {
   };
 
   useEffect(() => {
-    const fetchUserAppName = async () => {
-      try {
-        dispatchBusy({ isBusy: true });
-        const conf = getConfiguration();
-        const api = new TicketApi(conf);
-        const data = await api.apiTicketCheckPermGet();
-
-        var splittedName = data.data.name.split(" ");
-
-        let firstName = splittedName[0];
-        let lastName = "";
-
-        // ad soyad 2 kelimeden uzunsa bu şekilde bir kontrol
-        if (splittedName.length > 1) {
-          lastName = splittedName.slice(1).join(" ");
-        }
-        setFormData({
-          ...formData,
-          selectedKullaniciId: data.data.id,
-          startDate: "",
-          endDate: "",
-        });
-        setSelectedKullanici({
-          id: data.data.id,
-          firstName: firstName,
-          lastName: lastName,
-        });
-
-        if (data.data.id) {
-          try {
-            setTableData([]); // Clear existing data
-            const conf = getConfiguration();
-            const api = new DashboardsApi(conf);
-
-            const dataForm = await api.apiDashboardsUserOpenFormCountGet(
-              data.data.id,
-              formatDate(startDate),
-              formatDate(endDate)
-            );
-            setCountOfForms(dataForm ? dataForm.data : 0);
-
-            const data1 = await api.apiDashboardsGetUserCompanyTicketInfoCountGet(
-              data.data.id,
-              formatDate(startDate),
-              formatDate(endDate)
-            );
-
-            if (data1?.data && data1.data.length > 0) {
-              const newTableData = data1.data.map((item) => ({
-                Müşteri: item.companyName,
-                "Toplam Talep": item.ticketCount,
-                "Açık Talep": item.openCount,
-                "Çözümlü Talep": item.resolvedCount,
-              }));
-              setTableData(newTableData);
-            } else {
-              setTableData([
-                {
-                  Müşteri: "Veri yok",
-                  "Toplam Talep": 0,
-                  "Açık Talep": 0,
-                  "Çözümlü Talep": 0,
-                },
-              ]);
-            }
-          } catch (error) {
-            dispatchAlert({
-              message: "Hata oluştu : " + error,
-              type: MessageBoxType.Error,
-            });
-            setTableData([
-              {
-                Müşteri: "Hata oluştu",
-                "Toplam Talep": 0,
-                "Açık Talep": 0,
-                "Çözümlü Talep": 0,
-              },
-            ]);
-          }
-        } else {
-          setTableData([
-            {
-              Müşteri: "Veri yok",
-              "Toplam Talep": 0,
-              "Açık Talep": 0,
-              "Çözümlü Talep": 0,
-            },
-          ]);
-        }
-
-        if (data.data.id) {
-          const conf = getConfiguration();
-          const api = new DashboardsApi(conf);
-          const data2 = await api.apiDashboardsGetUserCompanyTicketCountGet(
-            data.data.id,
-            formatDate(startDate),
-            formatDate(endDate)
-          );
-
-          console.log("data2", data2);
-          const acikTalep =
-            data2.data.sumCount -
-            data2.data.closedCount -
-            data2.data.draftCount -
-            data2.data.canceledCount;
-
-          setTicketCountData({
-            sumCount: data2.data.sumCount,
-            openCount: data2.data.openCount,
-            resolvedCount: data2.data.resolvedCount,
-          });
-        } else if (!selectedKullanici) {
-          setTicketCountData({
-            sumCount: 0,
-            openCount: 0,
-            resolvedCount: 0,
-          });
-        }
 
 
-      } catch (error) {
-        dispatchAlert({
-          message: "Hata oluştu : " + error,
-          type: MessageBoxType.Error,
-        });
-      } finally {
-        dispatchBusy({ isBusy: false });
-      }
-    };
-
-    fetchUserAppName();
   }, []);
 
   const formatDate = (date: string): string => {

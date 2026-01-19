@@ -14,7 +14,6 @@ import {
   Paper,
 } from "@mui/material";
 import { Save as SaveIcon } from "@mui/icons-material";
-import ReusableQueryBuilder from "../../queryBuild/queryDetail/ReusableQueryBuilder";
 import { formatQuery } from "react-querybuilder";
 import MDButton from "components/MDButton";
 import { Icon } from "@mui/material";
@@ -388,15 +387,7 @@ const FormConditionTab = ({
               mb: 2,
             }}
           >
-            <ReusableQueryBuilder
-              key={`${node?.id}-${formNodeId}-${formFields.length}`}
-              initialQuery={query}
-              onQueryChange={setQuery}
-              parsedFormDesign={{
-                fields: formFields,
-                raw: fetchedFormData?.formDesign ? (typeof fetchedFormData.formDesign === 'string' ? JSON.parse(fetchedFormData.formDesign) : fetchedFormData.formDesign) : (selectedFormNode?.data?.parsedFormDesign?.raw || {}),
-              }}
-            />
+
           </Box>
 
           {/* Condition Preview */}

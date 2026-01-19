@@ -54,7 +54,7 @@ const UserTaskModalSimple = ({ open, onClose, initialValues, node, onSave }) => 
         dispatchBusy({ isBusy: true });
         const conf = getConfiguration();
         const api = new UserApi(conf);
-        const data = await api.apiUserGetAllUsersAsyncWitNameGet("*");
+        const data = await api.apiUserGetAllUsersWithNameNameGet("*");
         const pureData = data?.data || [];
         setSearchByName(pureData);
       } catch (error) {
@@ -111,7 +111,7 @@ const UserTaskModalSimple = ({ open, onClose, initialValues, node, onSave }) => 
     try {
       const conf = getConfiguration();
       const api = new UserApi(conf);
-      const data = await api.apiUserGetAllUsersAsyncWitNameGet(value.trim());
+      const data = await api.apiUserGetAllUsersWithNameGet(value.trim());
       const pureData = data?.data || [];
       setSearchByName(pureData);
     } catch (error) {

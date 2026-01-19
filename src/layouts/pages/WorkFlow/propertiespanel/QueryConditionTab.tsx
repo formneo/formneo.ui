@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
-import ReusableQueryBuilder from "../../queryBuild/queryDetail/ReusableQueryBuilder";
 import { Icon, Select, MenuItem, FormControl, InputLabel, Typography, Divider, Box } from "@mui/material";
 import MDButton from "components/MDButton";
 import { RuleGroupType } from "react-querybuilder";
@@ -519,28 +518,6 @@ const QueryConditionTab: React.FC<QueryConditionTabProps> = ({
 
       <Divider sx={{ my: 2 }} />
 
-      {/* ✅ Query Builder */}
-      {availableFields.length > 0 ? (
-      <ReusableQueryBuilder
-          key={`${node?.id}-${dataSource}-${selectedPreviousNodeId}-${availableFields.length}`}
-        initialQuery={query}
-        onQueryChange={setQuery}
-          parsedFormDesign={{
-            ...currentFormDesign,
-            fields: availableFields, // ✅ Data source'a göre field'ları geç
-          }}
-        />
-      ) : (
-        <Box sx={{ p: 2, bgcolor: "#fff3cd", borderRadius: 1 }}>
-          <Typography variant="body2" color="warning.dark">
-            {dataSource === "previousNode" && !selectedPreviousNodeId
-              ? "⚠️ Please select a previous node first."
-              : dataSource === "previousNode" && previousNodes.length === 0
-              ? "⚠️ No previous nodes available. Connect a node first."
-              : "⚠️ No fields available for this data source."}
-          </Typography>
-        </Box>
-      )}
 
       <MDButton
         variant="gradient"

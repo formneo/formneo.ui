@@ -24,8 +24,6 @@ let {
     email,
     password,
     department, // Yeni eklenen alan
-    manager1, // Yeni eklenen alan
-    manager2, // Yeni eklenen alan
     title, // Yeni eklenen alan
     linkedinUrl, // Yeni eklenen alan
     cv, // Yeni eklenen alan
@@ -63,8 +61,6 @@ let initialValues: InitialValuesType = {
   [email.name]: "",
   [password.name]: "",
   [department.name]: "", // Yeni alan
-  [manager1.name]: "", // Yeni alan
-  [manager2.name]: "", // Yeni alan
   [title.name]: "", // Yeni alan
   [linkedinUrl.name]: "", // Yeni alan
   [cv.name]: null, // Yeni alan, başlangıç değeri null olabilir

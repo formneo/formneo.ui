@@ -1,6 +1,6 @@
 import MDBox from "components/MDBox";
 import MDTypography from "components/MDTypography";
-import React, { useEffect } from "react";
+import React from "react";
 
 interface rowProps {
   id?: string;
@@ -9,17 +9,18 @@ interface rowProps {
   category?: string;
   status?: number;
 }
+
 interface Props {
   id?: string;
   checked?: boolean;
   value: any;
   testRow?: rowProps;
   columnName?: string;
-  statusId? :string;
+  statusId?: string;
 }
 
-function GlobalCell({ value,statusId, ...rest }: Props) {
-  const getStatusColor = (value:any) => {
+function GlobalCell({ value, statusId, ...rest }: Props) {
+  const getStatusColor = (value: any) => {
     const colors = [
       "#607D8B", // blue grey
       "#4CAF50", // green
@@ -33,27 +34,39 @@ function GlobalCell({ value,statusId, ...rest }: Props) {
       "#E91E63", // pink
       "#df1c1a", // deep orange
     ];
-    // const index =
-    //   value
-    //     ?.toString()
-    //     .split("")
-    //     .reduce((acc: number, char: string) => acc + char.charCodeAt(0), 0) % colors.length;
-    return colors[value-1];
+    return colors[value - 1];
   };
 
   const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    // Formatla: tarih ve saat, ancak saniye yok
-    const timeString = date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-    return date.toLocaleDateString() + " " + timeString;
+    if (!dateString) return "-";
+    try {
+      const date = new Date(dateString);
+      // Formatla: tarih ve saat, ancak saniye yok
+      const timeString = date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+      return date.toLocaleDateString() + " " + timeString;
+    } catch {
+      return dateString;
+    }
   };
+
+  // Null/undefined/boş kontrolü
+  if (value === null || value === undefined || value === "") {
+    return (
+      <MDBox display="flex" alignItems="center">
+        <MDBox ml={0}>
+          <MDTypography variant="caption" fontWeight="medium" color="text">
+            -
+          </MDTypography>
+        </MDBox>
+      </MDBox>
+    );
+  }
 
   return (
     <MDBox display="flex" alignItems="center">
       {typeof value == "boolean" &&
       (rest.columnName == "isActive" || rest.columnName == "showMenu") ? (
         <MDBox ml={0}>
-          {" "}
           {/* type boolean ve columnName isActive ise active veya inactive yaz */}
           <MDTypography
             variant="caption"
@@ -61,7 +74,7 @@ function GlobalCell({ value,statusId, ...rest }: Props) {
             color="text"
             style={{ color: value ? "#4CAF50" : "#F44336" }}
           >
-            {value ? "Aktif" : "Pasif"} {/* 1 ise aktif, 0 ise pasif */}
+            {value ? "Aktif" : "Pasif"} {/* true ise aktif, false ise pasif */}
           </MDTypography>
         </MDBox>
       ) : (
@@ -81,11 +94,11 @@ function GlobalCell({ value,statusId, ...rest }: Props) {
                   fontWeight="medium"
                   style={{ color: getStatusColor(statusId) }}
                 >
-                  {value}
+                  {value || "-"}
                 </MDTypography>
               ) : (
                 <MDTypography variant="caption" fontWeight="medium" color="text">
-                  {value}
+                  {value || "-"}
                 </MDTypography>
               )}
             </MDBox>
@@ -95,4 +108,5 @@ function GlobalCell({ value,statusId, ...rest }: Props) {
     </MDBox>
   );
 }
+
 export default GlobalCell;

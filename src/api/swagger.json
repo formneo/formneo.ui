@@ -4412,6 +4412,295 @@
         }
       }
     },
+    "/api/EmployeeAssignments": {
+      "get": {
+        "tags": [
+          "EmployeeAssignments"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/EmployeeAssignmentListDto"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/EmployeeAssignmentListDto"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/EmployeeAssignmentListDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "EmployeeAssignments"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EmployeeAssignmentInsertDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EmployeeAssignmentInsertDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/EmployeeAssignmentInsertDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "EmployeeAssignments"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EmployeeAssignmentUpdateDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EmployeeAssignmentUpdateDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/EmployeeAssignmentUpdateDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/EmployeeAssignments/user/{userId}": {
+      "get": {
+        "tags": [
+          "EmployeeAssignments"
+        ],
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/EmployeeAssignmentListDto"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/EmployeeAssignmentListDto"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/EmployeeAssignmentListDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/EmployeeAssignments/user/{userId}/active": {
+      "get": {
+        "tags": [
+          "EmployeeAssignments"
+        ],
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/EmployeeAssignmentListDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EmployeeAssignmentListDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EmployeeAssignmentListDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/EmployeeAssignments/{id}": {
+      "get": {
+        "tags": [
+          "EmployeeAssignments"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/EmployeeAssignmentListDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EmployeeAssignmentListDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EmployeeAssignmentListDto"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "EmployeeAssignments"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/EmployeeAssignments/{id}/end": {
+      "put": {
+        "tags": [
+          "EmployeeAssignments"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "string",
+                "format": "date-time"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "type": "string",
+                "format": "date-time"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "type": "string",
+                "format": "date-time"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
     "/api/ForgotPassword/forgot-password": {
       "post": {
         "tags": [
@@ -9393,6 +9682,14 @@
         ],
         "parameters": [
           {
+            "name": "orgUnitId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
             "name": "dptId",
             "in": "query",
             "schema": {
@@ -9418,6 +9715,227 @@
               "text/json": {
                 "schema": {
                   "$ref": "#/components/schemas/OrganizationDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/Organization/GetByOrgUnit": {
+      "get": {
+        "tags": [
+          "Organization"
+        ],
+        "parameters": [
+          {
+            "name": "orgUnitId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "dptId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrganizationDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrganizationDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrganizationDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/OrgUnits": {
+      "get": {
+        "tags": [
+          "OrgUnits"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/OrgUnitListDto"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/OrgUnitListDto"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/OrgUnitListDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "OrgUnits"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OrgUnitInsertDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OrgUnitInsertDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/OrgUnitInsertDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "OrgUnits"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OrgUnitUpdateDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OrgUnitUpdateDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/OrgUnitUpdateDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrgUnitUpdateDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrgUnitUpdateDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrgUnitUpdateDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/OrgUnits/{id}": {
+      "delete": {
+        "tags": [
+          "OrgUnits"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "OrgUnits"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrgUnitListDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrgUnitListDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrgUnitListDto"
                 }
               }
             }
@@ -12111,1671 +12629,6 @@
         }
       }
     },
-    "/api/Ticket": {
-      "post": {
-        "tags": [
-          "Ticket"
-        ],
-        "parameters": [
-          {
-            "name": "createEnvironment",
-            "in": "query",
-            "schema": {
-              "type": "integer",
-              "format": "int32",
-              "default": 1
-            }
-          },
-          {
-            "name": "ccRecipients",
-            "in": "query",
-            "schema": {
-              "type": "array",
-              "items": {
-                "type": "string"
-              }
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/TicketInsertDto"
-              }
-            },
-            "text/json": {
-              "schema": {
-                "$ref": "#/components/schemas/TicketInsertDto"
-              }
-            },
-            "application/*+json": {
-              "schema": {
-                "$ref": "#/components/schemas/TicketInsertDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Success"
-          }
-        }
-      },
-      "put": {
-        "tags": [
-          "Ticket"
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/TicketUpdateDto"
-              }
-            },
-            "text/json": {
-              "schema": {
-                "$ref": "#/components/schemas/TicketUpdateDto"
-              }
-            },
-            "application/*+json": {
-              "schema": {
-                "$ref": "#/components/schemas/TicketUpdateDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Success"
-          }
-        }
-      },
-      "get": {
-        "tags": [
-          "Ticket"
-        ],
-        "responses": {
-          "200": {
-            "description": "Success",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/TicketListDto"
-                  }
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/TicketListDto"
-                  }
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/TicketListDto"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/Ticket/UpdateStartTicket": {
-      "post": {
-        "tags": [
-          "Ticket"
-        ],
-        "parameters": [
-          {
-            "name": "createEnvironment",
-            "in": "query",
-            "schema": {
-              "type": "integer",
-              "format": "int32",
-              "default": 1
-            }
-          },
-          {
-            "name": "isEdit",
-            "in": "query",
-            "schema": {
-              "type": "boolean",
-              "default": false
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/TicketUpdateDto"
-              }
-            },
-            "text/json": {
-              "schema": {
-                "$ref": "#/components/schemas/TicketUpdateDto"
-              }
-            },
-            "application/*+json": {
-              "schema": {
-                "$ref": "#/components/schemas/TicketUpdateDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Success"
-          }
-        }
-      }
-    },
-    "/api/Ticket/AddComment": {
-      "post": {
-        "tags": [
-          "Ticket"
-        ],
-        "parameters": [
-          {
-            "name": "id",
-            "in": "query",
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/TicketCommentInsertDto"
-              }
-            },
-            "text/json": {
-              "schema": {
-                "$ref": "#/components/schemas/TicketCommentInsertDto"
-              }
-            },
-            "application/*+json": {
-              "schema": {
-                "$ref": "#/components/schemas/TicketCommentInsertDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Success"
-          }
-        }
-      }
-    },
-    "/api/Ticket/GetFile": {
-      "get": {
-        "tags": [
-          "Ticket"
-        ],
-        "parameters": [
-          {
-            "name": "id",
-            "in": "query",
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Success",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/TicketFileDto"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/TicketFileDto"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/TicketFileDto"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/Ticket/{id}": {
-      "get": {
-        "tags": [
-          "Ticket"
-        ],
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Success",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/TicketListDto"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/TicketListDto"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/TicketListDto"
-                }
-              }
-            }
-          }
-        }
-      },
-      "delete": {
-        "tags": [
-          "Ticket"
-        ],
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Success"
-          }
-        }
-      }
-    },
-    "/api/Ticket/GetAssignTickets": {
-      "get": {
-        "tags": [
-          "Ticket"
-        ],
-        "responses": {
-          "200": {
-            "description": "Success",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/TicketListDto"
-                  }
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/TicketListDto"
-                  }
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/TicketListDto"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/Ticket/Assign": {
-      "post": {
-        "tags": [
-          "Ticket"
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/TicketManagerUpdateDto"
-              }
-            },
-            "text/json": {
-              "schema": {
-                "$ref": "#/components/schemas/TicketManagerUpdateDto"
-              }
-            },
-            "application/*+json": {
-              "schema": {
-                "$ref": "#/components/schemas/TicketManagerUpdateDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Success"
-          }
-        }
-      }
-    },
-    "/api/Ticket/TicketSubject": {
-      "get": {
-        "tags": [
-          "Ticket"
-        ],
-        "responses": {
-          "200": {
-            "description": "Success"
-          }
-        }
-      }
-    },
-    "/api/Ticket/TicketSLA": {
-      "get": {
-        "tags": [
-          "Ticket"
-        ],
-        "responses": {
-          "200": {
-            "description": "Success"
-          }
-        }
-      }
-    },
-    "/api/Ticket/TicketType": {
-      "get": {
-        "tags": [
-          "Ticket"
-        ],
-        "responses": {
-          "200": {
-            "description": "Success"
-          }
-        }
-      }
-    },
-    "/api/Ticket/ticket-priorities": {
-      "get": {
-        "tags": [
-          "Ticket"
-        ],
-        "responses": {
-          "200": {
-            "description": "Success"
-          }
-        }
-      }
-    },
-    "/api/Ticket/ticket-status": {
-      "get": {
-        "tags": [
-          "Ticket"
-        ],
-        "responses": {
-          "200": {
-            "description": "Success"
-          }
-        }
-      }
-    },
-    "/api/Ticket/check-perm": {
-      "get": {
-        "tags": [
-          "Ticket"
-        ],
-        "responses": {
-          "200": {
-            "description": "Success",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/TicketPermDto"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/TicketPermDto"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/TicketPermDto"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/Ticket/check-othercompanyperm": {
-      "get": {
-        "tags": [
-          "Ticket"
-        ],
-        "responses": {
-          "200": {
-            "description": "Success",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/TicketPermDto"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/TicketPermDto"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/TicketPermDto"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/Ticket/GetAssingList": {
-      "get": {
-        "tags": [
-          "Ticket"
-        ],
-        "parameters": [
-          {
-            "name": "ticketId",
-            "in": "query",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Success",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/TicketAssigneListDto"
-                  }
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/TicketAssigneListDto"
-                  }
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/TicketAssigneListDto"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/Ticket/FilteredAllTickets": {
-      "get": {
-        "tags": [
-          "Ticket"
-        ],
-        "parameters": [
-          {
-            "name": "skip",
-            "in": "query",
-            "schema": {
-              "type": "integer",
-              "format": "int32",
-              "default": 0
-            }
-          },
-          {
-            "name": "top",
-            "in": "query",
-            "schema": {
-              "type": "integer",
-              "format": "int32",
-              "default": 50
-            }
-          },
-          {
-            "name": "pageDesc",
-            "in": "query",
-            "schema": {
-              "type": "string",
-              "default": "solveAllTicket"
-            }
-          },
-          {
-            "name": "statues",
-            "in": "query",
-            "schema": {
-              "type": "array",
-              "items": {
-                "type": "string"
-              }
-            }
-          },
-          {
-            "name": "workCompanyId",
-            "in": "query",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "assignedUser",
-            "in": "query",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "assignedTeam",
-            "in": "query",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "type",
-            "in": "query",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "endDate",
-            "in": "query",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "startDate",
-            "in": "query",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "creator",
-            "in": "query",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "customer",
-            "in": "query",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "closeInc",
-            "in": "query",
-            "schema": {
-              "type": "boolean",
-              "default": false
-            }
-          },
-          {
-            "name": "title",
-            "in": "query",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "departmentId",
-            "in": "query",
-            "schema": {
-              "type": "array",
-              "items": {
-                "type": "string"
-              }
-            }
-          },
-          {
-            "name": "ticketProjectId",
-            "in": "query",
-            "schema": {
-              "type": "array",
-              "items": {
-                "type": "string"
-              }
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Success",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/TicketDtoResult"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/TicketDtoResult"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/TicketDtoResult"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/Ticket/SearchTicket": {
-      "get": {
-        "tags": [
-          "Ticket"
-        ],
-        "parameters": [
-          {
-            "name": "pageDesc",
-            "in": "query",
-            "schema": {
-              "type": "string",
-              "default": "solveAllTicket"
-            }
-          },
-          {
-            "name": "talepNo",
-            "in": "query",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "skip",
-            "in": "query",
-            "schema": {
-              "type": "integer",
-              "format": "int32",
-              "default": 0
-            }
-          },
-          {
-            "name": "top",
-            "in": "query",
-            "schema": {
-              "type": "integer",
-              "format": "int32",
-              "default": 50
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Success",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/TicketDtoResult"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/TicketDtoResult"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/TicketDtoResult"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/Ticket/getTicketPdf/{id}": {
-      "get": {
-        "tags": [
-          "Ticket"
-        ],
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Success",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "type": "string"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "type": "string"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "type": "string"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/Ticket/ExcelExport": {
-      "get": {
-        "tags": [
-          "Ticket"
-        ],
-        "parameters": [
-          {
-            "name": "pageDesc",
-            "in": "query",
-            "schema": {
-              "type": "string",
-              "default": "solveAllTicket"
-            }
-          },
-          {
-            "name": "statues",
-            "in": "query",
-            "schema": {
-              "type": "array",
-              "items": {
-                "type": "string"
-              }
-            }
-          },
-          {
-            "name": "workCompanyId",
-            "in": "query",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "assignedUser",
-            "in": "query",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "assignedTeam",
-            "in": "query",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "type",
-            "in": "query",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "endDate",
-            "in": "query",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "startDate",
-            "in": "query",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "creator",
-            "in": "query",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "customer",
-            "in": "query",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "closeInc",
-            "in": "query",
-            "schema": {
-              "type": "boolean",
-              "default": false
-            }
-          },
-          {
-            "name": "title",
-            "in": "query",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "departmentId",
-            "in": "query",
-            "schema": {
-              "type": "array",
-              "items": {
-                "type": "string"
-              }
-            }
-          },
-          {
-            "name": "ticketProjectId",
-            "in": "query",
-            "schema": {
-              "type": "array",
-              "items": {
-                "type": "string"
-              }
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Success",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/ExcelAndGraphicData"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ExcelAndGraphicData"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ExcelAndGraphicData"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/Ticket/CheckRuleEngine": {
-      "patch": {
-        "tags": [
-          "Ticket"
-        ],
-        "parameters": [
-          {
-            "name": "insertDto.TicketCode",
-            "in": "query",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "insertDto.Title",
-            "in": "query",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "insertDto.Description",
-            "in": "query",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "insertDto.WorkCompanyId",
-            "in": "query",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "insertDto.WorkCompanySystemInfoId",
-            "in": "query",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "insertDto.UserAppId",
-            "in": "query",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "insertDto.Type",
-            "in": "query",
-            "schema": {
-              "$ref": "#/components/schemas/TicketType"
-            }
-          },
-          {
-            "name": "insertDto.TicketSLA",
-            "in": "query",
-            "schema": {
-              "$ref": "#/components/schemas/TicketSLA"
-            }
-          },
-          {
-            "name": "insertDto.TicketSubject",
-            "in": "query",
-            "schema": {
-              "$ref": "#/components/schemas/TicketSubject"
-            }
-          },
-          {
-            "name": "insertDto.Priority",
-            "in": "query",
-            "schema": {
-              "$ref": "#/components/schemas/TicketPriority"
-            }
-          },
-          {
-            "name": "insertDto.TicketComment",
-            "in": "query",
-            "schema": {
-              "type": "array",
-              "items": {
-                "$ref": "#/components/schemas/TicketCommentInsertDto"
-              }
-            }
-          },
-          {
-            "name": "insertDto.isSend",
-            "in": "query",
-            "schema": {
-              "type": "boolean"
-            }
-          },
-          {
-            "name": "insertDto.CustomerRefId",
-            "in": "query",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "insertDto.IsFromEmail",
-            "in": "query",
-            "schema": {
-              "type": "boolean"
-            }
-          },
-          {
-            "name": "insertDto.MailConversationId",
-            "in": "query",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "insertDto.AddedMailAddresses",
-            "in": "query",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "insertDto.IsFilePath",
-            "in": "query",
-            "schema": {
-              "type": "boolean"
-            }
-          },
-          {
-            "name": "insertDto.FilePath",
-            "in": "query",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "updateDto.Id",
-            "in": "query",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "updateDto.TicketCode",
-            "in": "query",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "updateDto.Title",
-            "in": "query",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "updateDto.Description",
-            "in": "query",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "updateDto.WorkCompanyId",
-            "in": "query",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "updateDto.WorkCompanySystemInfoId",
-            "in": "query",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "updateDto.UserAppId",
-            "in": "query",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "updateDto.Type",
-            "in": "query",
-            "schema": {
-              "$ref": "#/components/schemas/TicketType"
-            }
-          },
-          {
-            "name": "updateDto.TicketSLA",
-            "in": "query",
-            "schema": {
-              "$ref": "#/components/schemas/TicketSLA"
-            }
-          },
-          {
-            "name": "updateDto.TicketSubject",
-            "in": "query",
-            "schema": {
-              "$ref": "#/components/schemas/TicketSubject"
-            }
-          },
-          {
-            "name": "updateDto.Status",
-            "in": "query",
-            "schema": {
-              "$ref": "#/components/schemas/TicketStatus"
-            }
-          },
-          {
-            "name": "updateDto.Priority",
-            "in": "query",
-            "schema": {
-              "$ref": "#/components/schemas/TicketPriority"
-            }
-          },
-          {
-            "name": "updateDto.TicketDepartmentId",
-            "in": "query",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "updateDto.isSend",
-            "in": "query",
-            "schema": {
-              "type": "boolean"
-            }
-          },
-          {
-            "name": "updateDto.CustomerRefId",
-            "in": "query",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "updateDto.AddedMailAddresses",
-            "in": "query",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "updateDto.EstimatedDeadline",
-            "in": "query",
-            "schema": {
-              "type": "string",
-              "format": "date-time"
-            }
-          },
-          {
-            "name": "updateDto.TicketProjectId",
-            "in": "query",
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          },
-          {
-            "name": "createEnvironment",
-            "in": "query",
-            "schema": {
-              "type": "integer",
-              "format": "int32"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Success",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/TicketRuleEngineListDto"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/TicketRuleEngineListDto"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/TicketRuleEngineListDto"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/Ticket/ReadMails": {
-      "get": {
-        "tags": [
-          "Ticket"
-        ],
-        "responses": {
-          "200": {
-            "description": "Success",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "type": "boolean"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "type": "boolean"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "type": "boolean"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/Ticket/DeleteAllSentEmails": {
-      "get": {
-        "tags": [
-          "Ticket"
-        ],
-        "responses": {
-          "200": {
-            "description": "Success"
-          }
-        }
-      }
-    },
-    "/api/TicketDepartments": {
-      "get": {
-        "tags": [
-          "TicketDepartments"
-        ],
-        "responses": {
-          "200": {
-            "description": "Success",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/TicketDepartmensListDto"
-                  }
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/TicketDepartmensListDto"
-                  }
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/TicketDepartmensListDto"
-                  }
-                }
-              }
-            }
-          }
-        }
-      },
-      "post": {
-        "tags": [
-          "TicketDepartments"
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/TicketDepartmensInsertDto"
-              }
-            },
-            "text/json": {
-              "schema": {
-                "$ref": "#/components/schemas/TicketDepartmensInsertDto"
-              }
-            },
-            "application/*+json": {
-              "schema": {
-                "$ref": "#/components/schemas/TicketDepartmensInsertDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Success"
-          }
-        }
-      },
-      "put": {
-        "tags": [
-          "TicketDepartments"
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/TicketDepartmensUpdateDto"
-              }
-            },
-            "text/json": {
-              "schema": {
-                "$ref": "#/components/schemas/TicketDepartmensUpdateDto"
-              }
-            },
-            "application/*+json": {
-              "schema": {
-                "$ref": "#/components/schemas/TicketDepartmensUpdateDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Success",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/TicketDepartmensUpdateDto"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/TicketDepartmensUpdateDto"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/TicketDepartmensUpdateDto"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/TicketDepartments/AllOnlyName": {
-      "get": {
-        "tags": [
-          "TicketDepartments"
-        ],
-        "responses": {
-          "200": {
-            "description": "Success",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/TicketDepartmensListDto"
-                  }
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/TicketDepartmensListDto"
-                  }
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/TicketDepartmensListDto"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/TicketDepartments/AllFilteredCompany": {
-      "get": {
-        "tags": [
-          "TicketDepartments"
-        ],
-        "parameters": [
-          {
-            "name": "companyId",
-            "in": "query",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Success",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/TicketDepartmensListDto"
-                  }
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/TicketDepartmensListDto"
-                  }
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/TicketDepartmensListDto"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/TicketDepartments/{id}": {
-      "delete": {
-        "tags": [
-          "TicketDepartments"
-        ],
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Success"
-          }
-        }
-      },
-      "get": {
-        "tags": [
-          "TicketDepartments"
-        ],
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Success",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/TicketDepartmensListDto"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/TicketDepartmensListDto"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/TicketDepartmensListDto"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/TicketDepartments/getAllWithUsers": {
-      "get": {
-        "tags": [
-          "TicketDepartments"
-        ],
-        "responses": {
-          "200": {
-            "description": "Success",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/TicketDepartmensListDto"
-                  }
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/TicketDepartmensListDto"
-                  }
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/TicketDepartmensListDto"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/TicketDepartments/getUsersByDepartmentId/{id}": {
-      "get": {
-        "tags": [
-          "TicketDepartments"
-        ],
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Success",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/UserAppDto"
-                  }
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/UserAppDto"
-                  }
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/UserAppDto"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/TicketDepartments/getAllVisibleDepartments": {
-      "get": {
-        "tags": [
-          "TicketDepartments"
-        ],
-        "responses": {
-          "200": {
-            "description": "Success",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/TicketDepartmensListDto"
-                  }
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/TicketDepartmensListDto"
-                  }
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/TicketDepartmensListDto"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/api/TicketProjects": {
       "get": {
         "tags": [
@@ -14621,6 +13474,141 @@
         }
       }
     },
+    "/api/User/GetById/{userId}": {
+      "get": {
+        "tags": [
+          "User"
+        ],
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserAppDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserAppDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserAppDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/User/GetAllUsersWithName/{name}": {
+      "get": {
+        "tags": [
+          "User"
+        ],
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/UserAppDto"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/UserAppDto"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/UserAppDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/User/GetAllWithOuthPhoto": {
+      "get": {
+        "tags": [
+          "User"
+        ],
+        "parameters": [
+          {
+            "name": "includeBlocked",
+            "in": "query",
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/UserAppDtoWithoutPhoto"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/UserAppDtoWithoutPhoto"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/UserAppDtoWithoutPhoto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/User/GetAllWithOuthPhotoForManagement": {
       "get": {
         "tags": [
@@ -14659,177 +13647,7 @@
         }
       }
     },
-    "/api/User/GetAllUsersNameIdOnly": {
-      "get": {
-        "tags": [
-          "User"
-        ],
-        "responses": {
-          "200": {
-            "description": "Success",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/UserAppDtoOnlyNameId"
-                  }
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/UserAppDtoOnlyNameId"
-                  }
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/UserAppDtoOnlyNameId"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/User/GetAllWithOuthPhoto": {
-      "get": {
-        "tags": [
-          "User"
-        ],
-        "responses": {
-          "200": {
-            "description": "Success",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/UserAppDtoWithoutPhoto"
-                  }
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/UserAppDtoWithoutPhoto"
-                  }
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/UserAppDtoWithoutPhoto"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/User/GetAllUsersAsyncWitName": {
-      "get": {
-        "tags": [
-          "User"
-        ],
-        "parameters": [
-          {
-            "name": "name",
-            "in": "query",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Success",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/UserAppDto"
-                  }
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/UserAppDto"
-                  }
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/UserAppDto"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/User/GetAllUsersWitNameAssign": {
-      "get": {
-        "tags": [
-          "User"
-        ],
-        "parameters": [
-          {
-            "name": "name",
-            "in": "query",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Success",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/UserAppDto"
-                  }
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/UserAppDto"
-                  }
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/UserAppDto"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/User/GetUser": {
+    "/api/User/GetCurrentUserFromToken": {
       "get": {
         "tags": [
           "User"
@@ -15051,6 +13869,35 @@
         }
       }
     },
+    "/api/User/GetCurrentUserBasic": {
+      "get": {
+        "tags": [
+          "User"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserAppDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserAppDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserAppDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/User/UserCompany": {
       "get": {
         "tags": [
@@ -15080,10 +13927,20 @@
         }
       }
     },
-    "/api/User/UserDepartment": {
+    "/api/User/GetCurrentUserActiveOrganization/{userId}": {
       "get": {
         "tags": [
           "User"
+        ],
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
         ],
         "responses": {
           "200": {
@@ -15091,17 +13948,65 @@
             "content": {
               "text/plain": {
                 "schema": {
-                  "$ref": "#/components/schemas/TicketDepartmensListDto"
+                  "$ref": "#/components/schemas/EmployeeAssignmentListDto"
                 }
               },
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/TicketDepartmensListDto"
+                  "$ref": "#/components/schemas/EmployeeAssignmentListDto"
                 }
               },
               "text/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/TicketDepartmensListDto"
+                  "$ref": "#/components/schemas/EmployeeAssignmentListDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/User/GetCurrentUserOrganizationHistory/{userId}": {
+      "get": {
+        "tags": [
+          "User"
+        ],
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/EmployeeAssignmentListDto"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/EmployeeAssignmentListDto"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/EmployeeAssignmentListDto"
+                  }
                 }
               }
             }
@@ -15210,638 +14115,6 @@
               "text/json": {
                 "schema": {
                   "type": "boolean"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/UserCalendar": {
-      "get": {
-        "tags": [
-          "UserCalendar"
-        ],
-        "responses": {
-          "200": {
-            "description": "Success",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/UserCalendarListDto"
-                  }
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/UserCalendarListDto"
-                  }
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/UserCalendarListDto"
-                  }
-                }
-              }
-            }
-          }
-        }
-      },
-      "post": {
-        "tags": [
-          "UserCalendar"
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UserCalendarInsertDto"
-              }
-            },
-            "text/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UserCalendarInsertDto"
-              }
-            },
-            "application/*+json": {
-              "schema": {
-                "$ref": "#/components/schemas/UserCalendarInsertDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Success"
-          }
-        }
-      },
-      "put": {
-        "tags": [
-          "UserCalendar"
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UserCalendarUpdateDto"
-              }
-            },
-            "text/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UserCalendarUpdateDto"
-              }
-            },
-            "application/*+json": {
-              "schema": {
-                "$ref": "#/components/schemas/UserCalendarUpdateDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Success"
-          }
-        }
-      },
-      "delete": {
-        "tags": [
-          "UserCalendar"
-        ],
-        "parameters": [
-          {
-            "name": "id",
-            "in": "query",
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Success"
-          }
-        }
-      }
-    },
-    "/api/UserCalendar/department/{id}": {
-      "get": {
-        "tags": [
-          "UserCalendar"
-        ],
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Success",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/UserCalendarListDto"
-                  }
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/UserCalendarListDto"
-                  }
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/UserCalendarListDto"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/UserCalendar/getByUsers": {
-      "get": {
-        "tags": [
-          "UserCalendar"
-        ],
-        "parameters": [
-          {
-            "name": "year",
-            "in": "query",
-            "schema": {
-              "type": "integer",
-              "format": "int32"
-            }
-          },
-          {
-            "name": "month",
-            "in": "query",
-            "schema": {
-              "type": "integer",
-              "format": "int32"
-            }
-          },
-          {
-            "name": "users",
-            "in": "query",
-            "schema": {
-              "type": "array",
-              "items": {
-                "type": "string"
-              }
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Success",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/UserCalendarListDto"
-                  }
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/UserCalendarListDto"
-                  }
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/UserCalendarListDto"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/UserCalendar/{id}": {
-      "get": {
-        "tags": [
-          "UserCalendar"
-        ],
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Success",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/UserCalendarListDto"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/UserCalendarListDto"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/UserCalendarListDto"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/UserCalendar/getUsersByDepartmentAndLevel": {
-      "get": {
-        "tags": [
-          "UserCalendar"
-        ],
-        "parameters": [
-          {
-            "name": "ticketDepartmentId",
-            "in": "query",
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          },
-          {
-            "name": "level",
-            "in": "query",
-            "schema": {
-              "type": "integer",
-              "format": "int32"
-            }
-          },
-          {
-            "name": "userId",
-            "in": "query",
-            "schema": {
-              "type": "array",
-              "items": {
-                "type": "string"
-              }
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Success",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/UserAppDto"
-                  }
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/UserAppDto"
-                  }
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/UserAppDto"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/UserCalendar/WorkLocations": {
-      "get": {
-        "tags": [
-          "UserCalendar"
-        ],
-        "responses": {
-          "200": {
-            "description": "Success"
-          }
-        }
-      }
-    },
-    "/api/UserCalendar/GetTasksByWeekly": {
-      "get": {
-        "tags": [
-          "UserCalendar"
-        ],
-        "parameters": [
-          {
-            "name": "yil",
-            "in": "query",
-            "schema": {
-              "type": "integer",
-              "format": "int32"
-            }
-          },
-          {
-            "name": "hafta",
-            "in": "query",
-            "schema": {
-              "type": "integer",
-              "format": "int32"
-            }
-          },
-          {
-            "name": "users",
-            "in": "query",
-            "schema": {
-              "type": "array",
-              "items": {
-                "type": "string"
-              }
-            }
-          },
-          {
-            "name": "ticketDepartmentId",
-            "in": "query",
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          },
-          {
-            "name": "userLevel",
-            "in": "query",
-            "schema": {
-              "type": "integer",
-              "format": "int32"
-            }
-          },
-          {
-            "name": "daysOfWeek",
-            "in": "query",
-            "schema": {
-              "type": "array",
-              "items": {
-                "type": "string"
-              }
-            }
-          },
-          {
-            "name": "percentage",
-            "in": "query",
-            "schema": {
-              "type": "array",
-              "items": {
-                "type": "integer",
-                "format": "int32"
-              }
-            }
-          },
-          {
-            "name": "isGetAll",
-            "in": "query",
-            "schema": {
-              "type": "boolean",
-              "default": false
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Success",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/UserWeeklyTasksDto"
-                  }
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/UserWeeklyTasksDto"
-                  }
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/UserWeeklyTasksDto"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/UserCalendar/GetEmployeeLeavesByWeekly": {
-      "get": {
-        "tags": [
-          "UserCalendar"
-        ],
-        "parameters": [
-          {
-            "name": "year",
-            "in": "query",
-            "schema": {
-              "type": "integer",
-              "format": "int32"
-            }
-          },
-          {
-            "name": "week",
-            "in": "query",
-            "schema": {
-              "type": "integer",
-              "format": "int32"
-            }
-          },
-          {
-            "name": "userMails",
-            "in": "query",
-            "schema": {
-              "type": "array",
-              "items": {
-                "type": "string"
-              }
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Success",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/HolidaysAndLeavesDto"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HolidaysAndLeavesDto"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HolidaysAndLeavesDto"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/UserCalendar/GetEmployeeLeavesByMonthly": {
-      "get": {
-        "tags": [
-          "UserCalendar"
-        ],
-        "parameters": [
-          {
-            "name": "year",
-            "in": "query",
-            "schema": {
-              "type": "integer",
-              "format": "int32"
-            }
-          },
-          {
-            "name": "month",
-            "in": "query",
-            "schema": {
-              "type": "integer",
-              "format": "int32"
-            }
-          },
-          {
-            "name": "userMails",
-            "in": "query",
-            "schema": {
-              "type": "array",
-              "items": {
-                "type": "string"
-              }
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Success",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/HolidaysAndLeavesDto"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HolidaysAndLeavesDto"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HolidaysAndLeavesDto"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/UserCalendar/check-otherDeptperm": {
-      "get": {
-        "tags": [
-          "UserCalendar"
-        ],
-        "responses": {
-          "200": {
-            "description": "Success",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/TicketPermDto"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/TicketPermDto"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/TicketPermDto"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/UserCalendar/check-userIsManager": {
-      "get": {
-        "tags": [
-          "UserCalendar"
-        ],
-        "responses": {
-          "200": {
-            "description": "Success",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/TicketPermDto"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/TicketPermDto"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/TicketPermDto"
                 }
               }
             }
@@ -16236,251 +14509,6 @@
             }
           }
         },
-        "responses": {
-          "200": {
-            "description": "Success"
-          }
-        }
-      }
-    },
-    "/api/WorkCompany": {
-      "get": {
-        "tags": [
-          "WorkCompany"
-        ],
-        "responses": {
-          "200": {
-            "description": "Success",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/WorkCompanyDto"
-                  }
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/WorkCompanyDto"
-                  }
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/WorkCompanyDto"
-                  }
-                }
-              }
-            }
-          }
-        }
-      },
-      "post": {
-        "tags": [
-          "WorkCompany"
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/WorkCompanyInsertDto"
-              }
-            },
-            "text/json": {
-              "schema": {
-                "$ref": "#/components/schemas/WorkCompanyInsertDto"
-              }
-            },
-            "application/*+json": {
-              "schema": {
-                "$ref": "#/components/schemas/WorkCompanyInsertDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Success"
-          }
-        }
-      },
-      "put": {
-        "tags": [
-          "WorkCompany"
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/WorkCompanyUpdateDto"
-              }
-            },
-            "text/json": {
-              "schema": {
-                "$ref": "#/components/schemas/WorkCompanyUpdateDto"
-              }
-            },
-            "application/*+json": {
-              "schema": {
-                "$ref": "#/components/schemas/WorkCompanyUpdateDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Success"
-          }
-        }
-      }
-    },
-    "/api/WorkCompany/GetAll": {
-      "get": {
-        "tags": [
-          "WorkCompany"
-        ],
-        "responses": {
-          "200": {
-            "description": "Success",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/WorkCompanyDto"
-                  }
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/WorkCompanyDto"
-                  }
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/WorkCompanyDto"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/WorkCompany/GetAssingList": {
-      "get": {
-        "tags": [
-          "WorkCompany"
-        ],
-        "responses": {
-          "200": {
-            "description": "Success",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/WorkCompanyDto"
-                  }
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/WorkCompanyDto"
-                  }
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/WorkCompanyDto"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/WorkCompany/{id}": {
-      "delete": {
-        "tags": [
-          "WorkCompany"
-        ],
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Success"
-          }
-        }
-      },
-      "get": {
-        "tags": [
-          "WorkCompany"
-        ],
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Success",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/WorkCompanyDto"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/WorkCompanyDto"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/WorkCompanyDto"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/WorkCompany/GetApproveWorkDesign": {
-      "get": {
-        "tags": [
-          "WorkCompany"
-        ],
         "responses": {
           "200": {
             "description": "Success"
@@ -17258,17 +15286,17 @@
             "content": {
               "text/plain": {
                 "schema": {
-                  "$ref": "#/components/schemas/WorkFlowDefinationUpdateDto"
+                  "$ref": "#/components/schemas/WorkFlowDefinationListDto"
                 }
               },
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/WorkFlowDefinationUpdateDto"
+                  "$ref": "#/components/schemas/WorkFlowDefinationListDto"
                 }
               },
               "text/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/WorkFlowDefinationUpdateDto"
+                  "$ref": "#/components/schemas/WorkFlowDefinationListDto"
                 }
               }
             }
@@ -17723,6 +15751,16 @@
           1,
           2,
           3
+        ],
+        "type": "integer",
+        "format": "int32"
+      },
+      "AssignmentType": {
+        "enum": [
+          1,
+          2,
+          3,
+          4
         ],
         "type": "integer",
         "format": "int32"
@@ -19664,7 +17702,7 @@
             "type": "string",
             "nullable": true
           },
-          "customerRefId": {
+          "parentPositionId": {
             "type": "string",
             "format": "uuid",
             "nullable": true
@@ -19809,10 +17847,6 @@
             "type": "string",
             "nullable": true
           },
-          "department": {
-            "type": "string",
-            "nullable": true
-          },
           "title": {
             "type": "string",
             "nullable": true
@@ -19821,20 +17855,7 @@
             "type": "string",
             "nullable": true
           },
-          "sapDepartmentText": {
-            "type": "string",
-            "nullable": true
-          },
-          "sapPositionText": {
-            "type": "string",
-            "nullable": true
-          },
-          "departmentsId": {
-            "type": "string",
-            "format": "uuid",
-            "nullable": true
-          },
-          "ticketDepartmentId": {
+          "orgUnitId": {
             "type": "string",
             "format": "uuid",
             "nullable": true
@@ -19844,10 +17865,6 @@
             "items": {
               "$ref": "#/components/schemas/UserRoleDto"
             },
-            "nullable": true
-          },
-          "workCompanyId": {
-            "type": "string",
             "nullable": true
           },
           "positionId": {
@@ -21720,6 +19737,261 @@
         "type": "integer",
         "format": "int32"
       },
+      "EmployeeAssignment": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "mainClientId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "mainClient": {
+            "$ref": "#/components/schemas/MainClient"
+          },
+          "createdBy": {
+            "type": "string",
+            "nullable": true
+          },
+          "updatedBy": {
+            "type": "string",
+            "nullable": true
+          },
+          "createdDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedDate": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "isDelete": {
+            "type": "boolean"
+          },
+          "uniqNumber": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "concurrencyToken": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "userId": {
+            "type": "string",
+            "nullable": true
+          },
+          "user": {
+            "$ref": "#/components/schemas/UserApp"
+          },
+          "orgUnitId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "orgUnit": {
+            "$ref": "#/components/schemas/OrgUnit"
+          },
+          "positionId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "position": {
+            "$ref": "#/components/schemas/Positions"
+          },
+          "managerId": {
+            "type": "string",
+            "nullable": true
+          },
+          "manager": {
+            "$ref": "#/components/schemas/UserApp"
+          },
+          "startDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "endDate": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "isActive": {
+            "type": "boolean",
+            "readOnly": true
+          },
+          "assignmentType": {
+            "$ref": "#/components/schemas/AssignmentType"
+          },
+          "notes": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "EmployeeAssignmentInsertDto": {
+        "required": [
+          "userId"
+        ],
+        "type": "object",
+        "properties": {
+          "userId": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "orgUnitId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "positionId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "managerId": {
+            "type": "string",
+            "nullable": true
+          },
+          "startDate": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "endDate": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "assignmentType": {
+            "$ref": "#/components/schemas/AssignmentType"
+          },
+          "notes": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "EmployeeAssignmentListDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "userId": {
+            "type": "string",
+            "nullable": true
+          },
+          "userFullName": {
+            "type": "string",
+            "nullable": true
+          },
+          "orgUnitId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "orgUnitName": {
+            "type": "string",
+            "nullable": true
+          },
+          "positionId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "positionName": {
+            "type": "string",
+            "nullable": true
+          },
+          "managerId": {
+            "type": "string",
+            "nullable": true
+          },
+          "managerFullName": {
+            "type": "string",
+            "nullable": true
+          },
+          "startDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "endDate": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "assignmentType": {
+            "$ref": "#/components/schemas/AssignmentType"
+          },
+          "assignmentTypeText": {
+            "type": "string",
+            "nullable": true
+          },
+          "notes": {
+            "type": "string",
+            "nullable": true
+          },
+          "createdDate": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "additionalProperties": false
+      },
+      "EmployeeAssignmentUpdateDto": {
+        "required": [
+          "id"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "orgUnitId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "positionId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "managerId": {
+            "type": "string",
+            "nullable": true
+          },
+          "startDate": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "endDate": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "assignmentType": {
+            "$ref": "#/components/schemas/AssignmentType"
+          },
+          "notes": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
       "EnumDto": {
         "type": "object",
         "properties": {
@@ -21750,24 +20022,6 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/EnumDto"
-            },
-            "nullable": true
-          }
-        },
-        "additionalProperties": false
-      },
-      "ExcelAndGraphicData": {
-        "type": "object",
-        "properties": {
-          "excelData": {
-            "type": "string",
-            "format": "binary",
-            "nullable": true
-          },
-          "graphicData": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/TicketListDto"
             },
             "nullable": true
           }
@@ -23088,44 +21342,6 @@
         },
         "additionalProperties": false
       },
-      "HolidayResponseDto": {
-        "type": "object",
-        "properties": {
-          "tarih": {
-            "type": "string",
-            "nullable": true
-          },
-          "resmi_Tatil": {
-            "type": "string",
-            "nullable": true
-          },
-          "dayOfWeek": {
-            "type": "string",
-            "nullable": true
-          }
-        },
-        "additionalProperties": false
-      },
-      "HolidaysAndLeavesDto": {
-        "type": "object",
-        "properties": {
-          "leaves": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/LeaveResponseDto"
-            },
-            "nullable": true
-          },
-          "holidays": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/HolidayResponseDto"
-            },
-            "nullable": true
-          }
-        },
-        "additionalProperties": false
-      },
       "IGenericListDto": {
         "type": "object",
         "properties": {
@@ -23649,52 +21865,6 @@
             "nullable": true
           },
           "assigneId": {
-            "type": "string",
-            "nullable": true
-          }
-        },
-        "additionalProperties": false
-      },
-      "LeaveResponseDto": {
-        "type": "object",
-        "properties": {
-          "mail": {
-            "type": "string",
-            "nullable": true
-          },
-          "pernr": {
-            "type": "string",
-            "nullable": true
-          },
-          "vorna": {
-            "type": "string",
-            "nullable": true
-          },
-          "nachn": {
-            "type": "string",
-            "nullable": true
-          },
-          "begda": {
-            "type": "string",
-            "nullable": true
-          },
-          "endda": {
-            "type": "string",
-            "nullable": true
-          },
-          "atext": {
-            "type": "string",
-            "nullable": true
-          },
-          "abwtg": {
-            "type": "string",
-            "nullable": true
-          },
-          "status": {
-            "type": "string",
-            "nullable": true
-          },
-          "dayOfWeek": {
             "type": "string",
             "nullable": true
           }
@@ -24812,6 +22982,204 @@
         },
         "additionalProperties": false
       },
+      "OrgUnit": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "mainClientId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "mainClient": {
+            "$ref": "#/components/schemas/MainClient"
+          },
+          "createdBy": {
+            "type": "string",
+            "nullable": true
+          },
+          "updatedBy": {
+            "type": "string",
+            "nullable": true
+          },
+          "createdDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedDate": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "isDelete": {
+            "type": "boolean"
+          },
+          "uniqNumber": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "concurrencyToken": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "code": {
+            "type": "string",
+            "nullable": true
+          },
+          "type": {
+            "$ref": "#/components/schemas/OrgUnitType"
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "parentOrgUnitId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "parentOrgUnit": {
+            "$ref": "#/components/schemas/OrgUnit"
+          },
+          "subOrgUnits": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OrgUnit"
+            },
+            "nullable": true
+          },
+          "managerId": {
+            "type": "string",
+            "nullable": true
+          },
+          "manager": {
+            "$ref": "#/components/schemas/UserApp"
+          }
+        },
+        "additionalProperties": false
+      },
+      "OrgUnitInsertDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "code": {
+            "type": "string",
+            "nullable": true
+          },
+          "type": {
+            "$ref": "#/components/schemas/OrgUnitType"
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "managerId": {
+            "type": "string",
+            "nullable": true
+          },
+          "parentOrgUnitId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "OrgUnitListDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "nullable": true
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "code": {
+            "type": "string",
+            "nullable": true
+          },
+          "type": {
+            "$ref": "#/components/schemas/OrgUnitType"
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "managerId": {
+            "type": "string",
+            "nullable": true
+          },
+          "manager": {
+            "$ref": "#/components/schemas/UserApp"
+          },
+          "parentOrgUnitId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "subOrgUnits": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OrgUnit"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "OrgUnitType": {
+        "enum": [
+          1,
+          2,
+          3,
+          4,
+          99
+        ],
+        "type": "integer",
+        "format": "int32"
+      },
+      "OrgUnitUpdateDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "code": {
+            "type": "string",
+            "nullable": true
+          },
+          "type": {
+            "$ref": "#/components/schemas/OrgUnitType"
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "managerId": {
+            "type": "string",
+            "nullable": true
+          },
+          "parentOrgUnitId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
       "OrganizationDto": {
         "type": "object",
         "properties": {
@@ -24915,13 +23283,9 @@
             "type": "string",
             "nullable": true
           },
-          "customerRefId": {
+          "parentPositionId": {
             "type": "string",
             "format": "uuid",
-            "nullable": true
-          },
-          "customerName": {
-            "type": "string",
             "nullable": true
           }
         },
@@ -24978,13 +23342,20 @@
             "type": "string",
             "nullable": true
           },
-          "customerRefId": {
+          "parentPositionId": {
             "type": "string",
             "format": "uuid",
             "nullable": true
           },
-          "customerRef": {
-            "$ref": "#/components/schemas/WorkCompany"
+          "parentPosition": {
+            "$ref": "#/components/schemas/Positions"
+          },
+          "subPositions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Positions"
+            },
+            "nullable": true
           },
           "userApps": {
             "type": "array",
@@ -26815,73 +25186,6 @@
         },
         "additionalProperties": false
       },
-      "TicketAssigneDto": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "ticketsId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "userAppId": {
-            "type": "string",
-            "format": "uuid",
-            "nullable": true
-          },
-          "ticketTeamID": {
-            "type": "string",
-            "format": "uuid",
-            "nullable": true
-          },
-          "isActive": {
-            "type": "boolean"
-          },
-          "status": {
-            "$ref": "#/components/schemas/TicketStatus"
-          },
-          "description": {
-            "type": "string",
-            "nullable": true
-          }
-        },
-        "additionalProperties": false
-      },
-      "TicketAssigneListDto": {
-        "type": "object",
-        "properties": {
-          "ticketsId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "name": {
-            "type": "string",
-            "nullable": true
-          },
-          "statusId": {
-            "$ref": "#/components/schemas/TicketStatus"
-          },
-          "status": {
-            "type": "string",
-            "nullable": true
-          },
-          "createDate": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "description": {
-            "type": "string",
-            "nullable": true
-          },
-          "createdBy": {
-            "type": "string",
-            "nullable": true
-          }
-        },
-        "additionalProperties": false
-      },
       "TicketComment": {
         "required": [
           "ticketId"
@@ -26953,110 +25257,6 @@
         },
         "additionalProperties": false
       },
-      "TicketCommentDto": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "nullable": true
-          },
-          "ticketId": {
-            "type": "string",
-            "nullable": true
-          },
-          "body": {
-            "type": "string",
-            "nullable": true
-          },
-          "files": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/TicketFileDto"
-            },
-            "nullable": true
-          },
-          "isNew": {
-            "type": "boolean"
-          },
-          "createdDate": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "createdBy": {
-            "type": "string",
-            "nullable": true
-          },
-          "filePath": {
-            "type": "string",
-            "nullable": true
-          }
-        },
-        "additionalProperties": false
-      },
-      "TicketCommentInsertDto": {
-        "type": "object",
-        "properties": {
-          "body": {
-            "type": "string",
-            "nullable": true
-          },
-          "filePath": {
-            "type": "string",
-            "nullable": true
-          },
-          "files": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/TicketFileInsertDto"
-            },
-            "nullable": true
-          },
-          "isNew": {
-            "type": "boolean"
-          }
-        },
-        "additionalProperties": false
-      },
-      "TicketDepartmensInsertDto": {
-        "type": "object",
-        "properties": {
-          "deparmentCode": {
-            "type": "string",
-            "nullable": true
-          },
-          "departmentText": {
-            "type": "string",
-            "nullable": true
-          },
-          "isActive": {
-            "type": "boolean"
-          },
-          "managerId": {
-            "type": "string",
-            "nullable": true
-          },
-          "workCompanyId": {
-            "type": "string",
-            "nullable": true
-          },
-          "departmentUsers": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/DepartmentUserInsertDto"
-            },
-            "nullable": true
-          },
-          "parentDepartmentId": {
-            "type": "string",
-            "format": "uuid",
-            "nullable": true
-          },
-          "isVisibleInList": {
-            "type": "boolean"
-          }
-        },
-        "additionalProperties": false
-      },
       "TicketDepartmensListDto": {
         "type": "object",
         "properties": {
@@ -27107,50 +25307,6 @@
             "items": {
               "$ref": "#/components/schemas/TicketDepartment"
             },
-            "nullable": true
-          },
-          "isVisibleInList": {
-            "type": "boolean"
-          }
-        },
-        "additionalProperties": false
-      },
-      "TicketDepartmensUpdateDto": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "deparmentCode": {
-            "type": "string",
-            "nullable": true
-          },
-          "departmentText": {
-            "type": "string",
-            "nullable": true
-          },
-          "isActive": {
-            "type": "boolean"
-          },
-          "managerId": {
-            "type": "string",
-            "nullable": true
-          },
-          "workCompanyId": {
-            "type": "string",
-            "nullable": true
-          },
-          "departmentUsers": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/DepartmentUserInsertDto"
-            },
-            "nullable": true
-          },
-          "parentDepartmentId": {
-            "type": "string",
-            "format": "uuid",
             "nullable": true
           },
           "isVisibleInList": {
@@ -27270,23 +25426,6 @@
         },
         "additionalProperties": false
       },
-      "TicketDtoResult": {
-        "type": "object",
-        "properties": {
-          "count": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "ticketList": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/TicketListDto"
-            },
-            "nullable": true
-          }
-        },
-        "additionalProperties": false
-      },
       "TicketFile": {
         "required": [
           "ticketCommentId"
@@ -27355,417 +25494,6 @@
           "filePath": {
             "type": "string",
             "nullable": true
-          }
-        },
-        "additionalProperties": false
-      },
-      "TicketFileDto": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "nullable": true
-          },
-          "ticketCommentId": {
-            "type": "string",
-            "nullable": true
-          },
-          "base64": {
-            "type": "string",
-            "nullable": true
-          },
-          "fileType": {
-            "type": "string",
-            "nullable": true
-          },
-          "fileName": {
-            "type": "string",
-            "nullable": true
-          },
-          "filePath": {
-            "type": "string",
-            "nullable": true
-          }
-        },
-        "additionalProperties": false
-      },
-      "TicketFileInsertDto": {
-        "type": "object",
-        "properties": {
-          "base64": {
-            "type": "string",
-            "nullable": true
-          },
-          "fileType": {
-            "type": "string",
-            "nullable": true
-          },
-          "fileName": {
-            "type": "string",
-            "nullable": true
-          },
-          "filePath": {
-            "type": "string",
-            "nullable": true
-          }
-        },
-        "additionalProperties": false
-      },
-      "TicketInsertDto": {
-        "type": "object",
-        "properties": {
-          "ticketCode": {
-            "type": "string",
-            "nullable": true
-          },
-          "title": {
-            "type": "string",
-            "nullable": true
-          },
-          "description": {
-            "type": "string",
-            "nullable": true
-          },
-          "workCompanyId": {
-            "type": "string",
-            "nullable": true
-          },
-          "workCompanySystemInfoId": {
-            "type": "string",
-            "nullable": true
-          },
-          "userAppId": {
-            "type": "string",
-            "nullable": true
-          },
-          "type": {
-            "$ref": "#/components/schemas/TicketType"
-          },
-          "ticketSLA": {
-            "$ref": "#/components/schemas/TicketSLA"
-          },
-          "ticketSubject": {
-            "$ref": "#/components/schemas/TicketSubject"
-          },
-          "priority": {
-            "$ref": "#/components/schemas/TicketPriority"
-          },
-          "ticketComment": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/TicketCommentInsertDto"
-            },
-            "nullable": true
-          },
-          "isSend": {
-            "type": "boolean"
-          },
-          "customerRefId": {
-            "type": "string",
-            "nullable": true
-          },
-          "isFromEmail": {
-            "type": "boolean"
-          },
-          "mailConversationId": {
-            "type": "string",
-            "nullable": true
-          },
-          "addedMailAddresses": {
-            "type": "string",
-            "nullable": true
-          },
-          "isFilePath": {
-            "type": "boolean",
-            "nullable": true
-          },
-          "filePath": {
-            "type": "string",
-            "nullable": true
-          }
-        },
-        "additionalProperties": false
-      },
-      "TicketListDto": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "ticketCode": {
-            "type": "string",
-            "nullable": true
-          },
-          "title": {
-            "type": "string",
-            "nullable": true
-          },
-          "description": {
-            "type": "string",
-            "nullable": true
-          },
-          "workCompanyId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "workCompanyName": {
-            "type": "string",
-            "nullable": true
-          },
-          "workCompanySystemInfoId": {
-            "type": "string",
-            "format": "uuid",
-            "nullable": true
-          },
-          "workCompanySystemName": {
-            "type": "string",
-            "nullable": true
-          },
-          "userAppId": {
-            "type": "string",
-            "nullable": true
-          },
-          "userAppName": {
-            "type": "string",
-            "nullable": true
-          },
-          "userAppUserName": {
-            "type": "string",
-            "nullable": true
-          },
-          "status": {
-            "$ref": "#/components/schemas/TicketStatus"
-          },
-          "statusText": {
-            "type": "string",
-            "nullable": true
-          },
-          "type": {
-            "$ref": "#/components/schemas/TicketType"
-          },
-          "typeText": {
-            "type": "string",
-            "nullable": true
-          },
-          "priority": {
-            "$ref": "#/components/schemas/TicketPriority"
-          },
-          "priorityText": {
-            "type": "string",
-            "nullable": true
-          },
-          "ticketSubject": {
-            "$ref": "#/components/schemas/TicketSubject"
-          },
-          "ticketSubjectText": {
-            "type": "string",
-            "nullable": true
-          },
-          "actualStartDate": {
-            "type": "string",
-            "format": "date-time",
-            "nullable": true
-          },
-          "actualEndDate": {
-            "type": "string",
-            "format": "date-time",
-            "nullable": true
-          },
-          "approveStatus": {
-            "$ref": "#/components/schemas/ApproveStatus"
-          },
-          "approveStatusText": {
-            "type": "string",
-            "nullable": true
-          },
-          "createdDate": {
-            "type": "string",
-            "format": "date-time",
-            "nullable": true
-          },
-          "createdBy": {
-            "type": "string",
-            "nullable": true
-          },
-          "updatedBy": {
-            "type": "string",
-            "nullable": true
-          },
-          "updatedDate": {
-            "type": "string",
-            "format": "date-time",
-            "nullable": true
-          },
-          "ticketSLA": {
-            "$ref": "#/components/schemas/TicketSLA"
-          },
-          "ticketSLAText": {
-            "type": "string",
-            "nullable": true
-          },
-          "ticketComment": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/TicketCommentDto"
-            },
-            "nullable": true
-          },
-          "ticketAssigneText": {
-            "type": "string",
-            "nullable": true
-          },
-          "ticketAssigneId": {
-            "type": "string",
-            "nullable": true
-          },
-          "isTeam": {
-            "type": "boolean"
-          },
-          "ticketAssigne": {
-            "$ref": "#/components/schemas/TicketAssigneDto"
-          },
-          "ticketDepartmentId": {
-            "type": "string",
-            "nullable": true
-          },
-          "ticketDepartmentText": {
-            "type": "string",
-            "nullable": true
-          },
-          "workFlowHeadId": {
-            "type": "string",
-            "nullable": true
-          },
-          "ticketNumber": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "canEdit": {
-            "type": "boolean"
-          },
-          "assigneDescription": {
-            "type": "string",
-            "nullable": true
-          },
-          "customerRefId": {
-            "type": "string",
-            "format": "uuid",
-            "nullable": true
-          },
-          "customerRefName": {
-            "type": "string",
-            "nullable": true
-          },
-          "isFromEmail": {
-            "type": "boolean"
-          },
-          "ticketNotificationsListDto": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/TicketNotificationsListDto"
-            },
-            "nullable": true
-          },
-          "mailConversationId": {
-            "type": "string",
-            "nullable": true
-          },
-          "addedMailAddresses": {
-            "type": "string",
-            "nullable": true
-          },
-          "isFilePath": {
-            "type": "boolean",
-            "nullable": true
-          },
-          "filePath": {
-            "type": "string",
-            "nullable": true
-          },
-          "estimatedDeadline": {
-            "type": "string",
-            "format": "date-time",
-            "nullable": true
-          },
-          "ticketProjectId": {
-            "type": "string",
-            "format": "uuid",
-            "nullable": true
-          },
-          "ticketprojectName": {
-            "type": "string",
-            "nullable": true
-          }
-        },
-        "additionalProperties": false
-      },
-      "TicketManagerUpdateDto": {
-        "type": "object",
-        "properties": {
-          "managerDto": {
-            "$ref": "#/components/schemas/TicketUpdateDto"
-          },
-          "assigngDto": {
-            "$ref": "#/components/schemas/TicketAssigneDto"
-          },
-          "notificationsInsertDtos": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/TicketNotificationsInsertDto"
-            },
-            "nullable": true
-          }
-        },
-        "additionalProperties": false
-      },
-      "TicketNotificationsInsertDto": {
-        "type": "object",
-        "properties": {
-          "ticketId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "userAppId": {
-            "type": "string",
-            "nullable": true
-          }
-        },
-        "additionalProperties": false
-      },
-      "TicketNotificationsListDto": {
-        "type": "object",
-        "properties": {
-          "ticketId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "userAppId": {
-            "type": "string",
-            "nullable": true
-          },
-          "user": {
-            "$ref": "#/components/schemas/UserApp"
-          }
-        },
-        "additionalProperties": false
-      },
-      "TicketPermDto": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "nullable": true
-          },
-          "name": {
-            "type": "string",
-            "nullable": true
-          },
-          "perm": {
-            "type": "boolean"
-          },
-          "canEditTicket": {
-            "type": "boolean"
           }
         },
         "additionalProperties": false
@@ -28542,80 +26270,6 @@
         "type": "integer",
         "format": "int32"
       },
-      "TicketUpdateDto": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "nullable": true
-          },
-          "ticketCode": {
-            "type": "string",
-            "nullable": true
-          },
-          "title": {
-            "type": "string",
-            "nullable": true
-          },
-          "description": {
-            "type": "string",
-            "nullable": true
-          },
-          "workCompanyId": {
-            "type": "string",
-            "nullable": true
-          },
-          "workCompanySystemInfoId": {
-            "type": "string",
-            "nullable": true
-          },
-          "userAppId": {
-            "type": "string",
-            "nullable": true
-          },
-          "type": {
-            "$ref": "#/components/schemas/TicketType"
-          },
-          "ticketSLA": {
-            "$ref": "#/components/schemas/TicketSLA"
-          },
-          "ticketSubject": {
-            "$ref": "#/components/schemas/TicketSubject"
-          },
-          "status": {
-            "$ref": "#/components/schemas/TicketStatus"
-          },
-          "priority": {
-            "$ref": "#/components/schemas/TicketPriority"
-          },
-          "ticketDepartmentId": {
-            "type": "string",
-            "nullable": true
-          },
-          "isSend": {
-            "type": "boolean"
-          },
-          "customerRefId": {
-            "type": "string",
-            "nullable": true
-          },
-          "addedMailAddresses": {
-            "type": "string",
-            "nullable": true
-          },
-          "estimatedDeadline": {
-            "type": "string",
-            "format": "date-time",
-            "nullable": true
-          },
-          "ticketProjectId": {
-            "type": "string",
-            "format": "uuid",
-            "nullable": true
-          }
-        },
-        "additionalProperties": false
-      },
       "Tickets": {
         "required": [
           "approveStatus",
@@ -28861,7 +26515,7 @@
             "type": "string",
             "nullable": true
           },
-          "customerRefId": {
+          "parentPositionId": {
             "type": "string",
             "format": "uuid",
             "nullable": true
@@ -29039,10 +26693,6 @@
             "type": "string",
             "nullable": true
           },
-          "department": {
-            "type": "string",
-            "nullable": true
-          },
           "title": {
             "type": "string",
             "nullable": true
@@ -29051,20 +26701,7 @@
             "type": "string",
             "nullable": true
           },
-          "sapDepartmentText": {
-            "type": "string",
-            "nullable": true
-          },
-          "sapPositionText": {
-            "type": "string",
-            "nullable": true
-          },
-          "departmentsId": {
-            "type": "string",
-            "format": "uuid",
-            "nullable": true
-          },
-          "ticketDepartmentId": {
+          "orgUnitId": {
             "type": "string",
             "format": "uuid",
             "nullable": true
@@ -29074,10 +26711,6 @@
             "items": {
               "$ref": "#/components/schemas/UserRoleDto"
             },
-            "nullable": true
-          },
-          "workCompanyId": {
-            "type": "string",
             "nullable": true
           },
           "positionId": {
@@ -29269,34 +26902,6 @@
             "type": "string",
             "nullable": true
           },
-          "department": {
-            "type": "string",
-            "nullable": true
-          },
-          "sapDepartmentText": {
-            "type": "string",
-            "nullable": true
-          },
-          "sapPositionText": {
-            "type": "string",
-            "nullable": true
-          },
-          "ticketDepartmentId": {
-            "type": "string",
-            "format": "uuid",
-            "nullable": true
-          },
-          "ticketDepartment": {
-            "$ref": "#/components/schemas/TicketDepartment"
-          },
-          "workCompanyId": {
-            "type": "string",
-            "format": "uuid",
-            "nullable": true
-          },
-          "workCompany": {
-            "$ref": "#/components/schemas/WorkCompany"
-          },
           "resetPasswordCode": {
             "type": "string",
             "nullable": true
@@ -29306,18 +26911,17 @@
             "format": "date-time",
             "nullable": true
           },
-          "positionId": {
-            "type": "string",
-            "format": "uuid",
-            "nullable": true
-          },
-          "positions": {
-            "$ref": "#/components/schemas/Positions"
-          },
           "departmentUsers": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/DepartmentUser"
+            },
+            "nullable": true
+          },
+          "employeeAssignments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EmployeeAssignment"
             },
             "nullable": true
           },
@@ -29414,34 +27018,21 @@
             "type": "string",
             "nullable": true
           },
-          "manager1": {
-            "type": "string",
-            "nullable": true
-          },
-          "manager2": {
-            "type": "string",
-            "nullable": true
-          },
           "title": {
             "type": "string",
             "nullable": true
           },
-          "sapDepartmentText": {
-            "type": "string",
-            "nullable": true
-          },
-          "sapPositionText": {
-            "type": "string",
-            "nullable": true
-          },
-          "departmentId": {
+          "orgUnitId": {
             "type": "string",
             "format": "uuid",
             "nullable": true
           },
-          "ticketDepartmentId": {
+          "orgUnitName": {
             "type": "string",
-            "format": "uuid",
+            "nullable": true
+          },
+          "managerId": {
+            "type": "string",
             "nullable": true
           },
           "roles": {
@@ -29449,10 +27040,6 @@
             "items": {
               "$ref": "#/components/schemas/UserRoleDto"
             },
-            "nullable": true
-          },
-          "workCompanyId": {
-            "type": "string",
             "nullable": true
           },
           "resetPasswordCode": {
@@ -29576,34 +27163,17 @@
             "type": "string",
             "nullable": true
           },
-          "manager1": {
-            "type": "string",
-            "nullable": true
-          },
-          "manager2": {
-            "type": "string",
-            "nullable": true
-          },
           "title": {
             "type": "string",
             "nullable": true
           },
-          "sapDepartmentText": {
-            "type": "string",
-            "nullable": true
-          },
-          "sapPositionText": {
-            "type": "string",
-            "nullable": true
-          },
-          "departmentId": {
+          "orgUnitId": {
             "type": "string",
             "format": "uuid",
             "nullable": true
           },
-          "ticketDepartmentId": {
+          "orgUnitName": {
             "type": "string",
-            "format": "uuid",
             "nullable": true
           },
           "roles": {
@@ -29613,18 +27183,6 @@
             },
             "nullable": true
           },
-          "workCompanyId": {
-            "type": "string",
-            "nullable": true
-          },
-          "departmentText": {
-            "type": "string",
-            "nullable": true
-          },
-          "workCompanyText": {
-            "type": "string",
-            "nullable": true
-          },
           "positionId": {
             "type": "string",
             "format": "uuid",
@@ -29632,161 +27190,6 @@
           },
           "userLevel": {
             "$ref": "#/components/schemas/UserLevel"
-          }
-        },
-        "additionalProperties": false
-      },
-      "UserCalendarInsertDto": {
-        "type": "object",
-        "properties": {
-          "name": {
-            "type": "string",
-            "nullable": true
-          },
-          "description": {
-            "type": "string",
-            "nullable": true
-          },
-          "startDate": {
-            "type": "string",
-            "format": "date-time",
-            "nullable": true
-          },
-          "endDate": {
-            "type": "string",
-            "format": "date-time",
-            "nullable": true
-          },
-          "customerRefId": {
-            "type": "string",
-            "nullable": true
-          },
-          "userAppId": {
-            "type": "string",
-            "nullable": true
-          },
-          "percentage": {
-            "type": "string",
-            "nullable": true
-          },
-          "workLocation": {
-            "$ref": "#/components/schemas/WorkLocation"
-          },
-          "isAvailable": {
-            "type": "boolean"
-          }
-        },
-        "additionalProperties": false
-      },
-      "UserCalendarListDto": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "name": {
-            "type": "string",
-            "nullable": true
-          },
-          "description": {
-            "type": "string",
-            "nullable": true
-          },
-          "startDate": {
-            "type": "string",
-            "format": "date-time",
-            "nullable": true
-          },
-          "endDate": {
-            "type": "string",
-            "format": "date-time",
-            "nullable": true
-          },
-          "customerRefId": {
-            "type": "string",
-            "nullable": true
-          },
-          "customerRef": {
-            "$ref": "#/components/schemas/WorkCompany"
-          },
-          "userAppId": {
-            "type": "string",
-            "nullable": true
-          },
-          "userAppDtoWithoutPhoto": {
-            "$ref": "#/components/schemas/UserAppDtoWithoutPhoto"
-          },
-          "userAppDto": {
-            "$ref": "#/components/schemas/UserAppDto"
-          },
-          "color": {
-            "type": "string",
-            "nullable": true
-          },
-          "percentage": {
-            "type": "string",
-            "nullable": true
-          },
-          "workLocation": {
-            "$ref": "#/components/schemas/WorkLocation"
-          },
-          "daysOfWeek": {
-            "type": "array",
-            "items": {
-              "type": "boolean"
-            },
-            "nullable": true
-          },
-          "isAvailable": {
-            "type": "boolean"
-          }
-        },
-        "additionalProperties": false
-      },
-      "UserCalendarUpdateDto": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "name": {
-            "type": "string",
-            "nullable": true
-          },
-          "description": {
-            "type": "string",
-            "nullable": true
-          },
-          "startDate": {
-            "type": "string",
-            "format": "date-time",
-            "nullable": true
-          },
-          "endDate": {
-            "type": "string",
-            "format": "date-time",
-            "nullable": true
-          },
-          "customerRefId": {
-            "type": "string",
-            "nullable": true
-          },
-          "percentage": {
-            "type": "string",
-            "nullable": true
-          },
-          "userAppId": {
-            "type": "string",
-            "nullable": true
-          },
-          "workLocation": {
-            "$ref": "#/components/schemas/WorkLocation"
-          },
-          "isAvailable": {
-            "type": "boolean",
-            "nullable": true
           }
         },
         "additionalProperties": false
@@ -30082,20 +27485,7 @@
           "dontApplyDefaultFilters": {
             "type": "boolean"
           },
-          "mainManagerUserAppId": {
-            "type": "string",
-            "format": "uuid",
-            "nullable": true
-          },
           "pCname": {
-            "type": "string",
-            "nullable": true
-          },
-          "manager1": {
-            "type": "string",
-            "nullable": true
-          },
-          "manager2": {
             "type": "string",
             "nullable": true
           }
@@ -30130,20 +27520,7 @@
           "dontApplyDefaultFilters": {
             "type": "boolean"
           },
-          "mainManagerUserAppId": {
-            "type": "string",
-            "format": "uuid",
-            "nullable": true
-          },
           "pCname": {
-            "type": "string",
-            "nullable": true
-          },
-          "manager1": {
-            "type": "string",
-            "nullable": true
-          },
-          "manager2": {
             "type": "string",
             "nullable": true
           }
@@ -30203,62 +27580,12 @@
           "dontApplyDefaultFilters": {
             "type": "boolean"
           },
-          "mainManagerUserAppId": {
-            "type": "string",
-            "format": "uuid",
-            "nullable": true
-          },
           "pCname": {
-            "type": "string",
-            "nullable": true
-          },
-          "manager1": {
-            "type": "string",
-            "nullable": true
-          },
-          "manager2": {
             "type": "string",
             "nullable": true
           },
           "isTenantAdmin": {
             "type": "boolean"
-          }
-        },
-        "additionalProperties": false
-      },
-      "UserWeeklyTasksDto": {
-        "type": "object",
-        "properties": {
-          "userId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "firstName": {
-            "type": "string",
-            "nullable": true
-          },
-          "lastName": {
-            "type": "string",
-            "nullable": true
-          },
-          "email": {
-            "type": "string",
-            "nullable": true
-          },
-          "ticketDepartmentId": {
-            "type": "string",
-            "nullable": true
-          },
-          "positionId": {
-            "type": "string",
-            "nullable": true
-          },
-          "tasks": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/UserCalendarListDto"
-            },
-            "nullable": true
           }
         },
         "additionalProperties": false
@@ -30358,31 +27685,6 @@
           },
           "workFlowDefination": {
             "$ref": "#/components/schemas/WorkFlowDefination"
-          },
-          "workFlowDefinationId": {
-            "type": "string",
-            "nullable": true
-          },
-          "isActive": {
-            "type": "boolean",
-            "nullable": true
-          }
-        },
-        "additionalProperties": false
-      },
-      "WorkCompanyInsertDto": {
-        "type": "object",
-        "properties": {
-          "name": {
-            "type": "string",
-            "nullable": true
-          },
-          "approveWorkDesign": {
-            "$ref": "#/components/schemas/ApproveWorkDesign"
-          },
-          "userAppId": {
-            "type": "string",
-            "nullable": true
           },
           "workFlowDefinationId": {
             "type": "string",
@@ -30571,35 +27873,6 @@
               "type": "string",
               "format": "uuid"
             },
-            "nullable": true
-          }
-        },
-        "additionalProperties": false
-      },
-      "WorkCompanyUpdateDto": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "nullable": true
-          },
-          "name": {
-            "type": "string",
-            "nullable": true
-          },
-          "approveWorkDesign": {
-            "$ref": "#/components/schemas/ApproveWorkDesign"
-          },
-          "userAppId": {
-            "type": "string",
-            "nullable": true
-          },
-          "workFlowDefinationId": {
-            "type": "string",
-            "nullable": true
-          },
-          "isActive": {
-            "type": "boolean",
             "nullable": true
           }
         },
@@ -31059,16 +28332,6 @@
           }
         },
         "additionalProperties": false
-      },
-      "WorkLocation": {
-        "enum": [
-          1,
-          2,
-          3,
-          4
-        ],
-        "type": "integer",
-        "format": "int32"
       },
       "WorkflowHead": {
         "type": "object",

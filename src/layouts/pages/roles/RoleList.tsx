@@ -17,12 +17,12 @@ import { Card, Grid, Icon, Typography } from "@mui/material";
 import { useEffect } from "react";
 import getConfiguration from "confiuration";
 import { RoleMenuApi } from "api/generated";
-import GlobalCell from "../talepYonetimi/allTickets/tableData/globalCell";
 import { useAlert } from "../hooks/useAlert";
 import { useBusy } from "../hooks/useBusy";
 import MessageBox from "../Components/MessageBox";
 import MDButton from "components/MDButton";
 import { useTranslation } from "react-i18next";
+import GlobalCell from "components/GlobalCell";
 
 function RolesList() {
   const navigate = useNavigate();

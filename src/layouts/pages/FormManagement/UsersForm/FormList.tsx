@@ -10,6 +10,7 @@ import {
 import DashboardNavbar from "examples/Navbars/DashboardNavbar";
 import MDBox from "components/MDBox";
 import DataTable from "examples/Tables/DataTable";
+import GlobalCell from "components/GlobalCell";
 import { useNavigate, useParams } from "react-router-dom";
 import {
     MessageBoxType,
@@ -25,7 +26,7 @@ import { format } from "date-fns";
 import { tr } from "date-fns/locale";
 import ReactPaginate from "react-paginate";
 import { useTranslation } from "react-i18next";
-import GlobalCell from "layouts/pages/talepYonetimi/allTickets/tableData/globalCell";
+
 import MDButton from "components/MDButton";
 import { bool } from "yup";
 import MessageBox from "layouts/pages/Components/MessageBox";

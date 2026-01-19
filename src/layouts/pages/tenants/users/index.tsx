@@ -38,7 +38,7 @@ function TenantUsersForTenant(): JSX.Element {
             try {
                 dispatchBusy({ isBusy: true });
                 // 1) Tüm kullanıcıları yükle (ad/soyad)
-                const usersRes = await userApi.apiUserGetAllUsersNameIdOnlyGet(undefined as any);
+                const usersRes = await userApi.apiUserGetAllWithOuthPhotoGet(undefined as any);
                 const usersPayload: UserAppDtoOnlyNameId[] = (usersRes as any)?.data || [];
                 const mappedUsers: Option[] = (usersPayload || []).map((u) => ({
                     id: String(u.id || ""),

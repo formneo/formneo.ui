@@ -455,7 +455,7 @@ const UserTaskModal = ({ open, onClose, initialValues, node, onSave }) => {
       try {
         const conf = getConfiguration();
         const api = new UserApi(conf);
-        const data = await api.apiUserGetAllUsersAsyncWitNameGet(value);
+        const data = await api.apiUserGetAllUsersWithNameGet(value);
         const pureData = data.data;
         setSearchByName(pureData);
       } catch (error) {

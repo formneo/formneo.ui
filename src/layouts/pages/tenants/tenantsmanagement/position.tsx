@@ -1,13 +1,9 @@
-
 import React, { useEffect, useState } from "react";
-import {
-  getPositions,
-  addPosition,
-  updatePosition,
-  softDeletePosition,
-  Position,
-} from "api/positionService";
-import { getDepartments, Department } from "api/departmentService";
+import { PositionsApi, PositionListDto, CreatePositionDto, UpdatePositionDto } from "api/generated";
+import getConfiguration from "confiuration";
+import DashboardLayout from "examples/LayoutContainers/DashboardLayout";
+import DashboardNavbar from "examples/Navbars/DashboardNavbar";
+import Footer from "examples/Footer";
 import MDBox from "components/MDBox";
 import MDButton from "components/MDButton";
 import MDInput from "components/MDInput";
@@ -16,51 +12,81 @@ import {
   Typography,
   Grid,
   IconButton,
-  Switch,
   Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
-  FormControlLabel,
   MenuItem,
   Select,
   InputLabel,
   FormControl,
+  TextField,
 } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import AddIcon from "@mui/icons-material/Add";
 
-const defaultForm = { name: "", code: "", departmentId: "", isActive: true };
+const defaultForm = { name: "", description: "", parentPositionId: "" };
 
 function PositionManagement() {
-  const [positions, setPositions] = useState<Position[]>([]);
-  const [departments, setDepartments] = useState<Department[]>([]);
+  const [positions, setPositions] = useState<PositionListDto[]>([]);
+  const [filteredPositions, setFilteredPositions] = useState<PositionListDto[]>([]);
   const [search, setSearch] = useState("");
-  const [departmentFilter, setDepartmentFilter] = useState<string>("all");
-  const [activeFilter, setActiveFilter] = useState<string>("all");
   const [openDialog, setOpenDialog] = useState(false);
   const [form, setForm] = useState<any>(defaultForm);
   const [editId, setEditId] = useState<string | null>(null);
 
-  const fetch = async () => {
-    const isActive = activeFilter === "all" ? null : activeFilter === "active";
-    const departmentId = departmentFilter === "all" ? undefined : departmentFilter;
-    setPositions(await getPositions({ search, departmentId, isActive }));
+  const fetchPositions = async () => {
+    try {
+      const conf = getConfiguration();
+      const api = new PositionsApi(conf);
+      const response = await api.apiPositionsGet();
+      setPositions(response.data || []);
+    } catch (error) {
+      console.error("Pozisyon listesi alınırken hata oluştu:", error);
+    }
   };
 
-  useEffect(() => { fetch(); }, [search, departmentFilter, activeFilter]);
-  useEffect(() => { getDepartments().then(setDepartments); }, []);
+  useEffect(() => {
+    fetchPositions();
+  }, []);
 
-  const handleEdit = (pos: Position) => {
-    setForm(pos);
-    setEditId(pos.id);
+  useEffect(() => {
+    let filtered = [...positions];
+    
+    // Search filter
+    if (search) {
+      const searchLower = search.toLowerCase();
+      filtered = filtered.filter(
+        (pos) =>
+          pos.name?.toLowerCase().includes(searchLower) ||
+          pos.description?.toLowerCase().includes(searchLower)
+      );
+    }
+    
+    setFilteredPositions(filtered);
+  }, [positions, search]);
+
+  const handleEdit = (pos: PositionListDto) => {
+    setForm({
+      name: pos.name || "",
+      description: pos.description || "",
+      parentPositionId: pos.parentPositionId || "",
+    });
+    setEditId(pos.id || null);
     setOpenDialog(true);
   };
 
-  const handleDelete = async (id: string) => {
-    await softDeletePosition(id);
-    fetch();
+  const handleDelete = async (id: string | null | undefined) => {
+    if (!id) return;
+    try {
+      const conf = getConfiguration();
+      const api = new PositionsApi(conf);
+      await api.apiPositionsDelete(id);
+      fetchPositions();
+    } catch (error) {
+      console.error("Pozisyon silinirken hata oluştu:", error);
+    }
   };
 
   const handleDialogClose = () => {
@@ -71,138 +97,121 @@ function PositionManagement() {
 
   const handleSave = async () => {
     if (!form.name) return;
-    if (editId) {
-      await updatePosition(editId, form);
-    } else {
-      await addPosition(form);
+    try {
+      const conf = getConfiguration();
+      const api = new PositionsApi(conf);
+      
+      if (editId) {
+        const updateDto: UpdatePositionDto = {
+          id: editId,
+          name: form.name || null,
+          description: form.description || null,
+          parentPositionId: form.parentPositionId || null,
+        };
+        await api.apiPositionsPut(updateDto);
+      } else {
+        const createDto: CreatePositionDto = {
+          name: form.name || null,
+          description: form.description || null,
+          parentPositionId: form.parentPositionId || null,
+        };
+        await api.apiPositionsPost(createDto);
+      }
+      handleDialogClose();
+      fetchPositions();
+    } catch (error) {
+      console.error("Pozisyon kaydedilirken hata oluştu:", error);
     }
-    handleDialogClose();
-    fetch();
   };
 
   return (
-    <MDBox p={3}>
-      <Typography variant="h4" mb={2}>Pozisyon Yönetimi</Typography>
-      <Card sx={{ p: 2, mb: 2 }}>
-        <Grid container spacing={2} alignItems="center">
-          <Grid item xs={12} md={3}>
-            <MDInput
-              label="Ara (Pozisyon Adı/Kodu)"
-              value={search}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearch(e.target.value)}
-              fullWidth
-            />
+    <DashboardLayout>
+      <DashboardNavbar />
+      <MDBox py={3}>
+        <Card sx={{ p: 2, mb: 2 }}>
+          <Typography variant="h5" sx={{ fontWeight: 700, mb: 2 }}>
+            Pozisyon Yönetimi
+          </Typography>
+          <Grid container spacing={2} alignItems="center">
+            <Grid item xs={12} md={4}>
+              <MDInput
+                label="Ara (Pozisyon Adı/Açıklama)"
+                value={search}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearch(e.target.value)}
+                fullWidth
+              />
+            </Grid>
+            <Grid item xs={12} md={4}>
+              <MDButton color="info" startIcon={<AddIcon />} onClick={() => setOpenDialog(true)}>
+                Yeni Pozisyon
+              </MDButton>
+            </Grid>
           </Grid>
-          <Grid item xs={12} md={3}>
-            <FormControl fullWidth>
-              <InputLabel>Departman</InputLabel>
+        </Card>
+        <Card>
+          <Grid container sx={{ p: 2, fontWeight: 600, borderBottom: "1px solid #eee" }}>
+            <Grid item xs={4}>Pozisyon Adı</Grid>
+            <Grid item xs={4}>Açıklama</Grid>
+            <Grid item xs={2}>Üst Pozisyon</Grid>
+            <Grid item xs={2}>Aksiyonlar</Grid>
+          </Grid>
+          {filteredPositions.map(pos => (
+            <Grid container key={pos.id} sx={{ p: 2, borderBottom: "1px solid #f5f5f5" }} alignItems="center">
+              <Grid item xs={4}>{pos.name || "-"}</Grid>
+              <Grid item xs={4}>{pos.description || "-"}</Grid>
+              <Grid item xs={2}>{positions.find(p => p.id === pos.parentPositionId)?.name || "-"}</Grid>
+              <Grid item xs={2}>
+                <IconButton color="info" onClick={() => handleEdit(pos)}><EditIcon /></IconButton>
+                <IconButton color="error" onClick={() => handleDelete(pos.id)}><DeleteIcon /></IconButton>
+              </Grid>
+            </Grid>
+          ))}
+          {filteredPositions.length === 0 && (
+            <Typography align="center" sx={{ p: 3, color: "#aaa" }}>Kayıt bulunamadı.</Typography>
+          )}
+        </Card>
+        <Dialog open={openDialog} onClose={handleDialogClose} maxWidth="sm" fullWidth>
+          <DialogTitle>{editId ? "Pozisyon Düzenle" : "Yeni Pozisyon"}</DialogTitle>
+          <DialogContent>
+            <MDInput
+              label="Pozisyon Adı *"
+              value={form.name}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setForm({ ...form, name: e.target.value })}
+              fullWidth
+              required
+              sx={{ mb: 2 }}
+            />
+            <TextField
+              label="Açıklama"
+              value={form.description}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setForm({ ...form, description: e.target.value })}
+              fullWidth
+              multiline
+              rows={3}
+              sx={{ mb: 2 }}
+            />
+            <FormControl fullWidth sx={{ mb: 2 }}>
+              <InputLabel>Üst Pozisyon</InputLabel>
               <Select
-                value={departmentFilter}
-                label="Departman"
-                onChange={(e) => setDepartmentFilter(e.target.value)}
+                value={form.parentPositionId || ""}
+                label="Üst Pozisyon"
+                onChange={e => setForm({ ...form, parentPositionId: e.target.value })}
               >
-                <MenuItem value="all">Tümü</MenuItem>
-                {departments.map(dep => (
-                  <MenuItem key={dep.id} value={dep.id}>{dep.name}</MenuItem>
+                <MenuItem value="">Yok</MenuItem>
+                {positions.filter(p => !editId || p.id !== editId).map(p => (
+                  <MenuItem key={p.id} value={p.id || ""}>{p.name || "-"}</MenuItem>
                 ))}
               </Select>
             </FormControl>
-          </Grid>
-          <Grid item xs={12} md={3}>
-            <FormControl fullWidth>
-              <InputLabel>Aktif/Pasif</InputLabel>
-              <Select
-                value={activeFilter}
-                label="Aktif/Pasif"
-                onChange={(e) => setActiveFilter(e.target.value)}
-              >
-                <MenuItem value="all">Tümü</MenuItem>
-                <MenuItem value="active">Aktif</MenuItem>
-                <MenuItem value="passive">Pasif</MenuItem>
-              </Select>
-            </FormControl>
-          </Grid>
-          <Grid item xs={12} md={3}>
-            <MDButton color="info" startIcon={<AddIcon />} onClick={() => setOpenDialog(true)}>
-              Yeni Pozisyon
-            </MDButton>
-          </Grid>
-        </Grid>
-      </Card>
-      <Card>
-        <Grid container sx={{ p: 2, fontWeight: 600, borderBottom: "1px solid #eee" }}>
-          <Grid item xs={3}>Pozisyon Adı</Grid>
-          <Grid item xs={2}>Pozisyon Kodu</Grid>
-          <Grid item xs={3}>Bağlı Departman</Grid>
-          <Grid item xs={2}>Durum</Grid>
-          <Grid item xs={2}>Aksiyonlar</Grid>
-        </Grid>
-        {positions.map(pos => (
-          <Grid container key={pos.id} sx={{ p: 2, borderBottom: "1px solid #f5f5f5" }} alignItems="center">
-            <Grid item xs={3}>{pos.name}</Grid>
-            <Grid item xs={2}>{pos.code}</Grid>
-            <Grid item xs={3}>{departments.find(d => d.id === pos.departmentId)?.name || "-"}</Grid>
-            <Grid item xs={2}>
-              <Switch checked={pos.isActive} disabled />
-              {pos.isActive ? "Aktif" : "Pasif"}
-            </Grid>
-            <Grid item xs={2}>
-              <IconButton color="info" onClick={() => handleEdit(pos)}><EditIcon /></IconButton>
-              <IconButton color="error" onClick={() => handleDelete(pos.id)}><DeleteIcon /></IconButton>
-            </Grid>
-          </Grid>
-        ))}
-        {positions.length === 0 && (
-          <Typography align="center" sx={{ p: 3, color: "#aaa" }}>Kayıt bulunamadı.</Typography>
-        )}
-      </Card>
-      <Dialog open={openDialog} onClose={handleDialogClose} maxWidth="sm" fullWidth>
-        <DialogTitle>{editId ? "Pozisyon Düzenle" : "Yeni Pozisyon"}</DialogTitle>
-        <DialogContent>
-          <MDInput
-            label="Pozisyon Adı *"
-            value={form.name}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setForm({ ...form, name: e.target.value })}
-            fullWidth
-            required
-            sx={{ mb: 2 }}
-          />
-          <MDInput
-            label="Pozisyon Kodu"
-            value={form.code}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setForm({ ...form, code: e.target.value })}
-            fullWidth
-            sx={{ mb: 2 }}
-          />
-          <FormControl fullWidth sx={{ mb: 2 }}>
-            <InputLabel>Bağlı Departman</InputLabel>
-            <Select
-              value={form.departmentId || ""}
-              label="Bağlı Departman"
-              onChange={(e) => setForm({ ...form, departmentId: e.target.value })}
-            >
-              <MenuItem value="">Yok</MenuItem>
-              {departments.map(d => (
-                <MenuItem key={d.id} value={d.id}>{d.name}</MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-          <FormControlLabel
-            control={
-              <Switch
-                checked={form.isActive}
-                onChange={e => setForm({ ...form, isActive: e.target.checked })}
-              />
-            }
-            label="Aktif"
-          />
-        </DialogContent>
-        <DialogActions>
-          <MDButton onClick={handleDialogClose} color="secondary">İptal</MDButton>
-          <MDButton onClick={handleSave} color="info">Kaydet</MDButton>
-        </DialogActions>
-      </Dialog>
-    </MDBox>
+          </DialogContent>
+          <DialogActions>
+            <MDButton onClick={handleDialogClose} color="secondary">İptal</MDButton>
+            <MDButton onClick={handleSave} color="info">Kaydet</MDButton>
+          </DialogActions>
+        </Dialog>
+      </MDBox>
+      <Footer />
+    </DashboardLayout>
   );
 }
 

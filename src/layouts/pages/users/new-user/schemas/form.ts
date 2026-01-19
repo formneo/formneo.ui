@@ -70,18 +70,6 @@ let form = {
       type: "text",
       errorMsg: "Department is required.",
     },
-    manager1: {
-      name: "manager1",
-      label: "First Manager",
-      type: "text",
-      errorMsg: "First Manager is required.",
-    },
-    manager2: {
-      name: "manager2",
-      label: "Second Manager",
-      type: "text",
-      errorMsg: "Second Manager is required.",
-    },
     title: {
       name: "title",
       label: "Title",

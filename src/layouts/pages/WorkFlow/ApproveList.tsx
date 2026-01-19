@@ -100,11 +100,11 @@ import ReactPaginate from "react-paginate";
 import DashboardLayout from "examples/LayoutContainers/DashboardLayout";
 import getConfiguration from "confiuration";
 import DataTable from "examples/Tables/DataTable";
-import GlobalCell from "../talepYonetimi/allTickets/tableData/globalCell";
+import GlobalCell from "components/GlobalCell";
 import MDBox from "components/MDBox";
 import DashboardNavbar from "examples/Navbars/DashboardNavbar";
 import MessageBox from "../Components/MessageBox";
-import HistoryDialog from "components/HistoryDialog/HistoryDialog";
+
 
 import emails from "../../../approvers.json";
 // setTheme("sap_horizon");

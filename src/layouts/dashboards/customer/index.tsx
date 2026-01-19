@@ -50,7 +50,7 @@ import dataTableData from "layouts/dashboards/sales/data/dataTableData";
 import MDInput from "components/MDInput";
 import { Autocomplete } from "@mui/material";
 import MDAvatar from "components/MDAvatar";
-import { DashboardsApi, GetSumTicketDto, GetTicketCustomerOpenCloseDto, TicketApi, UserApi, UserAppDto } from "api/generated/api";
+import { DashboardsApi, GetSumTicketDto, GetTicketCustomerOpenCloseDto, UserApi, UserAppDto } from "api/generated/api";
 import getConfiguration from "confiuration";
 import { useBusy } from "layouts/pages/hooks/useBusy";
 import { useAlert } from "layouts/pages/hooks/useAlert";
@@ -133,144 +133,8 @@ function CustomerSales(): JSX.Element {
   };
 
   useEffect(() => {
-    const fetchUserAppName = async () => {
-      try {
-        dispatchBusy({ isBusy: true });
-        const conf = getConfiguration();
-        const api = new TicketApi(conf);
-        const data = await api.apiTicketCheckPermGet();
-
-        var splittedName = data.data.name.split(" ");
-
-        let firstName = splittedName[0];
-        let lastName = "";
-
-        // ad soyad 2 kelimeden uzunsa bu şekilde bir kontrol
-        if (splittedName.length > 1) {
-          lastName = splittedName.slice(1).join(" ");
-        }
-        setFormData({
-          ...formData,
-          selectedKullaniciId: data.data.id,
-          startDate: "",
-          endDate: "",
-        });
-        setSelectedKullanici({
-          id: data.data.id,
-          firstName: firstName,
-          lastName: lastName,
-        });
-
-        if (data.data.id) {
-          try {
-            setTableData([]); // Clear existing data
-            const conf = getConfiguration();
-            const api = new DashboardsApi(conf);
-            const data1 = await api.apiDashboardsCustomerAssignTeamInfoGet(
-              data.data.id,
-              formatDate(startDate),
-              formatDate(endDate)
-            );
 
 
-
-            const openCloseData = await api.apiDashboardsGetCustomerOpenCloseeGet(
-              data.data.id,
-              formatDate(startDate),
-              formatDate(endDate)
-            );
-
-            const openCount = openCloseData.data.filter(item => item.name === "Açık")[0].count;
-            const closeCount = openCloseData.data.filter(item => item.name === "Kapalı")[0].count;
-
-
-            setopenTicketCount(openCount.toString());
-            setcloseTicketCount(closeCount.toString());
-
-            console.log("API Response:", data1); // Debug log
-
-            if (data1?.data && data1.data.length > 0) {
-              const newTableData = data1.data.map((item) => ({
-                Temsilci: item.name,
-                "Toplam Talep": item.totalCount,
-                "Açık Talep": item.openCount,
-                "Birim Testi": item.unitTest,
-                "Müşteri Testi": item.customerTest,
-              }));
-              setTableData(newTableData);
-            } else {
-              setTableData([
-                {
-                  Temsilci: "Veri yok",
-                  "Toplam Talep": 0,
-                  "Açık Talep": 0,
-                  "Çözümlü Talep": 0,
-                },
-              ]);
-            }
-          } catch (error) {
-            dispatchAlert({
-              message: "Hata oluştu : " + error,
-              type: MessageBoxType.Error,
-            });
-            setTableData([
-              {
-                Müşteri: "Hata oluştu",
-                "Toplam Talep": 0,
-                "Açık Talep": 0,
-                "Çözümlü Talep": 0,
-              },
-            ]);
-          }
-        } else {
-          setTableData([
-            {
-              Müşteri: "Veri yok",
-              "Toplam Talep": 0,
-              "Açık Talep": 0,
-              "Çözümlü Talep": 0,
-            },
-          ]);
-        }
-
-        if (data.data.id) {
-          const conf = getConfiguration();
-          const api = new DashboardsApi(conf);
-          const data2 = await api.apiDashboardsGetTicketAsyncGet(
-            data.data.id,
-            formatDate(startDate),
-            formatDate(endDate)
-          );
-
-          const acikTalep =
-            data2.data.sumCount -
-            data2.data.closedCount -
-            data2.data.draftCount -
-            data2.data.canceledCount;
-
-          setTicketCountData({
-            sumCount: data2.data.sumCount,
-            openCount: data2.data.openCount,
-            resolvedCount: data2.data.resolvedCount,
-          });
-        } else if (!selectedKullanici) {
-          setTicketCountData({
-            sumCount: 0,
-            openCount: 0,
-            resolvedCount: 0,
-          });
-        }
-      } catch (error) {
-        dispatchAlert({
-          message: "Hata oluştu : " + error,
-          type: MessageBoxType.Error,
-        });
-      } finally {
-        dispatchBusy({ isBusy: false });
-      }
-    };
-
-    fetchUserAppName();
   }, []);
 
   const formatDate = (date: string): string => {

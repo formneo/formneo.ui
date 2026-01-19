@@ -1,11 +1,9 @@
 import React, { useEffect, useState } from "react";
-import {
-  getDepartments,
-  addDepartment,
-  updateDepartment,
-  softDeleteDepartment,
-  Department,
-} from "api/departmentService";
+import { OrgUnitsApi, OrgUnitListDto, OrgUnitInsertDto, OrgUnitUpdateDto } from "api/generated";
+import getConfiguration from "confiuration";
+import DashboardLayout from "examples/LayoutContainers/DashboardLayout";
+import DashboardNavbar from "examples/Navbars/DashboardNavbar";
+import Footer from "examples/Footer";
 import MDBox from "components/MDBox";
 import MDButton from "components/MDButton";
 import MDInput from "components/MDInput";
@@ -29,10 +27,11 @@ import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import AddIcon from "@mui/icons-material/Add";
 
-const defaultForm = { name: "", code: "", parentDepartmentId: "", isActive: true };
+const defaultForm = { name: "", code: "", parentOrgUnitId: "", isActive: true };
 
 function DepartmentManagement() {
-  const [departments, setDepartments] = useState<Department[]>([]);
+  const [orgUnits, setOrgUnits] = useState<OrgUnitListDto[]>([]);
+  const [filteredOrgUnits, setFilteredOrgUnits] = useState<OrgUnitListDto[]>([]);
   const [search, setSearch] = useState("");
   const [activeFilter, setActiveFilter] = useState<string>("all");
   const [openDialog, setOpenDialog] = useState(false);
@@ -40,21 +39,64 @@ function DepartmentManagement() {
   const [editId, setEditId] = useState<string | null>(null);
 
   const fetch = async () => {
-    const isActive = activeFilter === "all" ? null : activeFilter === "active";
-    setDepartments(await getDepartments({ search, isActive }));
+    try {
+      const conf = getConfiguration();
+      const api = new OrgUnitsApi(conf);
+      const response = await api.apiOrgUnitsGet();
+      setOrgUnits(response.data || []);
+    } catch (error) {
+      console.error("OrgUnit listesi alınırken hata oluştu:", error);
+    }
   };
 
-  useEffect(() => { fetch(); }, [search, activeFilter]);
+  useEffect(() => {
+    fetch();
+  }, []);
 
-  const handleEdit = (dep: Department) => {
-    setForm(dep);
-    setEditId(dep.id);
+  useEffect(() => {
+    let filtered = [...orgUnits];
+    
+    // Search filter
+    if (search) {
+      const searchLower = search.toLowerCase();
+      filtered = filtered.filter(
+        (unit) =>
+          unit.name?.toLowerCase().includes(searchLower) ||
+          unit.code?.toLowerCase().includes(searchLower)
+      );
+    }
+    
+    // Active filter
+    if (activeFilter === "active") {
+      filtered = filtered.filter((unit) => unit.isActive === true);
+    } else if (activeFilter === "passive") {
+      filtered = filtered.filter((unit) => unit.isActive === false);
+    }
+    
+    setFilteredOrgUnits(filtered);
+  }, [orgUnits, search, activeFilter]);
+
+  const handleEdit = (unit: OrgUnitListDto) => {
+    setForm({
+      name: unit.name || "",
+      code: unit.code || "",
+      parentOrgUnitId: unit.parentOrgUnitId || "",
+      isActive: unit.isActive ?? true,
+    });
+    setEditId(unit.id || null);
     setOpenDialog(true);
   };
 
-  const handleDelete = async (id: string) => {
-    await softDeleteDepartment(id);
-    fetch();
+  const handleDelete = async (id: string | null | undefined) => {
+    if (!id) return;
+    try {
+      const conf = getConfiguration();
+      const api = new OrgUnitsApi(conf);
+      await api.apiOrgUnitsIdDelete(id);
+      fetch();
+    } catch (error) {
+      console.error("OrgUnit silinirken hata oluştu:", error);
+    }
   };
 
   const handleDialogClose = () => {
@@ -65,20 +107,44 @@ function DepartmentManagement() {
 
   const handleSave = async () => {
     if (!form.name) return;
-    if (editId) {
-      await updateDepartment(editId, form);
-    } else {
-      await addDepartment(form);
+    try {
+      const conf = getConfiguration();
+      const api = new OrgUnitsApi(conf);
+      
+      if (editId) {
+        const updateDto: OrgUnitUpdateDto = {
+          id: editId,
+          name: form.name || null,
+          code: form.code || null,
+          parentOrgUnitId: form.parentOrgUnitId || null,
+          isActive: form.isActive ?? true,
+        };
+        await api.apiOrgUnitsPut(updateDto);
+      } else {
+        const insertDto: OrgUnitInsertDto = {
+          name: form.name || null,
+          code: form.code || null,
+          parentOrgUnitId: form.parentOrgUnitId || null,
+          isActive: form.isActive ?? true,
+        };
+        await api.apiOrgUnitsPost(insertDto);
+      }
+      handleDialogClose();
+      fetch();
+    } catch (error) {
+      console.error("OrgUnit kaydedilirken hata oluştu:", error);
     }
-    handleDialogClose();
-    fetch();
   };
 
   return (
-    <MDBox p={3}>
-      <Typography variant="h4" mb={2}>Departman Yönetimi</Typography>
-      <Card sx={{ p: 2, mb: 2 }}>
-        <Grid container spacing={2} alignItems="center">
+    <DashboardLayout>
+      <DashboardNavbar />
+      <MDBox py={3}>
+        <Card sx={{ p: 2, mb: 2 }}>
+          <Typography variant="h5" sx={{ fontWeight: 700, mb: 2 }}>
+            Departman Yönetimi
+          </Typography>
+          <Grid container spacing={2} alignItems="center">
           <Grid item xs={12} md={3}>
             <MDInput
               label="Ara (Ad/Kod)"
@@ -116,22 +182,22 @@ function DepartmentManagement() {
           <Grid item xs={2}>Durum</Grid>
           <Grid item xs={2}>Aksiyonlar</Grid>
         </Grid>
-        {departments.map(dep => (
-          <Grid container key={dep.id} sx={{ p: 2, borderBottom: "1px solid #f5f5f5" }} alignItems="center">
-            <Grid item xs={3}>{dep.name}</Grid>
-            <Grid item xs={2}>{dep.code}</Grid>
-            <Grid item xs={3}>{departments.find(d => d.id === dep.parentDepartmentId)?.name || "-"}</Grid>
+        {filteredOrgUnits.map(unit => (
+          <Grid container key={unit.id} sx={{ p: 2, borderBottom: "1px solid #f5f5f5" }} alignItems="center">
+            <Grid item xs={3}>{unit.name || "-"}</Grid>
+            <Grid item xs={2}>{unit.code || "-"}</Grid>
+            <Grid item xs={3}>{orgUnits.find(d => d.id === unit.parentOrgUnitId)?.name || "-"}</Grid>
             <Grid item xs={2}>
-              <Switch checked={dep.isActive} disabled />
-              {dep.isActive ? "Aktif" : "Pasif"}
+              <Switch checked={unit.isActive ?? false} disabled />
+              {unit.isActive ? "Aktif" : "Pasif"}
             </Grid>
             <Grid item xs={2}>
-              <IconButton color="info" onClick={() => handleEdit(dep)}><EditIcon /></IconButton>
-              <IconButton color="error" onClick={() => handleDelete(dep.id)}><DeleteIcon /></IconButton>
+              <IconButton color="info" onClick={() => handleEdit(unit)}><EditIcon /></IconButton>
+              <IconButton color="error" onClick={() => handleDelete(unit.id)}><DeleteIcon /></IconButton>
             </Grid>
           </Grid>
         ))}
-        {departments.length === 0 && (
+        {filteredOrgUnits.length === 0 && (
           <Typography align="center" sx={{ p: 3, color: "#aaa" }}>Kayıt bulunamadı.</Typography>
         )}
       </Card>
@@ -156,13 +222,13 @@ function DepartmentManagement() {
           <FormControl fullWidth sx={{ mb: 2 }}>
             <InputLabel>Bağlı Departman</InputLabel>
             <Select
-              value={form.parentDepartmentId || ""}
+              value={form.parentOrgUnitId || ""}
               label="Bağlı Departman"
-              onChange={e => setForm({ ...form, parentDepartmentId: e.target.value })}
+              onChange={e => setForm({ ...form, parentOrgUnitId: e.target.value })}
             >
               <MenuItem value="">Yok</MenuItem>
-              {departments.filter(d => !editId || d.id !== editId).map(d => (
-                <MenuItem key={d.id} value={d.id}>{d.name}</MenuItem>
+              {orgUnits.filter(d => !editId || d.id !== editId).map(d => (
+                <MenuItem key={d.id} value={d.id || ""}>{d.name || "-"}</MenuItem>
               ))}
             </Select>
           </FormControl>
@@ -181,7 +247,9 @@ function DepartmentManagement() {
           <MDButton onClick={handleSave} color="info">Kaydet</MDButton>
         </DialogActions>
       </Dialog>
-    </MDBox>
+      </MDBox>
+      <Footer />
+    </DashboardLayout>
   );
 }
 

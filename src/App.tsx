@@ -75,32 +75,24 @@ const ResetCover = lazy(() => import("layouts/authentication/reset-password/cove
 const Analytics = lazy(() => import("layouts/dashboards/analytics"));
 const Sales = lazy(() => import("layouts/dashboards/sales"));
 const CustomerSales = lazy(() => import("layouts/dashboards/customer"));
-const QueryList = lazy(() => import("layouts/pages/queryBuild/queryList"));
-const QueryDetail = lazy(() => import("layouts/pages/queryBuild/queryDetail/queryDetail"));
+
 // import ChatPage from "layouts/applications/chat/chatpage";
-const CalendarPage = lazy(() => import("layouts/pages/calendar"));
-const CalendarList = lazy(() => import("layouts/pages/calendar/list"));
+
 const PositionPage = lazy(() => import("layouts/pages/position"));
 const PositionDetailPage = lazy(() => import("layouts/pages/position/details"));
-const OrganizationalChart = lazy(() => import("layouts/pages/organizational-chart"));
 const IsTakipYazilimi = lazy(() => import("layouts/pages/articles/IsTakipYazilimi"));
 const ProjeYonetimiYazilimi = lazy(() => import("layouts/pages/articles/ProjeYonetimiYazilimi"));
 const FormRoleList = lazy(() => import("layouts/pages/FormManagement/form-role/list"));
 const FormRoleDetail = lazy(() => import("layouts/pages/FormManagement/form-role/detail"));
 import { useTranslation } from "react-i18next";
-const CompanyRelation = lazy(() => import("layouts/pages/companyRelation"));
-const CompanyRelationDetail = lazy(() => import("layouts/pages/companyRelation/detail"));
 
-const TicketProjects = lazy(() => import("layouts/pages/ticketProjects"));
-const CreateTicketProject = lazy(() => import("layouts/pages/ticketProjects/createTicketProject"));
+
 const FormAuth = lazy(() => import("layouts/pages/FormManagement/FormAuth/FormAuth"));
 const FormAuthDetail = lazy(() => import("layouts/pages/FormManagement/FormAuth/FormAuthDetail"));
 const FormList = lazy(() => import("layouts/pages/FormManagement/UsersForm/FormList"));
 const TenantFormRole = lazy(() => import("layouts/pages/FormManagement/tenant-form-role"));
 const TenantFormRoleList = lazy(() => import("layouts/pages/FormManagement/tenant-form-role/list"));
 const ResumeBuild = lazy(() => import("layouts/pages/resumeBuilder"));
-const Inventory = lazy(() => import("layouts/pages/inventory"));
-const CreateInventory = lazy(() => import("layouts/pages/inventory/createInventory"));
 const VpnDashboard = lazy(() => import("layouts/pages/vpnPage"));
 const KanbanPage = lazy(() => import("layouts/pages/kanban"));
 const CustomerList = lazy(() => import("layouts/pages/customer"));
@@ -322,28 +314,14 @@ export default function App() {
               
               <Route path="/pages/demos/alldemos" element={<AllDemos />} />
               <Route path="/tickets/statistic" element={<Sales />} />
-              <Route path="/queryBuild" element={<QueryList />} />
-              <Route path="/queryBuild/detail" element={<QueryDetail />} />
-              <Route path="/queryBuild/detail/:id" element={<QueryDetail />} />
-              <Route path="/calendar" element={<CalendarList />} />
-              <Route path="/calendar/detail" element={<CalendarPage />} />
-              <Route path="/calendar/detail/:id" element={<CalendarPage />} />
+    
+
               <Route path="/position" element={<PositionPage />} />
               <Route path="/position/detail" element={<PositionDetailPage />} />
               <Route path="/position/detail/:id" element={<PositionDetailPage />} />
-              <Route path="/organizationalChart" element={<OrganizationalChart />} />
               <Route path="/form-role" element={<FormRoleList />} />
               <Route path="/form-role/detail" element={<FormRoleDetail />} />
               <Route path="/form-role/detail/:id" element={<FormRoleDetail />} />
-              <Route path="/companyRelation" element={<CompanyRelation />} />
-              <Route path="/companyRelation/detail" element={<CompanyRelationDetail />} />
-              <Route path="/companyRelation/detail/:id" element={<CompanyRelationDetail />} />
-              <Route path="/ticketProjects" element={<TicketProjects />} />
-              <Route path="/ticketProjects/detail" element={<CreateTicketProject />} />
-              <Route path="/ticketProjects/detail/:id" element={<CreateTicketProject />} />
-              <Route path="/inventory" element={<Inventory />} />
-              <Route path="/inventory/detail" element={<CreateInventory />} />
-              <Route path="/inventory/detail/:id" element={<CreateInventory />} />
               <Route path="/resumeBuild" element={<ResumeBuild />} />
               <Route path="/vpn" element={<VpnDashboard />} />
               <Route path="/kanban" element={<KanbanPage />} />

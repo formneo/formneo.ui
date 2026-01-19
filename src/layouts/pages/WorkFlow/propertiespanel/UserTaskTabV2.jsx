@@ -288,7 +288,7 @@ const UserTaskTabV2 = ({
       try {
         const conf = getConfiguration();
         const api = new UserApi(conf);
-        const data = await api.apiUserGetAllUsersAsyncWitNameGet(value);
+        const data = await api.apiUserGetAllUsersWithNameNameGet(value);
         const pureData = data.data;
         setSearchByName(pureData);
       } catch (error) {

@@ -78,7 +78,7 @@ export default function AprroveTab({ initialValues, node, onButtonClick }) {
 
       var conf = getConfiguration();
       var api = new UserApi(conf);
-      var data = await api.apiUserGetAllUsersAsyncWitNameGet(value);
+      var data = await api.apiUserGetAllUsersWithNameGet(value);
       var pureData = data.data;
       setSearchByName(pureData);
 

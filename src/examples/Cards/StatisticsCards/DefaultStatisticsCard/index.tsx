@@ -30,13 +30,14 @@ import MDButton from "components/MDButton";
 import { Dialog, DialogActions, DialogContent, DialogTitle, Icon, Tooltip } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import DataTable from "examples/Tables/DataTable";
-import GlobalCell from "layouts/pages/talepYonetimi/allTickets/tableData/globalCell";
+
 import { useTranslation } from "react-i18next";
 import { useBusy } from "layouts/pages/hooks/useBusy";
 import { useAlert } from "layouts/pages/hooks/useAlert";
 import getConfiguration from "confiuration";
 import { FormAssignApi } from "api/generated";
 import { MessageBoxType } from "@ui5/webcomponents-react";
+import GlobalCell from "components/GlobalCell";
 // Declaring prop types for DefaultStatisticsCard
 interface Props {
   title: string;

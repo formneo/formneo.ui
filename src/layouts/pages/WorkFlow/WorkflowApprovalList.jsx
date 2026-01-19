@@ -20,9 +20,7 @@ import {
   WorkFlowApi,
   WorkFlowContiuneApiDto,
 } from "api/generated";
-
-// Basit GlobalCell component'i
-const GlobalCell = ({ value }) => <span>{value || "-"}</span>;
+import GlobalCell from "../../../components/GlobalCell";
 
 function WorkflowApprovalList() {
   const navigate = useNavigate();

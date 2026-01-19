@@ -47,10 +47,11 @@ import { useEffect, useState } from "react";
 import form from "layouts/pages/users/new-user/schemas/form";
 import Header from "./components/Header";
 import getConfiguration from "confiuration";
-import { CreateUserDto, UpdateUserDto, UserApi, WorkCompanyApi, WorkCompanyDto } from "api/generated";
+import { CreateUserDto, UpdateUserDto, UserApi } from "api/generated";
 import UserTenantRoles from "./components/UserTenantRoles";
 import UserTenantFormRoles from "./components/UserTenantFormRoles";
 import UserTenantAdmin from "./components/UserTenantAdmin";
+import UserOrganization from "./components/UserOrganization";
 import { useBusy } from "layouts/pages/hooks/useBusy";
 import { useNavigate, useLocation } from "react-router-dom";
 import { MessageBoxType } from "@ui5/webcomponents-react";
@@ -60,8 +61,6 @@ import DashboardNavbar from "examples/Navbars/DashboardNavbar";
 import NewPaswword from "./components/ChangePassword/newpassord";
 
 import validations from "layouts/pages/users/new-user/schemas/validations";
-import RequestManagement from "./components/TicketManagement";
-import TicketManagement from "./components/TicketManagement";
 
 function Settings(): JSX.Element {
   const currentValidation = validations[0];
@@ -149,6 +148,7 @@ function Settings(): JSX.Element {
     ...(!isTenantMode && isGlobalAdmin ? [{ label: "Hesaplar", icon: "pi pi-id-card", key: "accounts" }] : []),
     ...(!isTenantMode && isGlobalAdmin ? [{ label: "Tenantlar", icon: "pi pi-users", key: "userTenants" }] : []),
     // Tenant özellikleri tenant modda göster
+    ...(isTenantMode ? [{ label: "Organizasyon", icon: "pi pi-building", key: "organization" }] : []),
     ...(isTenantMode ? [{ label: "Ticket Yetkileri", icon: "pi pi-ticket", key: "ticket" }] : []),
     ...(isTenantMode ? [{ label: "Tenant Rolleri", icon: "pi pi-users", key: "tenantRoles" }] : []),
     ...(isTenantMode ? [{ label: "Form Rolleri", icon: "pi pi-shield", key: "tenantFormRoles" }] : []),
@@ -184,7 +184,6 @@ function Settings(): JSX.Element {
   const [userId, setUserId] = useState<string | null>(null);
   const navigate = useNavigate(); // Navig
   const location = useLocation();
-  const [companies, setCompanies] = useState<WorkCompanyDto[]>([]);
 
 
 
@@ -215,19 +214,7 @@ function Settings(): JSX.Element {
     }
   }, []);
 
-  useEffect(() => {
-    const fetchCompanies = async () => {
-      try {
-        const conf = getConfiguration();
-        const api = new WorkCompanyApi(conf);
-        const res = await api.apiWorkCompanyGet();
-        setCompanies(res.data as any);
-      } catch (e) {
-        // sessiz geç
-      }
-    };
-    if (isGlobalAdmin) fetchCompanies();
-  }, [isGlobalAdmin]);
+
 
   // Global admin kontrolü (güvenilir sekme görünürlüğü için)
   useEffect(() => {
@@ -278,17 +265,12 @@ function Settings(): JSX.Element {
       setFormId(resultData.id);
       setIsValidUser(true);
       
-      console.log("formGudid set edildi:", resultData.id);
-      console.log(data.data);
-      
       setFormValues((prevValues) => ({
         ...prevValues,
-        manager1: data.data.manager1 || "",
-        manager2: data.data.manager2 || "",
         userName: data.data.userName || "",
         firstName: data.data.firstName || "",
         lastName: data.data.lastName || "",
-        department: data.data.departmentId || "",
+        department: data.data.orgUnitId || "",
         title: data.data.title || "",
         email: data.data.email || "",
         linkedinUrl: data.data.linkedinUrl || "",
@@ -299,8 +281,6 @@ function Settings(): JSX.Element {
         vacationMode: data.data.vacationMode || false,
         profileInfo: data.data.profileInfo || "",
         photo: data.data.photo || "",
-        sapDepartmentText: data.data.sapDepartmentText || "",
-        sapPositionText: data.data.sapPositionText || "",
         roleIds: data.data.roles || [],
         positionId: data.data.positionId || null,
         userLevel: data.data.userLevel || null,
@@ -404,6 +384,7 @@ function Settings(): JSX.Element {
                           profile: 'sap-icon://employee',
                           password: 'sap-icon://key',
                           accounts: 'sap-icon://contacts',
+                          organization: 'sap-icon://building',
                           ticket: 'sap-icon://task',
                           userTenants: 'sap-icon://group',
                           tenantRoles: 'sap-icon://shield',
@@ -459,11 +440,29 @@ function Settings(): JSX.Element {
                               </MDBox>
                             )}
 
+                            {it.key === "organization" && isTenantMode && (
+                              <MDBox sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 2, p: 2, bgcolor: 'background.paper' }}>
+                                <Grid container spacing={3}>
+                                  <Grid item xs={12}>
+                                    {formGudid || userId ? (
+                                      <UserOrganization userId={formGudid || userId || undefined} />
+                                    ) : (
+                                      <MDBox p={3} textAlign="center">
+                                        <MDTypography variant="body2" color="text">
+                                          Kullanıcı bilgileri yükleniyor...
+                                        </MDTypography>
+                                      </MDBox>
+                                    )}
+                                  </Grid>
+                                </Grid>
+                              </MDBox>
+                            )}
+
                             {it.key === "ticket" && isTenantMode && (
                               <MDBox sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 2, p: 2, bgcolor: 'background.paper' }}>
                                 <Grid container spacing={3}>
                                   <Grid item xs={12}>
-                                    <TicketManagement formData={{ values, touched, formField, errors }} />
+
                                   </Grid>
                                 </Grid>
                               </MDBox>
