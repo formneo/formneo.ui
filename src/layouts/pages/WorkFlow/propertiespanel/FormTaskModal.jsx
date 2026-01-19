@@ -1,9 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import {
   Dialog,
-  DialogTitle,
   DialogContent,
-  DialogActions,
   Box,
   Typography,
   TextField,
@@ -19,11 +17,6 @@ import {
   Tabs,
   Tab,
   Grid,
-  InputAdornment,
-  Tooltip,
-  ButtonGroup,
-  Card,
-  CardContent,
   MenuItem,
   Select,
   FormControl,
@@ -37,9 +30,16 @@ import {
   TableContainer,
   TableHead,
   TableRow,
+  ToggleButton,
+  ToggleButtonGroup,
 } from "@mui/material";
 import {
   Close as CloseIcon,
+  Save as SaveIcon,
+  Layers as LayersIcon,
+  VerifiedUser as VerifiedUserIcon,
+  InfoOutlined as InfoOutlinedIcon,
+  AccessTime as AccessTimeIcon,
   Person as PersonIcon,
   Visibility as VisibilityIcon,
   VisibilityOff as VisibilityOffIcon,
@@ -47,23 +47,24 @@ import {
   LockOpen as LockOpenIcon,
   Message as MessageIcon,
   Settings as SettingsIcon,
-  Search as SearchIcon,
   CheckBox as CheckBoxIcon,
   CheckBoxOutlineBlank as CheckBoxOutlineBlankIcon,
-  SelectAll as SelectAllIcon,
-  Deselect as DeselectIcon,
   Code as CodeIcon,
   ContentCopy as ContentCopyIcon,
   PlayArrow as PlayArrowIcon,
   BugReport as BugReportIcon,
   TableChart as TableChartIcon,
   FormatListBulleted as FormatListBulletedIcon,
+  AccountTree as AccountTreeIcon,
+  Work as WorkIcon,
+  SupervisorAccount as SupervisorAccountIcon,
+  Business as BusinessIcon,
 } from "@mui/icons-material";
 import { Editor } from "@monaco-editor/react";
 import * as monaco from "monaco-editor";
 import MDButton from "components/MDButton";
 import MDInput from "components/MDInput";
-import { UserApi, FormDataApi } from "api/generated";
+import { UserApi, FormDataApi, OrgUnitsApi, PositionsApi, EmployeeAssignmentsApi } from "api/generated";
 import getConfiguration from "confiuration";
 import { useBusy } from "layouts/pages/hooks/useBusy";
 
@@ -85,9 +86,8 @@ const FormTaskModal = ({ open, onClose, initialValues, node, onSave, workflowFor
   const [fieldSettings, setFieldSettings] = useState({});
   const [buttonSettings, setButtonSettings] = useState({});
   const [message, setMessage] = useState(initialValues?.message || "");
-  const [activeTab, setActiveTab] = useState(0);
+  const [activeTab, setActiveTab] = useState("assignment");
   const [inputValue, setInputValue] = useState("");
-  const [searchQuery, setSearchQuery] = useState("");
   const [fieldScript, setFieldScript] = useState(initialValues?.fieldScript || "");
   const [scriptEventType, setScriptEventType] = useState(initialValues?.scriptEventType || "onLoad"); // "onLoad" | "onChange" | "both"
   const [monacoEditor, setMonacoEditor] = useState(null);
@@ -95,6 +95,16 @@ const FormTaskModal = ({ open, onClose, initialValues, node, onSave, workflowFor
   const [selectedTemplate, setSelectedTemplate] = useState("");
   const [showFieldReference, setShowFieldReference] = useState(false);
   const dispatchBusy = useBusy();
+  
+  // Organizasyon bazlı seçim için state'ler
+  const [selectionMode, setSelectionMode] = useState("manual"); // "manual" | "organization"
+  const [orgUnits, setOrgUnits] = useState([]);
+  const [positions, setPositions] = useState([]);
+  const [managers, setManagers] = useState([]);
+  const [selectedOrgUnit, setSelectedOrgUnit] = useState("");
+  const [selectedPosition, setSelectedPosition] = useState("");
+  const [selectedManager, setSelectedManager] = useState(null);
+  const [filteredUsersByOrg, setFilteredUsersByOrg] = useState([]);
 
   // Script şablonları
   const scriptTemplates = {
@@ -216,7 +226,7 @@ console.log(formValues);`;
 
   // Monaco Editor için IntelliSense tip tanımlarını oluştur ve güncelle
   useEffect(() => {
-    if (!monacoInstance || activeTab !== 2) return;
+    if (!monacoInstance || activeTab !== "script") return;
 
     // Form alanları varsa detaylı tip tanımları, yoksa temel tip tanımları
     let typeDefinitions = '';
@@ -422,6 +432,113 @@ declare var formValues: Record<string, any>;
     }
   }, [open, dispatchBusy]);
 
+  // Organizasyon verilerini yükle (modal açıldığında)
+  useEffect(() => {
+    const loadOrganizationData = async () => {
+      if (!open) return;
+      
+      try {
+        dispatchBusy({ isBusy: true });
+        const conf = getConfiguration();
+        
+        // Organizasyon birimleri, pozisyonlar ve yöneticileri paralel çek
+        const [orgUnitsResponse, positionsResponse, managersResponse] = await Promise.all([
+          new OrgUnitsApi(conf).apiOrgUnitsGet(),
+          new PositionsApi(conf).apiPositionsGet(),
+          new UserApi(conf).apiUserGetAllWithOuthPhotoGet(),
+        ]);
+        
+        setOrgUnits(orgUnitsResponse.data || []);
+        setPositions(positionsResponse.data || []);
+        setManagers(managersResponse.data || []);
+      } catch (error) {
+        console.error("Organizasyon verileri yüklenirken hata:", error);
+        setOrgUnits([]);
+        setPositions([]);
+        setManagers([]);
+      } finally {
+        dispatchBusy({ isBusy: false });
+      }
+    };
+
+    if (open) {
+      loadOrganizationData();
+    } else {
+      // Modal kapandığında temizle
+      setOrgUnits([]);
+      setPositions([]);
+      setManagers([]);
+      setSelectedOrgUnit("");
+      setSelectedPosition("");
+      setSelectedManager(null);
+      setFilteredUsersByOrg([]);
+    }
+  }, [open, dispatchBusy]);
+
+  // Organizasyon kriterlerine göre kullanıcıları filtrele
+  useEffect(() => {
+    const filterUsersByOrganization = async () => {
+      if (selectionMode !== "organization" || (!selectedOrgUnit && !selectedPosition && !selectedManager)) {
+        setFilteredUsersByOrg([]);
+        return;
+      }
+
+      try {
+        dispatchBusy({ isBusy: true });
+        const conf = getConfiguration();
+
+        // Tüm aktif atamaları çek
+        const employeeAssignmentsApi = new EmployeeAssignmentsApi(conf);
+        const allAssignments = await employeeAssignmentsApi.apiEmployeeAssignmentsGet();
+        
+        const assignments = Array.isArray(allAssignments?.data) ? allAssignments.data : [];
+        
+        // Aktif atamaları filtrele (endDate null olanlar)
+        const activeAssignments = assignments.filter(assignment => !assignment.endDate);
+        
+        // Seçilen kriterlere göre filtrele
+        let filteredAssignments = activeAssignments;
+        
+        if (selectedOrgUnit) {
+          filteredAssignments = filteredAssignments.filter(a => a.orgUnitId === selectedOrgUnit);
+        }
+        
+        if (selectedPosition) {
+          filteredAssignments = filteredAssignments.filter(a => a.positionId === selectedPosition);
+        }
+        
+        if (selectedManager) {
+          filteredAssignments = filteredAssignments.filter(a => a.managerId === selectedManager.id);
+        }
+        
+        // Atamalardan kullanıcı ID'lerini al
+        const userIds = [...new Set(filteredAssignments.map(a => a.userId))];
+        
+        // Kullanıcı bilgilerini çek
+        if (userIds.length > 0) {
+          const userApi = new UserApi(conf);
+          const allUsers = await userApi.apiUserGetAllWithOuthPhotoGet();
+          const allUsersList = Array.isArray(allUsers?.data) ? allUsers.data : [];
+          
+          // ID'lere göre kullanıcıları filtrele
+          const filteredUsers = allUsersList.filter(user => userIds.includes(user.id));
+          setFilteredUsersByOrg(filteredUsers);
+        } else {
+          setFilteredUsersByOrg([]);
+        }
+      } catch (error) {
+        console.error("Organizasyon bazlı kullanıcı filtreleme hatası:", error);
+        setFilteredUsersByOrg([]);
+      } finally {
+        dispatchBusy({ isBusy: false });
+      }
+    };
+
+    if (open && selectionMode === "organization") {
+      filterUsersByOrganization();
+    }
+  }, [open, selectionMode, selectedOrgUnit, selectedPosition, selectedManager, dispatchBusy]);
+
   // Form alanlarını yükle
   useEffect(() => {
     const loadFormFields = async () => {
@@ -599,28 +716,6 @@ declare var formValues: Record<string, any>;
     }
   };
 
-  // Alan görünürlüğünü değiştir
-  const handleFieldVisibilityChange = (fieldKey, visible) => {
-    setFieldSettings(prev => ({
-      ...prev,
-      [fieldKey]: {
-        ...prev[fieldKey],
-        visible,
-      },
-    }));
-  };
-
-  // Alan read-only durumunu değiştir
-  const handleFieldReadonlyChange = (fieldKey, readonly) => {
-    setFieldSettings(prev => ({
-      ...prev,
-      [fieldKey]: {
-        ...prev[fieldKey],
-        readonly,
-      },
-    }));
-  };
-
   // Buton görünürlüğünü değiştir
   const handleButtonVisibilityChange = (buttonId, visible) => {
     setButtonSettings(prev => ({
@@ -630,40 +725,6 @@ declare var formValues: Record<string, any>;
       },
     }));
   };
-
-  // Toplu işlemler - Tüm alanları görünür/gizli yap
-  const handleSelectAllFields = () => {
-    const newSettings = {};
-    formFields.forEach(field => {
-      newSettings[field.key] = {
-        ...fieldSettings[field.key],
-        visible: true,
-      };
-    });
-    setFieldSettings(newSettings);
-  };
-
-  const handleDeselectAllFields = () => {
-    const newSettings = {};
-    formFields.forEach(field => {
-      newSettings[field.key] = {
-        ...fieldSettings[field.key],
-        visible: false,
-      };
-    });
-    setFieldSettings(newSettings);
-  };
-
-  // Filtrelenmiş alanlar
-  const filteredFields = formFields.filter(field => {
-    if (!searchQuery) return true;
-    const query = searchQuery.toLowerCase();
-    return (
-      field.label.toLowerCase().includes(query) ||
-      field.key.toLowerCase().includes(query) ||
-      field.component.toLowerCase().includes(query)
-    );
-  });
 
   // Kaydet
   const handleSave = () => {
@@ -743,19 +804,55 @@ declare var formValues: Record<string, any>;
     onClose();
   };
 
-  return (
+  const legacyContent = () => (
     <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
-      <DialogTitle>
-        <Box display="flex" justifyContent="space-between" alignItems="center">
-          <Typography variant="h6">Form Görevi Ayarları</Typography>
-          <IconButton onClick={onClose} size="small">
-            <CloseIcon />
-          </IconButton>
-        </Box>
-      </DialogTitle>
-      
-      <DialogContent>
-        <Box sx={{ pt: 2 }}>
+      <DialogContent sx={{ p: 0 }}>
+        <div className="p-6 lg:p-8">
+          <div className="space-y-6">
+            <div className="bg-white rounded-3xl shadow-2xl shadow-slate-200/60 border border-slate-200 overflow-hidden">
+              <div className="px-6 lg:px-8 py-5 border-b border-slate-100 flex items-center justify-between bg-white sticky top-0 z-20">
+                <div className="flex items-center gap-4">
+                  <div className="p-3 bg-blue-50 text-blue-600 rounded-2xl shadow-inner">
+                    <SettingsIcon fontSize="medium" />
+                  </div>
+                  <div>
+                    <h2 className="text-xl lg:text-2xl font-black text-slate-800 tracking-tight">Form Görevi Ayarları</h2>
+                    <p className="text-xs text-slate-400 font-bold uppercase tracking-tighter italic">
+                      Atama ve form davranışı yapılandırması
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={handleSave}
+                    className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-2xl text-xs font-black flex items-center gap-2 transition-all shadow-lg shadow-blue-100 active:scale-95 transform"
+                  >
+                    <SaveIcon fontSize="small" /> Kaydet
+                  </button>
+                  <IconButton onClick={onClose} size="small" className="text-slate-500">
+                    <CloseIcon />
+                  </IconButton>
+                </div>
+              </div>
+
+              <div className="p-6 lg:p-10">
+                  <div className="space-y-10 animate-in fade-in zoom-in-95 duration-500">
+                    <section>
+                      <div className="flex items-center gap-2 mb-6">
+                        <div className="h-1.5 w-1.5 rounded-full bg-blue-500"></div>
+                        <h4 className="text-[11px] font-black text-slate-500 uppercase tracking-[0.2em]">
+                          Atama ve Form Konfigürasyonu
+                        </h4>
+                      </div>
+                      <section className="bg-slate-50/50 p-6 lg:p-8 rounded-[2.5rem] border-2 border-slate-100 border-dashed min-h-[260px] relative transition-all hover:border-blue-200">
+                        <div className="flex items-center gap-3 mb-6">
+                          <LayersIcon fontSize="small" className="text-blue-600" />
+                          <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                            Konfigürasyon Detayı
+                          </h4>
+                        </div>
+                        <Box sx={{ pt: 0 }}>
           {/* Görev Adı */}
           <Box mb={3}>
             <MDInput
@@ -770,74 +867,253 @@ declare var formValues: Record<string, any>;
 
           {/* Kullanıcı Seçimi */}
           <Box mb={3}>
-            <Typography variant="subtitle1" fontWeight={600} mb={1}>
-              <PersonIcon sx={{ verticalAlign: "middle", mr: 1 }} />
-              Atanacak Kullanıcı
-            </Typography>
-            <Autocomplete
-              options={searchByName}
-              getOptionLabel={(option) => {
-                if (option.firstName && option.lastName) {
-                  return `${option.firstName} ${option.lastName}`;
-                }
-                return option.userAppName || option.userName || "";
-              }}
-              value={selectedUser}
-              inputValue={inputValue}
-              isOptionEqualToValue={(option, value) => {
-                if (!option || !value) return false;
-                return (
-                  option.id === value.id ||
-                  option.id === value.userAppId ||
-                  option.userAppId === value.id
-                );
-              }}
-              onChange={(event, newValue) => {
-                setSelectedUser(newValue);
-                if (newValue) {
-                  setInputValue(newValue.firstName && newValue.lastName
-                    ? `${newValue.firstName} ${newValue.lastName}`
-                    : newValue.userAppName || newValue.userName || "");
-                }
-              }}
-              onInputChange={(event, newInputValue, reason) => {
-                setInputValue(newInputValue);
-                // Kullanıcı yazarken arama yap
-                if (reason === "input" && newInputValue.trim().length > 0) {
-                  handleSearchByName(newInputValue);
-                } else if (reason === "clear" || newInputValue.trim().length === 0) {
-                  setSearchByName([]);
-                }
-              }}
-              renderInput={(params) => (
-                <MDInput
-                  {...params}
-                  label="Kullanıcı ara..."
-                  placeholder="Kullanıcı adı veya email ile ara"
-                />
-              )}
-              renderOption={(props, option) => (
-                <li {...props} key={option.id || option.userAppId}>
+            <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+              <Typography variant="subtitle1" fontWeight={600}>
+                <PersonIcon sx={{ verticalAlign: "middle", mr: 1 }} />
+                Atanacak Kullanıcı
+              </Typography>
+              <ToggleButtonGroup
+                value={selectionMode}
+                exclusive
+                onChange={(e, newMode) => {
+                  if (newMode !== null) {
+                    setSelectionMode(newMode);
+                    if (newMode === "manual") {
+                      setSelectedUser(null);
+                      setSelectedOrgUnit("");
+                      setSelectedPosition("");
+                      setSelectedManager(null);
+                    }
+                  }
+                }}
+                size="small"
+                sx={{ height: "32px" }}
+              >
+                <ToggleButton value="manual">
+                  <PersonIcon sx={{ fontSize: 16, mr: 0.5 }} />
+                  Manuel
+                </ToggleButton>
+                <ToggleButton value="organization">
+                  <AccountTreeIcon sx={{ fontSize: 16, mr: 0.5 }} />
+                  Organizasyon
+                </ToggleButton>
+              </ToggleButtonGroup>
+            </Box>
+
+            {selectionMode === "manual" ? (
+              <Autocomplete
+                options={searchByName}
+                getOptionLabel={(option) => {
+                  if (option.firstName && option.lastName) {
+                    return `${option.firstName} ${option.lastName}`;
+                  }
+                  return option.userAppName || option.userName || "";
+                }}
+                value={selectedUser}
+                inputValue={inputValue}
+                isOptionEqualToValue={(option, value) => {
+                  if (!option || !value) return false;
+                  return (
+                    option.id === value.id ||
+                    option.id === value.userAppId ||
+                    option.userAppId === value.id
+                  );
+                }}
+                onChange={(event, newValue) => {
+                  setSelectedUser(newValue);
+                  if (newValue) {
+                    setInputValue(newValue.firstName && newValue.lastName
+                      ? `${newValue.firstName} ${newValue.lastName}`
+                      : newValue.userAppName || newValue.userName || "");
+                  }
+                }}
+                onInputChange={(event, newInputValue, reason) => {
+                  setInputValue(newInputValue);
+                  // Kullanıcı yazarken arama yap
+                  if (reason === "input" && newInputValue.trim().length > 0) {
+                    handleSearchByName(newInputValue);
+                  } else if (reason === "clear" || newInputValue.trim().length === 0) {
+                    setSearchByName([]);
+                  }
+                }}
+                renderInput={(params) => (
+                  <MDInput
+                    {...params}
+                    label="Kullanıcı ara..."
+                    placeholder="Kullanıcı adı veya email ile ara"
+                  />
+                )}
+                renderOption={(props, option) => (
+                  <li {...props} key={option.id || option.userAppId}>
+                    <Box>
+                      <Typography fontWeight={600}>
+                        {option.firstName && option.lastName
+                          ? `${option.firstName} ${option.lastName}`
+                          : option.userAppName || option.userName}
+                      </Typography>
+                      {option.email && (
+                        <Typography variant="caption" color="textSecondary">
+                          {option.email}
+                        </Typography>
+                      )}
+                      {option.userName && (
+                        <Typography variant="caption" color="textSecondary">
+                          @{option.userName}
+                        </Typography>
+                      )}
+                    </Box>
+                  </li>
+                )}
+              />
+            ) : (
+              <Box>
+                <Grid container spacing={2} mb={2}>
+                  <Grid item xs={12} md={4}>
+                    <FormControl fullWidth>
+                      <InputLabel>Organizasyon Birimi</InputLabel>
+                      <Select
+                        value={selectedOrgUnit}
+                        label="Organizasyon Birimi"
+                        onChange={(e) => setSelectedOrgUnit(e.target.value)}
+                        startAdornment={<BusinessIcon sx={{ mr: 1, color: "text.secondary" }} />}
+                      >
+                        <MenuItem value="">
+                          <em>Tümü</em>
+                        </MenuItem>
+                        {orgUnits.map((orgUnit) => (
+                          <MenuItem key={orgUnit.id} value={orgUnit.id}>
+                            {orgUnit.name}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                  </Grid>
+                  <Grid item xs={12} md={4}>
+                    <FormControl fullWidth>
+                      <InputLabel>Pozisyon</InputLabel>
+                      <Select
+                        value={selectedPosition}
+                        label="Pozisyon"
+                        onChange={(e) => setSelectedPosition(e.target.value)}
+                        startAdornment={<WorkIcon sx={{ mr: 1, color: "text.secondary" }} />}
+                      >
+                        <MenuItem value="">
+                          <em>Tümü</em>
+                        </MenuItem>
+                        {positions.map((position) => (
+                          <MenuItem key={position.id} value={position.id}>
+                            {position.name}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                  </Grid>
+                  <Grid item xs={12} md={4}>
+                    <Autocomplete
+                      options={managers}
+                      getOptionLabel={(option) => {
+                        if (option.firstName && option.lastName) {
+                          return `${option.firstName} ${option.lastName}`;
+                        }
+                        return option.userAppName || option.userName || "";
+                      }}
+                      value={selectedManager}
+                      onChange={(event, newValue) => setSelectedManager(newValue)}
+                      renderInput={(params) => (
+                        <MDInput
+                          {...params}
+                          label="Yönetici"
+                          placeholder="Yönetici seçin..."
+                          InputProps={{
+                            ...params.InputProps,
+                            startAdornment: (
+                              <>
+                                <SupervisorAccountIcon sx={{ mr: 1, color: "text.secondary" }} />
+                                {params.InputProps.startAdornment}
+                              </>
+                            ),
+                          }}
+                        />
+                      )}
+                      renderOption={(props, option) => (
+                        <li {...props} key={option.id}>
+                          <Box>
+                            <Typography fontWeight={600}>
+                              {option.firstName && option.lastName
+                                ? `${option.firstName} ${option.lastName}`
+                                : option.userAppName || option.userName}
+                            </Typography>
+                            {option.email && (
+                              <Typography variant="caption" color="textSecondary">
+                                {option.email}
+                              </Typography>
+                            )}
+                          </Box>
+                        </li>
+                      )}
+                    />
+                  </Grid>
+                </Grid>
+
+                {/* Filtrelenmiş kullanıcılar */}
+                {filteredUsersByOrg.length > 0 ? (
                   <Box>
-                    <Typography fontWeight={600}>
-                      {option.firstName && option.lastName
-                        ? `${option.firstName} ${option.lastName}`
-                        : option.userAppName || option.userName}
+                    <Typography variant="body2" color="textSecondary" mb={1}>
+                      Seçilen kriterlere göre {filteredUsersByOrg.length} kullanıcı bulundu:
                     </Typography>
-                    {option.email && (
-                      <Typography variant="caption" color="textSecondary">
-                        {option.email}
-                      </Typography>
-                    )}
-                    {option.userName && (
-                      <Typography variant="caption" color="textSecondary">
-                        @{option.userName}
-                      </Typography>
-                    )}
+                    <Autocomplete
+                      options={filteredUsersByOrg}
+                      getOptionLabel={(option) => {
+                        if (option.firstName && option.lastName) {
+                          return `${option.firstName} ${option.lastName}`;
+                        }
+                        return option.userAppName || option.userName || "";
+                      }}
+                      value={selectedUser}
+                      onChange={(event, newValue) => {
+                        setSelectedUser(newValue);
+                        if (newValue) {
+                          setInputValue(newValue.firstName && newValue.lastName
+                            ? `${newValue.firstName} ${newValue.lastName}`
+                            : newValue.userAppName || newValue.userName || "");
+                        }
+                      }}
+                      renderInput={(params) => (
+                        <MDInput
+                          {...params}
+                          label="Kullanıcı seçin..."
+                          placeholder="Listeden kullanıcı seçin"
+                        />
+                      )}
+                      renderOption={(props, option) => (
+                        <li {...props} key={option.id}>
+                          <Box>
+                            <Typography fontWeight={600}>
+                              {option.firstName && option.lastName
+                                ? `${option.firstName} ${option.lastName}`
+                                : option.userAppName || option.userName}
+                            </Typography>
+                            {option.email && (
+                              <Typography variant="caption" color="textSecondary">
+                                {option.email}
+                              </Typography>
+                            )}
+                          </Box>
+                        </li>
+                      )}
+                    />
                   </Box>
-                </li>
-              )}
-            />
+                ) : (
+                  <Paper sx={{ p: 2, textAlign: "center", bgcolor: "grey.50" }}>
+                    <Typography variant="body2" color="textSecondary">
+                      {selectedOrgUnit || selectedPosition || selectedManager
+                        ? "Seçilen kriterlere uygun kullanıcı bulunamadı"
+                        : "Lütfen organizasyon birimi, pozisyon veya yönetici seçin"}
+                    </Typography>
+                  </Paper>
+                )}
+              </Box>
+            )}
           </Box>
 
           <Divider sx={{ my: 3 }} />
@@ -873,222 +1149,26 @@ declare var formValues: Record<string, any>;
           {/* Tabs */}
           <Box sx={{ borderBottom: 1, borderColor: "divider", mb: 2 }}>
             <Tabs value={activeTab} onChange={(e, newValue) => setActiveTab(newValue)}>
-              <Tab label="Alanlar" icon={<VisibilityIcon />} iconPosition="start" />
+              <Tab label="Zamanlama" icon={<AccessTimeIcon />} iconPosition="start" />
               <Tab label="Butonlar" icon={<SettingsIcon />} iconPosition="start" />
               <Tab label="Script" icon={<CodeIcon />} iconPosition="start" />
             </Tabs>
           </Box>
 
-          {/* Alan Görünürlük Kontrolü Tab */}
+          {/* Zamanlama Tab */}
           {activeTab === 0 && (
           <Box mb={2}>
-            {/* Başlık ve Toplu İşlemler */}
-            <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-              <Typography variant="subtitle2" fontWeight={600}>
-                Form Alanları Kontrolü ({formFields.length} alan)
-              </Typography>
-              {formFields.length > 0 && (
-                <ButtonGroup size="small" variant="outlined">
-                  <Tooltip title="Tümünü Görünür Yap">
-                    <MDButton
-                      size="small"
-                      variant="outlined"
-                      color="info"
-                      onClick={handleSelectAllFields}
-                      startIcon={<SelectAllIcon />}
-                    >
-                      Tümü
-                    </MDButton>
-                  </Tooltip>
-                  <Tooltip title="Tümünü Gizle">
-                    <MDButton
-                      size="small"
-                      variant="outlined"
-                      color="secondary"
-                      onClick={handleDeselectAllFields}
-                      startIcon={<DeselectIcon />}
-                    >
-                      Hiçbiri
-                    </MDButton>
-                  </Tooltip>
-                </ButtonGroup>
-              )}
-            </Box>
-
-            {/* Arama Kutusu */}
-            {formFields.length > 0 && (
-              <TextField
-                fullWidth
-                size="small"
-                placeholder="Alan ara... (isim, tip, vb.)"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <SearchIcon fontSize="small" />
-                    </InputAdornment>
-                  ),
-                  endAdornment: searchQuery && (
-                    <InputAdornment position="end">
-                      <IconButton
-                        size="small"
-                        onClick={() => setSearchQuery("")}
-                        edge="end"
-                      >
-                        <CloseIcon fontSize="small" />
-                      </IconButton>
-                    </InputAdornment>
-                  ),
-                }}
-                sx={{ mb: 2 }}
-              />
-            )}
-            
-            {formFields.length === 0 ? (
-              <Paper sx={{ p: 3, textAlign: "center", bgcolor: "grey.100" }}>
+            <section className="bg-slate-50/50 p-6 lg:p-8 rounded-[2.5rem] border-2 border-slate-100 border-dashed min-h-[220px] relative transition-all hover:border-blue-200">
+              <div className="flex items-center gap-3 mb-6">
+                <AccessTimeIcon fontSize="small" className="text-blue-600" />
+                <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                  Zamanlama ve SLA
+                </h4>
+              </div>
                 <Typography variant="body2" color="textSecondary">
-                  Form alanları bulunamadı veya form seçilmemiş.
+                Bu bölüm için SLA ve zamanlama ayarları yakında eklenecek.
                 </Typography>
-              </Paper>
-            ) : filteredFields.length === 0 ? (
-              <Paper sx={{ p: 3, textAlign: "center", bgcolor: "grey.100" }}>
-                <Typography variant="body2" color="textSecondary">
-                  &quot;{searchQuery}&quot; için sonuç bulunamadı.
-                </Typography>
-              </Paper>
-            ) : (
-              <Box sx={{ maxHeight: "500px", overflowY: "auto", pr: 1 }}>
-                <Grid container spacing={1.5}>
-                  {filteredFields.map((field) => {
-                    const isVisible = fieldSettings[field.key]?.visible !== false;
-                    const isReadonly = fieldSettings[field.key]?.readonly === true;
-                    return (
-                      <Grid item xs={12} sm={6} key={field.key}>
-                        <Card
-                          sx={{
-                            border: `2px solid ${isVisible ? (isReadonly ? "#ff9800" : "#4caf50") : "#e0e0e0"}`,
-                            bgcolor: isVisible ? (isReadonly ? "#fff3e0" : "#f1f8f4") : "#f5f5f5",
-                            transition: "all 0.2s",
-                            "&:hover": {
-                              boxShadow: 3,
-                              transform: "translateY(-2px)",
-                            },
-                          }}
-                        >
-                          <CardContent sx={{ p: 1.5, "&:last-child": { pb: 1.5 } }}>
-                            {/* Alan Başlığı ve Chips */}
-                            <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={1.5}>
-                              <Box flex={1}>
-                                <Typography
-                                  variant="body2"
-                                  fontWeight={isVisible ? 600 : 400}
-                                  sx={{
-                                    mb: 0.5,
-                                    color: isVisible ? "text.primary" : "text.secondary",
-                                    textDecoration: isVisible ? "none" : "line-through",
-                                  }}
-                                >
-                                  {field.label}
-                                </Typography>
-                                <Box display="flex" gap={0.5} flexWrap="wrap">
-                                  <Chip
-                                    label={field.component}
-                                    size="small"
-                                    variant="outlined"
-                                    sx={{ height: "18px", fontSize: "0.65rem" }}
-                                  />
-                                  {field.required && (
-                                    <Chip
-                                      label="Zorunlu"
-                                      size="small"
-                                      color="error"
-                                      sx={{ height: "18px", fontSize: "0.65rem" }}
-                                    />
-                                  )}
-                                  {isReadonly && (
-                                    <Chip
-                                      label="Read-Only"
-                                      size="small"
-                                      color="warning"
-                                      sx={{ height: "18px", fontSize: "0.65rem" }}
-                                    />
-                                  )}
-                                </Box>
-                              </Box>
-                            </Box>
-
-                            {/* Kontroller */}
-                            <Box display="flex" gap={1} flexWrap="wrap">
-                              <Tooltip title={isVisible ? "Görünür" : "Gizli"}>
-                                <FormControlLabel
-                                  control={
-                                    <Checkbox
-                                      checked={isVisible}
-                                      onChange={(e) => handleFieldVisibilityChange(field.key, e.target.checked)}
-                                      icon={<VisibilityOffIcon fontSize="small" />}
-                                      checkedIcon={<VisibilityIcon fontSize="small" color="success" />}
-                                      size="small"
-                                    />
-                                  }
-                                  label={
-                                    <Typography variant="caption" sx={{ fontSize: "0.7rem" }}>
-                                      Görünür
-                                    </Typography>
-                                  }
-                                  sx={{ m: 0 }}
-                                />
-                              </Tooltip>
-                              {isVisible && (
-                                <Tooltip title={isReadonly ? "Read-Only" : "Düzenlenebilir"}>
-                                  <FormControlLabel
-                                    control={
-                                      <Checkbox
-                                        checked={isReadonly}
-                                        onChange={(e) => handleFieldReadonlyChange(field.key, e.target.checked)}
-                                        icon={<LockOpenIcon fontSize="small" />}
-                                        checkedIcon={<LockIcon fontSize="small" color="warning" />}
-                                        size="small"
-                                      />
-                                    }
-                                    label={
-                                      <Typography variant="caption" sx={{ fontSize: "0.7rem" }}>
-                                        Read-Only
-                                      </Typography>
-                                    }
-                                    sx={{ m: 0 }}
-                                  />
-                                </Tooltip>
-                              )}
-                            </Box>
-                          </CardContent>
-                        </Card>
-                      </Grid>
-                    );
-                  })}
-                </Grid>
-              </Box>
-            )}
-            
-            {/* İstatistikler */}
-            {formFields.length > 0 && (
-              <Box mt={2} p={1.5} bgcolor="grey.50" borderRadius={1}>
-                <Box display="flex" gap={2} flexWrap="wrap">
-                  <Typography variant="caption" fontWeight={600}>
-                    📊 İstatistikler:
-                  </Typography>
-                  <Typography variant="caption" color="success.main">
-                    ✅ Görünür: {Object.values(fieldSettings).filter(s => s.visible).length} / {formFields.length}
-                  </Typography>
-                  <Typography variant="caption" color="warning.main">
-                    🔒 Read-Only: {Object.values(fieldSettings).filter(s => s.visible && s.readonly).length}
-                  </Typography>
-                  <Typography variant="caption" color="text.secondary">
-                    🔍 Filtrelenmiş: {filteredFields.length} / {formFields.length}
-                  </Typography>
-                </Box>
-              </Box>
-            )}
+            </section>
           </Box>
           )}
 
@@ -1530,17 +1610,772 @@ if (gunSayisi && gunlukUcret) {
             </Box>
           </Box>
           )}
+                        </Box>
+                      </section>
+                    </section>
+                  </div>
+                
+                <div className="mt-12 pt-8 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-400 font-bold uppercase tracking-widest">
+                  <div className="flex items-center gap-3">
+                    <VerifiedUserIcon fontSize="small" className="text-emerald-500" />
+                    <span>Güvenli Atama Motoru Aktif</span>
+                  </div>
+                  <div className="flex items-center gap-2 italic lowercase text-[10px] opacity-60">
+                    <InfoOutlinedIcon fontSize="inherit" />
+                    <span>v2.1 kurumsal politika standartları</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+
+  const renderAssignmentContent = () => (
+    <div className="space-y-8">
+      <section className="bg-slate-50/50 p-6 lg:p-8 rounded-[2.5rem] border-2 border-slate-100 border-dashed">
+                      <div className="flex items-center gap-3 mb-6">
+          <LayersIcon fontSize="small" className="text-blue-600" />
+                        <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+            Konfigürasyon Detayı
+                        </h4>
+                      </div>
+        <Box sx={{ pt: 0 }}>
+          <Box mb={3}>
+            <MDInput
+              label="Görev Adı"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              fullWidth
+            />
+          </Box>
+
+          <Divider sx={{ my: 3 }} />
+
+          <Box mb={3}>
+            <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+              <Typography variant="subtitle1" fontWeight={600}>
+                <PersonIcon sx={{ verticalAlign: "middle", mr: 1 }} />
+                Atanacak Kullanıcı
+              </Typography>
+              <ToggleButtonGroup
+                value={selectionMode}
+                exclusive
+                onChange={(e, newMode) => {
+                  if (newMode !== null) {
+                    setSelectionMode(newMode);
+                    if (newMode === "manual") {
+                      setSelectedUser(null);
+                      setSelectedOrgUnit("");
+                      setSelectedPosition("");
+                      setSelectedManager(null);
+                    }
+                  }
+                }}
+                size="small"
+                sx={{ height: "32px" }}
+              >
+                <ToggleButton value="manual">
+                  <PersonIcon sx={{ fontSize: 16, mr: 0.5 }} />
+                  Manuel
+                </ToggleButton>
+                <ToggleButton value="organization">
+                  <AccountTreeIcon sx={{ fontSize: 16, mr: 0.5 }} />
+                  Organizasyon
+                </ToggleButton>
+              </ToggleButtonGroup>
+            </Box>
+
+            {selectionMode === "manual" ? (
+              <Autocomplete
+                options={searchByName}
+                getOptionLabel={(option) => {
+                  if (option.firstName && option.lastName) {
+                    return `${option.firstName} ${option.lastName}`;
+                  }
+                  return option.userAppName || option.userName || "";
+                }}
+                value={selectedUser}
+                inputValue={inputValue}
+                isOptionEqualToValue={(option, value) => {
+                  if (!option || !value) return false;
+                  return (
+                    option.id === value.id ||
+                    option.id === value.userAppId ||
+                    option.userAppId === value.id
+                  );
+                }}
+                onChange={(event, newValue) => {
+                  setSelectedUser(newValue);
+                  if (newValue) {
+                    setInputValue(
+                      newValue.firstName && newValue.lastName
+                        ? `${newValue.firstName} ${newValue.lastName}`
+                        : newValue.userAppName || newValue.userName || ""
+                    );
+                  }
+                }}
+                onInputChange={(event, newInputValue, reason) => {
+                  setInputValue(newInputValue);
+                  if (reason === "input" && newInputValue.trim().length > 0) {
+                    handleSearchByName(newInputValue);
+                  } else if (reason === "clear" || newInputValue.trim().length === 0) {
+                    setSearchByName([]);
+                  }
+                }}
+                renderInput={(params) => (
+                  <MDInput
+                    {...params}
+                    label="Kullanıcı ara..."
+                    placeholder="Kullanıcı adı veya email ile ara"
+                  />
+                )}
+                renderOption={(props, option) => (
+                  <li {...props} key={option.id || option.userAppId}>
+                    <Box>
+                      <Typography fontWeight={600}>
+                        {option.firstName && option.lastName
+                          ? `${option.firstName} ${option.lastName}`
+                          : option.userAppName || option.userName}
+                      </Typography>
+                      {option.email && (
+                        <Typography variant="caption" color="textSecondary">
+                          {option.email}
+                        </Typography>
+                      )}
+                      {option.userName && (
+                        <Typography variant="caption" color="textSecondary">
+                          @{option.userName}
+                        </Typography>
+                      )}
+                    </Box>
+                  </li>
+                )}
+              />
+            ) : (
+              <Box>
+                <Grid container spacing={2} mb={2}>
+                  <Grid item xs={12} md={4}>
+                    <FormControl fullWidth>
+                      <InputLabel>Organizasyon Birimi</InputLabel>
+                      <Select
+                        value={selectedOrgUnit}
+                        label="Organizasyon Birimi"
+                        onChange={(e) => setSelectedOrgUnit(e.target.value)}
+                        startAdornment={<BusinessIcon sx={{ mr: 1, color: "text.secondary" }} />}
+                      >
+                        <MenuItem value="">
+                          <em>Tümü</em>
+                        </MenuItem>
+                        {orgUnits.map((orgUnit) => (
+                          <MenuItem key={orgUnit.id} value={orgUnit.id}>
+                            {orgUnit.name}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                  </Grid>
+                  <Grid item xs={12} md={4}>
+                    <FormControl fullWidth>
+                      <InputLabel>Pozisyon</InputLabel>
+                      <Select
+                        value={selectedPosition}
+                        label="Pozisyon"
+                        onChange={(e) => setSelectedPosition(e.target.value)}
+                        startAdornment={<WorkIcon sx={{ mr: 1, color: "text.secondary" }} />}
+                      >
+                        <MenuItem value="">
+                          <em>Tümü</em>
+                        </MenuItem>
+                        {positions.map((position) => (
+                          <MenuItem key={position.id} value={position.id}>
+                            {position.name}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                  </Grid>
+                  <Grid item xs={12} md={4}>
+                    <Autocomplete
+                      options={managers}
+                      getOptionLabel={(option) => {
+                        if (option.firstName && option.lastName) {
+                          return `${option.firstName} ${option.lastName}`;
+                        }
+                        return option.userAppName || option.userName || "";
+                      }}
+                      value={selectedManager}
+                      onChange={(event, newValue) => setSelectedManager(newValue)}
+                      renderInput={(params) => (
+                        <MDInput
+                          {...params}
+                          label="Yönetici"
+                          placeholder="Yönetici seçin..."
+                          InputProps={{
+                            ...params.InputProps,
+                            startAdornment: (
+                              <>
+                                <SupervisorAccountIcon sx={{ mr: 1, color: "text.secondary" }} />
+                                {params.InputProps.startAdornment}
+                              </>
+                            ),
+                          }}
+                        />
+                      )}
+                      renderOption={(props, option) => (
+                        <li {...props} key={option.id}>
+                          <Box>
+                            <Typography fontWeight={600}>
+                              {option.firstName && option.lastName
+                                ? `${option.firstName} ${option.lastName}`
+                                : option.userAppName || option.userName}
+                            </Typography>
+                            {option.email && (
+                              <Typography variant="caption" color="textSecondary">
+                                {option.email}
+                              </Typography>
+                            )}
+                          </Box>
+                        </li>
+                      )}
+                    />
+                  </Grid>
+                </Grid>
+
+                {filteredUsersByOrg.length > 0 ? (
+                  <Box>
+                    <Typography variant="body2" color="textSecondary" mb={1}>
+                      Seçilen kriterlere göre {filteredUsersByOrg.length} kullanıcı bulundu:
+                    </Typography>
+                    <Autocomplete
+                      options={filteredUsersByOrg}
+                      getOptionLabel={(option) => {
+                        if (option.firstName && option.lastName) {
+                          return `${option.firstName} ${option.lastName}`;
+                        }
+                        return option.userAppName || option.userName || "";
+                      }}
+                      value={selectedUser}
+                      onChange={(event, newValue) => {
+                        setSelectedUser(newValue);
+                        if (newValue) {
+                          setInputValue(
+                            newValue.firstName && newValue.lastName
+                              ? `${newValue.firstName} ${newValue.lastName}`
+                              : newValue.userAppName || newValue.userName || ""
+                          );
+                        }
+                      }}
+                      renderInput={(params) => (
+                        <MDInput
+                          {...params}
+                          label="Kullanıcı seçin..."
+                          placeholder="Listeden kullanıcı seçin"
+                        />
+                      )}
+                      renderOption={(props, option) => (
+                        <li {...props} key={option.id}>
+                          <Box>
+                            <Typography fontWeight={600}>
+                              {option.firstName && option.lastName
+                                ? `${option.firstName} ${option.lastName}`
+                                : option.userAppName || option.userName}
+                            </Typography>
+                            {option.email && (
+                              <Typography variant="caption" color="textSecondary">
+                                {option.email}
+                              </Typography>
+                            )}
+                          </Box>
+                        </li>
+                      )}
+                    />
+                  </Box>
+                ) : (
+                  <Paper sx={{ p: 2, textAlign: "center", bgcolor: "grey.50" }}>
+                      <Typography variant="body2" color="textSecondary">
+                      {selectedOrgUnit || selectedPosition || selectedManager
+                        ? "Seçilen kriterlere uygun kullanıcı bulunamadı"
+                        : "Lütfen organizasyon birimi, pozisyon veya yönetici seçin"}
+                      </Typography>
+                  </Paper>
+                )}
+              </Box>
+            )}
+          </Box>
+
+          <Divider sx={{ my: 3 }} />
+
+          <Box mb={3}>
+            <Typography variant="subtitle1" fontWeight={600} mb={1}>
+              <MessageIcon sx={{ verticalAlign: "middle", mr: 1 }} />
+              Kullanıcıya Gösterilecek Mesaj
+            </Typography>
+            <TextField
+              multiline
+              rows={3}
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+              placeholder="Kullanıcıya gösterilecek mesajı buraya yazın..."
+              fullWidth
+              helperText="Bu mesaj kullanıcıya form gösterildiğinde görüntülenecektir"
+            />
+          </Box>
+
+          <Divider sx={{ my: 3 }} />
+
+          {workflowFormName && (
+            <Box mb={1}>
+              <Typography variant="subtitle1" fontWeight={600} mb={1}>
+                Form: {workflowFormName}
+              </Typography>
+            </Box>
+          )}
+        </Box>
+                    </section>
+                  </div>
+  );
+
+  const renderTimingContent = () => (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between p-6 bg-white border border-slate-200 rounded-[2.5rem] shadow-sm">
+        <div className="flex items-center gap-4">
+          <div className="p-4 bg-amber-50 text-amber-600 rounded-3xl">
+            <AccessTimeIcon fontSize="medium" />
+                      </div>
+          <div>
+            <h5 className="text-base font-black text-slate-800 tracking-tight">Zamanlama ve SLA</h5>
+            <p className="text-xs text-slate-500 font-bold">Bu alan için ayarlar yakında eklenecek.</p>
+          </div>
+        </div>
+      </div>
+      <Paper sx={{ p: 3, textAlign: "center", bgcolor: "grey.50" }}>
+                      <Typography variant="body2" color="textSecondary">
+          Zamanlama ayarları ve SLA kuralları için yapılandırma alanı burada görünecek.
+                      </Typography>
+      </Paper>
+                  </div>
+  );
+
+  const renderButtonsContent = () => (
+    <div className="space-y-6">
+      <div className="flex items-center gap-3 text-indigo-600 mb-4 px-2">
+        <FormatListBulletedIcon fontSize="small" />
+        <h4 className="text-sm font-black tracking-tight uppercase">Buton Görünürlüğü ve Aksiyonlar</h4>
+      </div>
+      {formButtons.length === 0 ? (
+        <Paper sx={{ p: 2, textAlign: "center", bgcolor: "grey.100" }}>
+          <Typography variant="body2" color="textSecondary">
+            Bu formda buton bulunmuyor.
+          </Typography>
+        </Paper>
+      ) : (
+        <>
+          <div className="grid gap-4">
+            {formButtons.map((button) => {
+              const isVisible = buttonSettings[button.id]?.visible !== false;
+              return (
+                <div
+                  key={button.id}
+                  className="flex items-center gap-6 p-6 bg-white border border-slate-200 rounded-[2.5rem] hover:shadow-xl transition-all group relative border-l-8 border-l-slate-100 hover:border-l-blue-500"
+                >
+                  <div
+                    className={`w-12 h-12 rounded-2xl ${
+                      isVisible ? "bg-indigo-600" : "bg-slate-400"
+                    } flex items-center justify-center text-white shadow-xl shadow-slate-100 transition-transform group-hover:scale-105`}
+                  >
+                    <PlayArrowIcon fontSize="small" />
+                  </div>
+                  <div className="flex-1">
+                    <div className="text-base font-black text-slate-800">
+                      {button.label || button.name || "Buton"}
+                    </div>
+                    <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest mt-1 opacity-60">
+                      SİSTEM ID: {button.id}
+                    </p>
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      {button.action && (
+                        <span className="text-[10px] font-bold bg-indigo-50 text-indigo-700 px-2 py-1 rounded-full border border-indigo-100">
+                          {button.action}
+                        </span>
+                      )}
+                      {button.type && (
+                        <span className="text-[10px] font-bold bg-slate-100 text-slate-600 px-2 py-1 rounded-full border border-slate-200">
+                          {button.type}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleButtonVisibilityChange(button.id, !isVisible)}
+                    className={`p-4 rounded-[1.5rem] transition-all transform active:scale-90 shadow-md ${
+                      isVisible
+                        ? "text-blue-600 bg-blue-50 hover:bg-blue-100"
+                        : "text-slate-400 bg-slate-100 hover:bg-slate-200 opacity-50"
+                    }`}
+                  >
+                    {isVisible ? <VisibilityIcon fontSize="small" /> : <VisibilityOffIcon fontSize="small" />}
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+          <Box mt={2}>
+            <Typography variant="caption" color="textSecondary">
+              Görünür: {formButtons.filter(btn => buttonSettings[btn.id]?.visible !== false).length} / {formButtons.length} buton
+            </Typography>
+            <Typography variant="caption" color="warning.main" display="block" mt={0.5}>
+              ⚠️ Görünür butonlar için çıkış handle&apos;ları oluşturulacaktır
+            </Typography>
+          </Box>
+        </>
+      )}
+    </div>
+  );
+
+  const renderScriptContent = () => (
+    <Box mb={2}>
+      <Typography variant="subtitle2" fontWeight={600} mb={2}>
+        Form Alanları Script Kontrolü
+      </Typography>
+      
+      <Box mb={2} display="flex" gap={2} flexWrap="wrap">
+        <FormControl size="small" sx={{ minWidth: 200 }}>
+          <InputLabel>📝 Script Şablonu</InputLabel>
+          <Select
+            value={selectedTemplate}
+            label="📝 Script Şablonu"
+            onChange={(e) => handleTemplateChange(e.target.value)}
+          >
+            <MenuItem value="">Özel Script</MenuItem>
+            <MenuItem value="conditional-visibility">Koşullu Görünürlük</MenuItem>
+            <MenuItem value="auto-calculation">Otomatik Hesaplama</MenuItem>
+            <MenuItem value="readonly-condition">Koşullu Readonly</MenuItem>
+            <MenuItem value="form-validation">Form Validasyon</MenuItem>
+            <MenuItem value="date-calculation">Tarih Hesaplama</MenuItem>
+          </Select>
+        </FormControl>
+
+        <Box display="flex" gap={1} flexWrap="wrap">
+          <MDButton
+            size="small"
+            variant="outlined"
+            color="info"
+            onClick={quickActions["hide-all"]}
+            startIcon={<VisibilityOffIcon />}
+          >
+            Tümünü Gizle
+          </MDButton>
+          <MDButton
+            size="small"
+            variant="outlined"
+            color="info"
+            onClick={quickActions["show-all"]}
+            startIcon={<VisibilityIcon />}
+          >
+            Tümünü Göster
+          </MDButton>
+          <MDButton
+            size="small"
+            variant="outlined"
+            color="warning"
+            onClick={quickActions["readonly-all"]}
+            startIcon={<LockIcon />}
+          >
+            Tümünü Readonly
+          </MDButton>
+          <MDButton
+            size="small"
+            variant="outlined"
+            color="success"
+            onClick={quickActions["enable-all"]}
+            startIcon={<LockOpenIcon />}
+          >
+            Tümünü Aktif
+          </MDButton>
+          <MDButton
+            size="small"
+            variant="outlined"
+            color="secondary"
+            onClick={quickActions["debug-template"]}
+            startIcon={<BugReportIcon />}
+          >
+            Debug Template
+          </MDButton>
+        </Box>
+      </Box>
+
+      <Paper sx={{ p: 2, mb: 2, bgcolor: "info.light", color: "info.contrastText" }}>
+        <Typography variant="body2" fontWeight={600} mb={1}>
+          💡 Script Kullanımı - Form Alanlarını Kontrol Etme
+        </Typography>
+        <Typography variant="caption" component="div">
+          Script ile form alanlarını dinamik olarak kontrol edebilirsiniz.
+        </Typography>
+      </Paper>
+
+      <Box sx={{ border: "1px solid #e0e0e0", borderRadius: 1, overflow: "hidden" }}>
+        <Editor
+          height="400px"
+          defaultLanguage="javascript"
+          value={fieldScript}
+          onChange={(value) => setFieldScript(value || "")}
+          theme="vs-light"
+          onMount={(editor, monacoInstance) => {
+            setMonacoEditor(editor);
+            setMonacoInstance(monacoInstance);
+          }}
+          options={{
+            minimap: { enabled: false },
+            fontSize: 14,
+            lineNumbers: "on",
+            automaticLayout: true,
+            scrollBeyondLastLine: false,
+          }}
+        />
+      </Box>
+
+      <Box mt={2} display="flex" justifyContent="space-between" alignItems="center">
+        <Box display="flex" alignItems="center" gap={1}>
+          <FormControl size="small" sx={{ minWidth: 200 }}>
+            <InputLabel>Script Çalışma Zamanı</InputLabel>
+            <Select
+              value={scriptEventType}
+              label="Script Çalışma Zamanı"
+              onChange={(e) => setScriptEventType(e.target.value)}
+            >
+              <MenuItem value="onLoad">Form Yüklendiğinde</MenuItem>
+              <MenuItem value="onChange">Alan Değiştiğinde</MenuItem>
+              <MenuItem value="both">Her İkisi</MenuItem>
+            </Select>
+          </FormControl>
+          <MDButton
+            size="small"
+            variant="outlined"
+            color="info"
+            startIcon={<ContentCopyIcon />}
+            onClick={() => {
+              navigator.clipboard.writeText(fieldScript);
+              alert("Script panoya kopyalandı!");
+            }}
+          >
+            Kopyala
+          </MDButton>
+        </Box>
+        <MDButton
+          size="small"
+          variant="contained"
+          color="success"
+          startIcon={<PlayArrowIcon />}
+          onClick={() => {
+            alert("Script test özelliği yakında eklenecek!");
+          }}
+        >
+          Test Et
+        </MDButton>
+      </Box>
+
+      <Accordion expanded={showFieldReference} onChange={(e, expanded) => setShowFieldReference(expanded)} sx={{ mt: 2 }}>
+        <AccordionSummary expandIcon={<TableChartIcon />}>
+          <Typography variant="subtitle2">📋 Form Alan Referansları</Typography>
+        </AccordionSummary>
+        <AccordionDetails>
+          <TableContainer>
+            <Table size="small">
+              <TableHead>
+                <TableRow>
+                  <TableCell><strong>Alan Adı</strong></TableCell>
+                  <TableCell><strong>Tip</strong></TableCell>
+                  <TableCell><strong>Label</strong></TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {formFields.map((field) => (
+                  <TableRow key={field.key}>
+                    <TableCell>
+                      <Typography variant="caption" fontWeight={600}>
+                        {field.normalizedKey || field.key}
+                      </Typography>
+                    </TableCell>
+                    <TableCell>{field.type}</TableCell>
+                    <TableCell>{field.label}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        </AccordionDetails>
+      </Accordion>
+    </Box>
+  );
+
+  return (
+    <Dialog open={open} onClose={onClose} maxWidth="lg" fullWidth>
+      <DialogContent sx={{ p: 0, display: "flex", flexDirection: "row", height: "80vh", overflow: "hidden" }}>
+        {/* Sidebar */}
+        <Box
+          sx={{
+            width: 280,
+            bgcolor: "grey.50",
+            borderRight: 1,
+            borderColor: "divider",
+            p: 3,
+            display: "flex",
+            flexDirection: "column",
+            overflowY: "auto",
+          }}
+        >
+          <Box mb={3}>
+            <Box
+              sx={{
+                width: 48,
+                height: 48,
+                bgcolor: "primary.main",
+                borderRadius: 2,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                color: "white",
+                mb: 2,
+              }}
+            >
+              <SettingsIcon />
+            </Box>
+            <Typography variant="h6" fontWeight={700}>
+              FormTask
+            </Typography>
+            <Typography variant="caption" color="text.secondary" fontWeight={600}>
+              NEO-BPM
+            </Typography>
+          </Box>
+
+          <Box sx={{ flex: 1 }}>
+            {[
+              { id: "assignment", label: "Atama Mantığı", icon: LayersIcon, color: "primary" },
+              { id: "timing", label: "Zamanlama", icon: AccessTimeIcon, color: "warning" },
+              { id: "script", label: "Script Tabı", icon: CodeIcon, color: "success" },
+              { id: "buttons", label: "Buton Ayarları", icon: SettingsIcon, color: "info" },
+            ].map((item) => {
+              const Icon = item.icon;
+              const isActive = activeTab === item.id;
+              return (
+                <Box
+                  key={item.id}
+                  onClick={() => setActiveTab(item.id)}
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 2,
+                    p: 2,
+                    mb: 1,
+                    borderRadius: 2,
+                    cursor: "pointer",
+                    bgcolor: isActive ? `${item.color}.light` : "transparent",
+                    color: isActive ? `${item.color}.main` : "text.secondary",
+                    "&:hover": {
+                      bgcolor: isActive ? `${item.color}.light` : "action.hover",
+                    },
+                    transition: "all 0.2s",
+                  }}
+                >
+                  <Icon fontSize="small" />
+                  <Typography variant="body2" fontWeight={isActive ? 700 : 500}>
+                    {item.label}
+                  </Typography>
+                </Box>
+              );
+            })}
+          </Box>
+
+          <Box sx={{ pt: 2, borderTop: 1, borderColor: "divider" }}>
+            <Paper sx={{ p: 2, bgcolor: "success.light", borderRadius: 2 }}>
+              <Box display="flex" alignItems="center" gap={1} mb={1}>
+                <VerifiedUserIcon fontSize="small" color="success" />
+                <Typography variant="caption" fontWeight={700}>
+                  Güvenli Tasarım
+                </Typography>
+              </Box>
+              <Typography variant="caption" color="text.secondary">
+                Uyumlanmış Model
+              </Typography>
+            </Paper>
+          </Box>
+        </Box>
+
+        {/* Main Content */}
+        <Box sx={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
+          {/* Header */}
+          <Box
+            sx={{
+              px: 3,
+              py: 2,
+              borderBottom: 1,
+              borderColor: "divider",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+            }}
+          >
+            <Box>
+              <Typography variant="h6" fontWeight={700}>
+                {activeTab === "assignment"
+                  ? "Atama Mantığı"
+                  : activeTab === "timing"
+                  ? "Zamanlama & SLA"
+                  : activeTab === "script"
+                  ? "Form Script"
+                  : "Buton Yönetimi"}
+              </Typography>
+              <Typography variant="caption" color="text.secondary">
+                Süreç Adımı: {name || "Form Görevi"}
+              </Typography>
+            </Box>
+            <IconButton onClick={onClose} size="small">
+              <CloseIcon />
+            </IconButton>
+          </Box>
+
+          {/* Content */}
+          <Box sx={{ flex: 1, overflowY: "auto", p: 3 }}>
+            {activeTab === "assignment" && renderAssignmentContent()}
+            {activeTab === "timing" && renderTimingContent()}
+            {activeTab === "script" && renderScriptContent()}
+            {activeTab === "buttons" && renderButtonsContent()}
+          </Box>
+
+          {/* Footer */}
+          <Box
+            sx={{
+              px: 3,
+              py: 2,
+              borderTop: 1,
+              borderColor: "divider",
+              bgcolor: "grey.50",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+            }}
+          >
+            <Box sx={{ display: { xs: "none", lg: "flex" }, alignItems: "center", gap: 1 }}>
+              <InfoOutlinedIcon fontSize="small" color="action" />
+              <Typography variant="caption" color="text.secondary">
+                Kaydetmeden önce değişiklikleri kontrol edin.
+              </Typography>
+            </Box>
+            <Box sx={{ display: "flex", gap: 2, ml: "auto" }}>
+              <MDButton variant="outlined" color="secondary" onClick={onClose}>
+                Vazgeç
+              </MDButton>
+              <MDButton variant="gradient" color="info" onClick={handleSave} startIcon={<SaveIcon />}>
+                Güncelle ve Kaydet
+              </MDButton>
+            </Box>
+          </Box>
         </Box>
       </DialogContent>
-      
-      <DialogActions sx={{ px: 3, pb: 2 }}>
-        <MDButton variant="outlined" color="secondary" onClick={onClose}>
-          İptal
-        </MDButton>
-        <MDButton variant="gradient" color="info" onClick={handleSave}>
-          Kaydet
-        </MDButton>
-      </DialogActions>
     </Dialog>
   );
 };

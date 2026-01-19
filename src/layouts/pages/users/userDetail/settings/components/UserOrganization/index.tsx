@@ -18,7 +18,6 @@ import { useBusy } from "layouts/pages/hooks/useBusy";
 import { MessageBoxType } from "@ui5/webcomponents-react";
 import { format } from "date-fns";
 import { tr } from "date-fns/locale";
-import apiClient from "api/apiclient";
 
 type Props = {
   userId?: string;
@@ -40,9 +39,9 @@ function UserOrganization({ userId }: Props): JSX.Element {
   const [selectedOrgUnit, setSelectedOrgUnit] = useState<string>("");
   const [selectedPosition, setSelectedPosition] = useState<string>("");
   const [selectedManager, setSelectedManager] = useState<UserAppDtoWithoutPhoto | null>(null);
-  const [currentAssignment, setCurrentAssignment] = useState<any | null>(null);
+  const [currentAssignment, setCurrentAssignment] = useState<EmployeeAssignmentListDto | null>(null);
   const [actualUserId, setActualUserId] = useState<string | null>(null);
-  const [assignmentHistory, setAssignmentHistory] = useState<any[]>([]);
+  const [assignmentHistory, setAssignmentHistory] = useState<EmployeeAssignmentListDto[]>([]);
   const [selectedStartDate, setSelectedStartDate] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -134,12 +133,18 @@ function UserOrganization({ userId }: Props): JSX.Element {
 
   const fetchActiveOrganization = async (uid: string) => {
     try {
-      // GetCurrentUserActiveOrganization endpoint'ini kullan
-      const response = await apiClient.get(`/api/User/GetCurrentUserActiveOrganization`, {
-        params: { userId: uid }
-      });
+      const conf = getConfiguration();
+      const tenantId = localStorage.getItem("selectedTenantId");
       
-      const activeOrg: any = response?.data || (response as any)?.data?.data || null;
+      if (!tenantId) return;
+
+      // GetCurrentUserActiveOrganization endpoint'ini UserApi ile kullan
+      const userApi = new UserApi(conf);
+      const response = await userApi.apiUserGetCurrentUserActiveOrganizationUserIdGet(uid, {
+        headers: { 'X-Tenant-Id': tenantId }
+      } as any);
+      
+      const activeOrg: EmployeeAssignmentListDto = (response as any)?.data;
       
       if (activeOrg) {
         setCurrentAssignment(activeOrg);
@@ -175,17 +180,19 @@ function UserOrganization({ userId }: Props): JSX.Element {
 
   const fetchOrganizationHistory = async (uid: string) => {
     try {
-      // GetCurrentUserOrganizationHistory endpoint'ini kullan
-      const response = await apiClient.get(`/api/User/GetCurrentUserOrganizationHistory`, {
-        params: { userId: uid }
-      });
+      const conf = getConfiguration();
+      const tenantId = localStorage.getItem("selectedTenantId");
       
-      const history: any[] = Array.isArray(response?.data) 
-        ? response.data 
-        : Array.isArray((response as any)?.data?.items)
-        ? (response as any).data.items
-        : Array.isArray((response as any)?.data?.data)
-        ? (response as any).data.data
+      if (!tenantId) return;
+
+      // GetCurrentUserOrganizationHistory endpoint'ini UserApi ile kullan
+      const userApi = new UserApi(conf);
+      const response = await userApi.apiUserGetCurrentUserOrganizationHistoryUserIdGet(uid, {
+        headers: { 'X-Tenant-Id': tenantId }
+      } as any);
+      
+      const history: EmployeeAssignmentListDto[] = Array.isArray((response as any)?.data) 
+        ? (response as any).data 
         : [];
       
       // Tarihe göre sırala (en yeni en üstte)
@@ -243,32 +250,20 @@ function UserOrganization({ userId }: Props): JSX.Element {
 
       const employeeAssignmentsApi = new EmployeeAssignmentsApi(conf);
       
-      if (currentAssignment?.id) {
-        const updateDto: EmployeeAssignmentUpdateDto = {
-          id: currentAssignment.id,
-          orgUnitId: selectedOrgUnit || null,
-          positionId: selectedPosition || null,
-          managerId: selectedManager?.id || null,
-        };
-        
-        await employeeAssignmentsApi.apiEmployeeAssignmentsPut(updateDto, {
-          headers: { 'X-Tenant-Id': tenantId }
-        } as any);
-      } else {
-        // Gerçek kullanıcı ID'sini kullan
+      // Yeni atama yaparken her zaman INSERT kullanılır (yeni kayıt oluşturulur)
+      // Mevcut aktif atama varsa backend tarafında otomatik olarak sonlandırılır
         const realUserId = actualUserId || user.id || userId!;
         const insertDto: EmployeeAssignmentInsertDto = {
           userId: realUserId,
           orgUnitId: selectedOrgUnit || null,
           positionId: selectedPosition || null,
           managerId: selectedManager?.id || null,
-          startDate: selectedStartDate ? new Date(selectedStartDate).toISOString() : new Date().toISOString(),
+        startDate: selectedStartDate ? new Date(selectedStartDate).toISOString() : new Date().toISOString(),
         };
         
         await employeeAssignmentsApi.apiEmployeeAssignmentsPost(insertDto, {
           headers: { 'X-Tenant-Id': tenantId }
         } as any);
-      }
       
       const userApi = new UserApi(conf);
       const updateData = {
@@ -285,8 +280,7 @@ function UserOrganization({ userId }: Props): JSX.Element {
       
       setUser(updateData);
       
-      // Gerçek kullanıcı ID'sini kullan
-      const realUserId = actualUserId || updateData.id || userId!;
+      // Organizasyon bilgilerini yeniden yükle
       if (realUserId) {
         await Promise.all([
           fetchActiveOrganization(realUserId),
@@ -348,11 +342,10 @@ function UserOrganization({ userId }: Props): JSX.Element {
     );
   }
 
-  const orgUnitName = currentAssignment?.orgUnitName || currentAssignment?.orgUnit?.name || orgUnits.find(ou => ou.id === (currentAssignment?.orgUnitId || user.orgUnitId))?.name || "-";
-  const positionName = currentAssignment?.positionName || currentAssignment?.position?.name || positions.find(p => p.id === (currentAssignment?.positionId || user.positionId))?.name || "-";
-  const managerName = currentAssignment?.managerFullName || currentAssignment?.manager?.firstName 
-    ? `${currentAssignment.manager.firstName || ""} ${currentAssignment.manager.lastName || ""}`.trim()
-    : (selectedManager 
+  const orgUnitName = currentAssignment?.orgUnitName || orgUnits.find(ou => ou.id === (currentAssignment?.orgUnitId || user.orgUnitId))?.name || "-";
+  const positionName = currentAssignment?.positionName || positions.find(p => p.id === (currentAssignment?.positionId || user.positionId))?.name || "-";
+  const managerName = currentAssignment?.managerFullName 
+    || (selectedManager 
         ? `${selectedManager.firstName || ""} ${selectedManager.lastName || ""}`.trim() || selectedManager.userName || "-"
         : (currentAssignment?.managerId 
             ? managers.find(m => m.id === currentAssignment.managerId)?.userName || "-"
@@ -427,11 +420,11 @@ function UserOrganization({ userId }: Props): JSX.Element {
                 <Icon sx={{ color: "white", mr: 1 }}>work</Icon>
                 <MDTypography variant="caption" fontWeight="medium" color="rgba(255,255,255,0.9)">
                   Pozisyon
-                </MDTypography>
+            </MDTypography>
               </MDBox>
               <MDTypography variant="h6" fontWeight="bold" color="white">
-                {positionName}
-              </MDTypography>
+              {positionName}
+            </MDTypography>
             </MDBox>
           </Grid>
           <Grid item xs={12} md={4}>
@@ -447,11 +440,11 @@ function UserOrganization({ userId }: Props): JSX.Element {
                 <Icon sx={{ color: "white", mr: 1 }}>supervisor_account</Icon>
                 <MDTypography variant="caption" fontWeight="medium" color="rgba(255,255,255,0.9)">
                   Yönetici
-                </MDTypography>
+            </MDTypography>
               </MDBox>
               <MDTypography variant="h6" fontWeight="bold" color="white">
-                {managerName}
-              </MDTypography>
+              {managerName}
+            </MDTypography>
             </MDBox>
           </Grid>
           {currentAssignment?.startDate && (
@@ -529,10 +522,9 @@ function UserOrganization({ userId }: Props): JSX.Element {
             {assignmentHistory.map((assignment, index) => {
               const isActive = assignment.isActive;
               const isLast = index === assignmentHistory.length - 1;
-              const orgUnitName = assignment.orgUnitName || assignment.orgUnit?.name || "-";
-              const positionName = assignment.positionName || assignment.position?.name || "-";
-              const managerName = assignment.managerFullName || 
-                (assignment.manager ? `${assignment.manager.firstName || ""} ${assignment.manager.lastName || ""}`.trim() : "-");
+              const orgUnitName = assignment.orgUnitName || "-";
+              const positionName = assignment.positionName || "-";
+              const managerName = assignment.managerFullName || "-";
               
               return (
                 <TimelineItem key={assignment.id || index}>
@@ -638,50 +630,50 @@ function UserOrganization({ userId }: Props): JSX.Element {
                 <Grid item xs={12} md={6}>
                   <FormControl fullWidth sx={{ mb: 2 }}>
                     <InputLabel required>Departman</InputLabel>
-                    <Select
-                      value={selectedOrgUnit}
-                      label="Departman"
-                      onChange={(e) => setSelectedOrgUnit(e.target.value)}
-                    >
-                      {orgUnits.map((ou) => (
-                        <MenuItem key={ou.id} value={ou.id || ""}>{ou.name || "-"}</MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
+              <Select
+                value={selectedOrgUnit}
+                label="Departman"
+                onChange={(e) => setSelectedOrgUnit(e.target.value)}
+              >
+                {orgUnits.map((ou) => (
+                  <MenuItem key={ou.id} value={ou.id || ""}>{ou.name || "-"}</MenuItem>
+                ))}
+              </Select>
+            </FormControl>
                 </Grid>
                 <Grid item xs={12} md={6}>
-                  <FormControl fullWidth sx={{ mb: 2 }}>
+            <FormControl fullWidth sx={{ mb: 2 }}>
                     <InputLabel required>Pozisyon</InputLabel>
-                    <Select
-                      value={selectedPosition}
-                      label="Pozisyon"
-                      onChange={(e) => setSelectedPosition(e.target.value)}
-                    >
-                      {positions.map((pos) => (
-                        <MenuItem key={pos.id} value={pos.id || ""}>{pos.name || "-"}</MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
+              <Select
+                value={selectedPosition}
+                label="Pozisyon"
+                onChange={(e) => setSelectedPosition(e.target.value)}
+              >
+                {positions.map((pos) => (
+                  <MenuItem key={pos.id} value={pos.id || ""}>{pos.name || "-"}</MenuItem>
+                ))}
+              </Select>
+            </FormControl>
                 </Grid>
                 <Grid item xs={12} md={6}>
-                  <Autocomplete
-                    options={managers}
-                    getOptionLabel={(option) => 
-                      `${option.firstName || ""} ${option.lastName || ""}`.trim() || option.userName || ""
-                    }
-                    value={selectedManager}
-                    onChange={(event, newValue) => {
-                      setSelectedManager(newValue);
-                    }}
-                    renderInput={(params) => (
-                      <TextField
-                        {...params}
-                        label="Yönetici"
-                        placeholder="Yönetici seçiniz (opsiyonel)"
-                      />
-                    )}
-                    sx={{ mb: 2 }}
-                  />
+            <Autocomplete
+              options={managers}
+              getOptionLabel={(option) => 
+                `${option.firstName || ""} ${option.lastName || ""}`.trim() || option.userName || ""
+              }
+              value={selectedManager}
+              onChange={(event, newValue) => {
+                setSelectedManager(newValue);
+              }}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  label="Yönetici"
+                  placeholder="Yönetici seçiniz (opsiyonel)"
+                />
+              )}
+              sx={{ mb: 2 }}
+            />
                 </Grid>
                 <Grid item xs={12} md={6}>
                   <TextField

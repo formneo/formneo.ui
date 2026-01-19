@@ -15304,6 +15304,45 @@
         }
       }
     },
+    "/api/WorkFlowDefination/{id}/for-workflow": {
+      "get": {
+        "tags": [
+          "WorkFlowDefination"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkFlowDefinationDetailDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkFlowDefinationDetailDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkFlowDefinationDetailDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/WorkFlowDefination/GetWorkFlowListByMenu": {
       "get": {
         "tags": [
@@ -27984,6 +28023,31 @@
           },
           "form": {
             "$ref": "#/components/schemas/Form"
+          }
+        },
+        "additionalProperties": false
+      },
+      "WorkFlowDefinationDetailDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "workflowName": {
+            "type": "string",
+            "nullable": true
+          },
+          "defination": {
+            "type": "string",
+            "nullable": true
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "revision": {
+            "type": "integer",
+            "format": "int32"
           }
         },
         "additionalProperties": false

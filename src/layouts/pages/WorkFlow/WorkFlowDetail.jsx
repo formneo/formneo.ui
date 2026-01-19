@@ -236,75 +236,87 @@ function Flow(props) {
   const { setViewport } = useReactFlow();
   const { id } = useParams();
   useEffect(() => {
+    if (!id) {
+      setDisabled(true);
+      setShowWizard(true);
+      return;
+    }
+
     dispatchBusy({ isBusy: true });
+    setisEdit(true);
+    
+    const conf = getConfiguration();
+    const api = new WorkFlowDefinationApi(conf);
+    
+    api
+      .apiWorkFlowDefinationIdForWorkflowGet(id)
+      .then((response) => {
+        const workflowData = response.data;
+        let flow = JSON.parse(workflowData.defination);
+        if (flow) {
+          setworkflowName(workflowData.workflowName);
+          txtname.current?.setValue(workflowData.workflowName);
+          const { x = 0, y = 0, zoom = 1 } = flow.viewport;
+          setNodes(flow.nodes || []);
+          setEdges(flow.edges || []);
+          setViewport({ x, y, zoom });
 
-    if (id) {
-      setisEdit(true);
-      var conf = getConfiguration();
-      let api = new WorkFlowDefinationApi(conf);
-      var data = api
-        .apiWorkFlowDefinationIdGet(id)
-        .then((response) => {
-          let flow = JSON.parse(response.data.defination);
-          if (flow) {
-            setworkflowName(response.data.workflowName);
-            txtname.current?.setValue(response.data.workflowName);
-            const { x = 0, y = 0, zoom = 1 } = flow.viewport;
-            setNodes(flow.nodes || []);
-            setEdges(flow.edges || []);
-            setViewport({ x, y, zoom });
-
-            // ✅ Önce queryConditionNode'dan dene (mevcut mantık)
-            const queryNodes = flow.nodes?.filter((n) => n.type === "queryConditionNode") || [];
-            if (queryNodes.length > 0) {
-              const firstQueryNode = queryNodes[0];
-              if (firstQueryNode.data?.selectedFormId && firstQueryNode.data?.parsedFormDesign) {
-                setSelectedForm({
-                  id: firstQueryNode.data.selectedFormId,
-                  formName: firstQueryNode.data.selectedFormName,
-                  formDesign: JSON.stringify(firstQueryNode.data.parsedFormDesign?.raw || {}),
-                  formType: firstQueryNode.data.workflowFormInfo?.formType || "workflow",
-                });
-                setParsedFormDesign(firstQueryNode.data.parsedFormDesign);
-                console.log(
-                  "✅ Form restored from queryConditionNode:",
-                  firstQueryNode.data.selectedFormName
-                );
-
-                // Form bulundu, çık
-                return;
-              }
-            }
-
-            // ✅ QueryConditionNode'da yoksa, diğer node'lardan dene
-            const allNodes = flow.nodes || [];
-            const nodeWithForm = allNodes.find(
-              (n) => n.data?.selectedFormId && n.type !== "queryConditionNode"
-            );
-
-            if (nodeWithForm) {
-              console.log("✅ Form restored from other node:", nodeWithForm.data.selectedFormName);
-
+          // ✅ Önce queryConditionNode'dan dene (mevcut mantık)
+          const queryNodes = flow.nodes?.filter((n) => n.type === "queryConditionNode") || [];
+          if (queryNodes.length > 0) {
+            const firstQueryNode = queryNodes[0];
+            if (firstQueryNode.data?.selectedFormId && firstQueryNode.data?.parsedFormDesign) {
               setSelectedForm({
-                id: nodeWithForm.data.selectedFormId,
-                formName: nodeWithForm.data.selectedFormName,
-                formDesign: JSON.stringify(nodeWithForm.data.parsedFormDesign?.raw || {}),
-                formType: nodeWithForm.data.workflowFormInfo?.formType || "workflow",
+                id: firstQueryNode.data.selectedFormId,
+                formName: firstQueryNode.data.selectedFormName,
+                formDesign: JSON.stringify(firstQueryNode.data.parsedFormDesign?.raw || {}),
+                formType: firstQueryNode.data.workflowFormInfo?.formType || "workflow",
               });
-              setParsedFormDesign(nodeWithForm.data.parsedFormDesign);
-            } else {
-              console.log("⚠️ Hiçbir node'da form bilgisi bulunamadı");
-              setSelectedForm(null);
-              setParsedFormDesign(null);
+              setParsedFormDesign(firstQueryNode.data.parsedFormDesign);
+              console.log(
+                "✅ Form restored from queryConditionNode:",
+                firstQueryNode.data.selectedFormName
+              );
+
+              // Form bulundu, çık
+              return;
             }
           }
-        })
-        .catch((error) => {
-          console.error("Workflow yükleme hatası:", error);
+
+          // ✅ QueryConditionNode'da yoksa, diğer node'lardan dene
+          const allNodes = flow.nodes || [];
+          const nodeWithForm = allNodes.find(
+            (n) => n.data?.selectedFormId && n.type !== "queryConditionNode"
+          );
+
+          if (nodeWithForm) {
+            console.log("✅ Form restored from other node:", nodeWithForm.data.selectedFormName);
+
+            setSelectedForm({
+              id: nodeWithForm.data.selectedFormId,
+              formName: nodeWithForm.data.selectedFormName,
+              formDesign: JSON.stringify(nodeWithForm.data.parsedFormDesign?.raw || {}),
+              formType: nodeWithForm.data.workflowFormInfo?.formType || "workflow",
+            });
+            setParsedFormDesign(nodeWithForm.data.parsedFormDesign);
+          } else {
+            console.log("⚠️ Hiçbir node'da form bilgisi bulunamadı");
+            setSelectedForm(null);
+            setParsedFormDesign(null);
+          }
+        }
+      })
+      .catch((error) => {
+        console.error("Workflow yükleme hatası:", error);
+        dispatchAlert({ 
+          message: "Workflow yüklenirken hata oluştu: " + (error?.response?.data?.message || error.message), 
+          type: MessageBoxType.Error 
         });
-    }
-    dispatchBusy({ isBusy: false });
-  }, [id, setSelectedForm, setParsedFormDesign, dispatchBusy]);
+      })
+      .finally(() => {
+        dispatchBusy({ isBusy: false });
+      });
+  }, [id]);
   const handleWorkFlowName = (event) => {
     alert(txtname.current?.current);
     setworkflowName(event.target.value);

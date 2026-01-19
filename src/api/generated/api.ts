@@ -3603,6 +3603,13 @@ export interface WorkFlowDefination {
     'formId'?: string | null;
     'form'?: Form;
 }
+export interface WorkFlowDefinationDetailDto {
+    'id'?: string;
+    'workflowName'?: string | null;
+    'defination'?: string | null;
+    'isActive'?: boolean;
+    'revision'?: number;
+}
 export interface WorkFlowDefinationInsertDto {
     'workflowName'?: string | null;
     'defination'?: string | null;
@@ -37717,6 +37724,43 @@ export const WorkFlowDefinationApiAxiosParamCreator = function (configuration?: 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
+        apiWorkFlowDefinationIdForWorkflowGet: async (id: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'id' is not null or undefined
+            assertParamExists('apiWorkFlowDefinationIdForWorkflowGet', 'id', id)
+            const localVarPath = `/api/WorkFlowDefination/{id}/for-workflow`
+                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication Bearer required
+            // http bearer authentication required
+            await setBearerAuthToObject(localVarHeaderParameter, configuration)
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @param {string} id 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
         apiWorkFlowDefinationIdGet: async (id: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'id' is not null or undefined
             assertParamExists('apiWorkFlowDefinationIdGet', 'id', id)
@@ -37859,6 +37903,18 @@ export const WorkFlowDefinationApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
+        async apiWorkFlowDefinationIdForWorkflowGet(id: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<WorkFlowDefinationDetailDto>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.apiWorkFlowDefinationIdForWorkflowGet(id, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['WorkFlowDefinationApi.apiWorkFlowDefinationIdForWorkflowGet']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * 
+         * @param {string} id 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
         async apiWorkFlowDefinationIdGet(id: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<WorkFlowDefinationListDto>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.apiWorkFlowDefinationIdGet(id, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
@@ -37920,6 +37976,15 @@ export const WorkFlowDefinationApiFactory = function (configuration?: Configurat
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
+        apiWorkFlowDefinationIdForWorkflowGet(id: string, options?: RawAxiosRequestConfig): AxiosPromise<WorkFlowDefinationDetailDto> {
+            return localVarFp.apiWorkFlowDefinationIdForWorkflowGet(id, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
+         * @param {string} id 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
         apiWorkFlowDefinationIdGet(id: string, options?: RawAxiosRequestConfig): AxiosPromise<WorkFlowDefinationListDto> {
             return localVarFp.apiWorkFlowDefinationIdGet(id, options).then((request) => request(axios, basePath));
         },
@@ -37964,6 +38029,16 @@ export class WorkFlowDefinationApi extends BaseAPI {
      */
     public apiWorkFlowDefinationGetWorkFlowListByMenuGet(options?: RawAxiosRequestConfig) {
         return WorkFlowDefinationApiFp(this.configuration).apiWorkFlowDefinationGetWorkFlowListByMenuGet(options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @param {string} id 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    public apiWorkFlowDefinationIdForWorkflowGet(id: string, options?: RawAxiosRequestConfig) {
+        return WorkFlowDefinationApiFp(this.configuration).apiWorkFlowDefinationIdForWorkflowGet(id, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**
