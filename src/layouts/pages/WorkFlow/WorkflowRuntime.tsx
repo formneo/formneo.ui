@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useMemo, useRef } from "react";
 import { useParams, useLocation, useNavigate } from "react-router-dom";
-import { FormDataApi, WorkFlowApi, UserApi, WorkFlowStartApiDto, AlertNodeInfo } from "api/generated";
+import { FormDataApi, WorkFlowApi, UserApi, WorkFlowStartApiDto, AlertNodeInfo, WorkFlowItemApi, WorkFlowItemDtoWithApproveItems } from "api/generated";
 import getConfiguration from "confiuration";
 import { showWorkflowAlert } from "./utils/workflowAlert";
 
@@ -8,7 +8,9 @@ import DashboardLayout from "examples/LayoutContainers/DashboardLayout";
 import DashboardNavbar from "examples/Navbars/DashboardNavbar";
 import MDBox from "components/MDBox";
 import MDTypography from "components/MDTypography";
-import { Button, Card, CardContent, Typography, Box } from "@mui/material";
+import { Button, Card, CardContent, Typography, Box, Drawer, IconButton, Chip, Avatar, Divider, Tooltip } from "@mui/material";
+import { Timeline, TimelineItem, TimelineSeparator, TimelineConnector, TimelineContent, TimelineDot, TimelineOppositeContent } from "@mui/lab";
+import { History as HistoryIcon, Close as CloseIcon, CheckCircle, Cancel, HourglassEmpty, Description, Person, CalendarToday } from "@mui/icons-material";
 
 // Formily render
 import "antd/dist/antd.css";
@@ -48,6 +50,11 @@ export default function WorkflowRuntime(): JSX.Element {
   const [submitting, setSubmitting] = useState<boolean>(false);
   const [currentUser, setCurrentUser] = useState<string>("");
   const scriptExecutedRef = useRef<boolean>(false); // Script'in çalıştırılıp çalıştırılmadığını takip et
+  
+  // Timeline state
+  const [timelineOpen, setTimelineOpen] = useState<boolean>(false);
+  const [historyData, setHistoryData] = useState<WorkFlowItemDtoWithApproveItems[]>([]);
+  const [loadingHistory, setLoadingHistory] = useState<boolean>(false);
 
   // Workflow instance bilgisi (location.state'den gelir)
   const workflowInstance = location.state?.workflowInstance;
@@ -262,6 +269,41 @@ export default function WorkflowRuntime(): JSX.Element {
     };
     loadUser();
   }, []);
+
+  // Workflow history'yi yükle
+  const loadWorkflowHistory = async () => {
+    const workflowHeadId = workflowInstance?.id || id;
+    if (!workflowHeadId || workflowHeadId === "new") {
+      return;
+    }
+
+    setLoadingHistory(true);
+    try {
+      const conf = getConfiguration();
+      const workflowItemApi = new WorkFlowItemApi(conf);
+      const response = await workflowItemApi.apiWorkFlowItemGetApproveItemsWorkFlowHeadIdGet(workflowHeadId);
+      
+      // Tarihe göre sırala (en yeni en üstte)
+      const sortedData = (response.data || []).sort((a, b) => {
+        const dateA = a.approveItems?.[0]?.createdDate ? new Date(a.approveItems[0].createdDate).getTime() : 0;
+        const dateB = b.approveItems?.[0]?.createdDate ? new Date(b.approveItems[0].createdDate).getTime() : 0;
+        return dateB - dateA;
+      });
+      
+      setHistoryData(sortedData);
+    } catch (error) {
+      console.error("History yüklenirken hata:", error);
+    } finally {
+      setLoadingHistory(false);
+    }
+  };
+
+  // Timeline açıldığında history'yi yükle
+  useEffect(() => {
+    if (timelineOpen) {
+      loadWorkflowHistory();
+    }
+  }, [timelineOpen]);
 
   useEffect(() => {
     const load = async () => {
@@ -731,24 +773,16 @@ export default function WorkflowRuntime(): JSX.Element {
         }
 
         .ant-form-item {
-          margin-bottom: 24px !important;
-          padding: 0;
+          margin-bottom: 16px !important;
         }
 
         .ant-form-item-label {
-          padding-bottom: 8px !important;
+          padding-bottom: 4px !important;
         }
 
         .ant-form-item-label > label {
           font-size: 14px !important;
           font-weight: 600 !important;
-          color: #1a202c !important;
-          line-height: 1.5 !important;
-        }
-
-        .ant-form-item-label > label.ant-form-item-required:not(.ant-form-item-required-mark-optional)::before {
-          color: #ef4444 !important;
-          margin-right: 4px !important;
         }
 
         /* Input, Select, TextArea Stilleri */
@@ -759,23 +793,9 @@ export default function WorkflowRuntime(): JSX.Element {
         .ant-select-selector,
         .ant-input-number-input,
         textarea.ant-input {
-          border-radius: 8px !important;
-          border: 1px solid #e2e8f0 !important;
-          padding: 10px 14px !important;
+          border-radius: 4px !important;
+          padding: 8px 12px !important;
           font-size: 14px !important;
-          line-height: 1.5 !important;
-          transition: all 0.2s ease !important;
-          background-color: #ffffff !important;
-          color: #1a202c !important;
-        }
-
-        .ant-input:hover,
-        .ant-input-number:hover,
-        .ant-input-password:hover,
-        .ant-picker:hover,
-        .ant-select-selector:hover,
-        textarea.ant-input:hover {
-          border-color: #667eea !important;
         }
 
         .ant-input:focus,
@@ -784,8 +804,6 @@ export default function WorkflowRuntime(): JSX.Element {
         .ant-picker-focused,
         .ant-select-focused .ant-select-selector,
         textarea.ant-input:focus {
-          border-color: #667eea !important;
-          box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1) !important;
           outline: none !important;
         }
 
@@ -829,14 +847,7 @@ export default function WorkflowRuntime(): JSX.Element {
         .ant-checkbox-wrapper,
         .ant-radio-wrapper {
           font-size: 14px !important;
-          color: #1a202c !important;
-          margin-bottom: 8px !important;
-        }
-
-        .ant-checkbox-checked .ant-checkbox-inner,
-        .ant-radio-checked .ant-radio-inner {
-          background-color: #667eea !important;
-          border-color: #667eea !important;
+          margin-bottom: 4px !important;
         }
 
         /* Upload Stilleri */
@@ -845,15 +856,7 @@ export default function WorkflowRuntime(): JSX.Element {
         }
 
         .ant-upload.ant-upload-drag {
-          border-radius: 8px !important;
-          border: 2px dashed #e2e8f0 !important;
-          background-color: #f8f9fa !important;
-          transition: all 0.2s ease !important;
-        }
-
-        .ant-upload.ant-upload-drag:hover {
-          border-color: #667eea !important;
-          background-color: #f0f4ff !important;
+          border-radius: 4px !important;
         }
 
         /* Rate Component Stilleri */
@@ -861,48 +864,28 @@ export default function WorkflowRuntime(): JSX.Element {
           font-size: 20px !important;
         }
 
-        .ant-rate-star {
-          color: #fbbf24 !important;
-        }
-
         /* Slider Stilleri */
         .ant-slider {
           margin: 16px 0 !important;
         }
 
-        .ant-slider-rail {
-          background-color: #e2e8f0 !important;
-        }
-
-        .ant-slider-track {
-          background-color: #667eea !important;
-        }
-
-        .ant-slider-handle {
-          border-color: #667eea !important;
-        }
-
         /* Card Component Stilleri */
         .ant-card {
-          border-radius: 12px !important;
-          border: 1px solid #e2e8f0 !important;
-          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08) !important;
+          border-radius: 4px !important;
           margin-bottom: 16px !important;
         }
 
         .ant-card-head {
-          border-bottom: 1px solid #e2e8f0 !important;
-          padding: 16px 20px !important;
+          padding: 12px 16px !important;
         }
 
         .ant-card-head-title {
           font-size: 16px !important;
           font-weight: 600 !important;
-          color: #1a202c !important;
         }
 
         .ant-card-body {
-          padding: 20px !important;
+          padding: 16px !important;
         }
 
         /* Form Item Help Text */
@@ -918,78 +901,31 @@ export default function WorkflowRuntime(): JSX.Element {
           margin-top: 4px !important;
         }
 
-        /* Form Layout Responsive */
-        @media (max-width: 768px) {
-          .ant-form-item-label {
-            text-align: left !important;
-          }
-          
-          .ant-form-item-label > label {
-            font-size: 13px !important;
-          }
-        }
-
         /* Form Grid Layout */
         .ant-row {
-          margin-left: -8px !important;
-          margin-right: -8px !important;
+          margin-left: -4px !important;
+          margin-right: -4px !important;
         }
 
         .ant-col {
-          padding-left: 8px !important;
-          padding-right: 8px !important;
+          padding-left: 4px !important;
+          padding-right: 4px !important;
         }
 
         /* Button Group Stilleri */
         .ant-btn-group {
           display: flex !important;
-          gap: 8px !important;
+          gap: 4px !important;
         }
 
-        /* Switch Stilleri */
-        .ant-switch-checked {
-          background-color: #667eea !important;
-        }
-
-        /* TimePicker Stilleri */
-        .ant-picker-time-panel-column > li.ant-picker-time-panel-cell-selected {
-          background-color: #667eea !important;
-        }
+        /* Switch Stilleri - default */
 
         /* Cascader Stilleri */
         .ant-cascader-picker {
           width: 100% !important;
         }
 
-        .ant-cascader-menu-item-active {
-          background-color: #f0f4ff !important;
-        }
-
-        /* Transfer Stilleri */
-        .ant-transfer-list {
-          border-radius: 8px !important;
-          border: 1px solid #e2e8f0 !important;
-        }
-
-        /* TreeSelect Stilleri */
-        .ant-select-tree {
-          border-radius: 8px !important;
-        }
-
-        .ant-select-tree-node-selected {
-          background-color: #f0f4ff !important;
-        }
-
-        /* Form Item Spacing */
-        .ant-form-horizontal .ant-form-item-label {
-          flex: 0 0 25% !important;
-          max-width: 25% !important;
-        }
-
-        .ant-form-horizontal .ant-form-item-control {
-          flex: 0 0 75% !important;
-          max-width: 75% !important;
-        }
+        /* Form Item Spacing - Vertical Layout */
 
         /* Readonly ve Disabled State */
         .ant-input[disabled],
@@ -1008,13 +944,6 @@ export default function WorkflowRuntime(): JSX.Element {
           opacity: 1 !important;
         }
 
-        /* Focus Ring */
-        .ant-input:focus-visible,
-        .ant-select-focused .ant-select-selector,
-        .ant-picker-focused {
-          outline: 2px solid #667eea !important;
-          outline-offset: 2px !important;
-        }
       `}</style>
       
       <Box
@@ -1033,49 +962,68 @@ export default function WorkflowRuntime(): JSX.Element {
           <DashboardNavbar />
           <MDBox 
             my={0.5}
-            pt={1}
+            pt={0.5}
             sx={{ 
-              paddingBottom: formButtons.length > 0 ? "100px" : "20px",
+              paddingBottom: formButtons.length > 0 ? "80px" : "20px",
               overflowY: "auto",
               overflowX: "hidden",
               flex: 1,
               width: "100%",
-              maxHeight: "calc(100vh - 100px)",
+              maxHeight: "calc(100vh - 80px)",
             }}
           >
-            <Box sx={{ mb: 1.5, px: 2 }}>
-              <MDTypography variant="h4" fontWeight={600} gutterBottom sx={{ mb: 0.5 }}>
-                {formName}
-              </MDTypography>
-              {workflowInstance?.workflowName && (
-                <MDTypography variant="body2" color="textSecondary" sx={{ mb: 0 }}>
-                  Workflow: {workflowInstance.workflowName}
+            {/* Header */}
+            <Box sx={{ mb: 1, px: 2, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 2, flex: 1 }}>
+                <MDTypography variant="h6" fontWeight={600} sx={{ mb: 0 }}>
+                  {formName}
                 </MDTypography>
+                {workflowInstance?.workflowName && (
+                  <Typography variant="caption" color="textSecondary" sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                    <Description sx={{ fontSize: "12px" }} />
+                    {workflowInstance.workflowName}
+                  </Typography>
+                )}
+                {currentUser && (
+                  <Typography variant="caption" color="textSecondary" sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                    <Person sx={{ fontSize: "12px" }} />
+                    {currentUser}
+                  </Typography>
+                )}
+              </Box>
+              
+              {/* Timeline Button */}
+              {!isNewInstance && (
+                <Button
+                  variant="text"
+                  size="small"
+                  startIcon={<HistoryIcon sx={{ fontSize: "16px !important" }} />}
+                  onClick={() => setTimelineOpen(true)}
+                  sx={{ textTransform: "none", fontSize: "13px" }}
+                >
+                  Geçmiş
+                </Button>
               )}
             </Box>
 
+            {/* Form Container */}
             <MDBox 
-              p={3}
+              p={2}
               sx={{ 
                 backgroundColor: "#fff", 
-                borderRadius: 3, 
-                boxShadow: "0 4px 16px rgba(0,0,0,0.1)",
-                border: "1px solid #e2e8f0",
-                maxWidth: "1200px",
-                margin: "0 auto",
+                borderRadius: 1, 
+                boxShadow: "0 1px 3px rgba(0,0,0,0.08)",
+                border: "1px solid #e0e0e0",
                 mx: 2,
               }}
             >
               <FormProvider form={form}>
                 <AntdFormily.Form>
-                  <AntdFormily.FormLayout 
-                    layout="horizontal" 
-                    labelAlign="left" 
-                    labelCol={6} 
-                    wrapperCol={18} 
-                    size="large"
-                    colon={true}
-                  >
+                                  <AntdFormily.FormLayout 
+                                    layout="vertical"
+                                    size="large"
+                                    colon={false}
+                                  >
                     <SchemaField schema={schema} />
                   </AntdFormily.FormLayout>
                 </AntdFormily.Form>
@@ -1093,17 +1041,16 @@ export default function WorkflowRuntime(): JSX.Element {
               left: 0,
               right: 0,
               width: "100%",
-              backgroundColor: "#ffffff",
-              borderTop: "2px solid #e0e0e0",
-              padding: "20px 24px",
-              boxShadow: "0 -4px 16px rgba(0,0,0,0.2)",
+              background: "#ffffff",
+              borderTop: "1px solid #e0e0e0",
+              padding: "16px 24px",
+              boxShadow: "0 -2px 8px rgba(0,0,0,0.1)",
               zIndex: 1300,
               display: "flex",
               gap: 2,
               justifyContent: "center",
               alignItems: "center",
-              minHeight: "80px",
-              overflowX: "hidden",
+              minHeight: "70px",
             }}
           >
             {formButtons.map((button) => {
@@ -1122,22 +1069,224 @@ export default function WorkflowRuntime(): JSX.Element {
                   icon={IconComponent ? <IconComponent /> : null}
                   onClick={() => handleButtonClick(button)}
                   size="large"
-                  style={{ margin: "0 8px" }}
                   loading={submitting}
                   disabled={buttonDisabled}
                   title={hasAction ? `Action: ${button.action}` : "Action Code tanımlanmamış!"}
                 >
                   {submitting ? "Gönderiliyor..." : button.label}
-                  {hasAction && (
-                    <span style={{ fontSize: "0.7em", marginLeft: "4px", opacity: 0.7 }}>
-                      ({button.action})
-                    </span>
-                  )}
                 </AntButton>
               );
             })}
           </Box>
         )}
+
+        {/* Timeline Drawer - Sağdan açılan modern timeline */}
+        <Drawer
+          anchor="right"
+          open={timelineOpen}
+          onClose={() => setTimelineOpen(false)}
+          PaperProps={{
+            sx: {
+              width: { xs: "100%", sm: "500px", md: "600px" },
+            },
+          }}
+        >
+          <Box sx={{ height: "100%", display: "flex", flexDirection: "column" }}>
+            {/* Header */}
+            <Box
+              sx={{
+                p: 2,
+                borderBottom: "1px solid #e0e0e0",
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+              }}
+            >
+              <Box>
+                <Typography variant="h6" fontWeight={600} sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                  <HistoryIcon />
+                  Süreç Geçmişi
+                </Typography>
+                {workflowInstance?.workflowName && (
+                  <Typography variant="caption" color="textSecondary">
+                    {workflowInstance.workflowName}
+                  </Typography>
+                )}
+              </Box>
+              <IconButton 
+                onClick={() => setTimelineOpen(false)} 
+                size="small"
+              >
+                <CloseIcon />
+              </IconButton>
+            </Box>
+
+            {/* Timeline Content */}
+            <Box sx={{ flex: 1, overflowY: "auto", p: 2 }}>
+              {loadingHistory ? (
+                <Box sx={{ textAlign: "center", py: 3 }}>
+                  <Typography variant="body2">Yükleniyor...</Typography>
+                </Box>
+              ) : historyData.length === 0 ? (
+                <Box 
+                  sx={{ 
+                    textAlign: "center", 
+                    py: 6,
+                    px: 2,
+                  }}
+                >
+                  <HistoryIcon sx={{ fontSize: "48px", color: "#ccc", mb: 2 }} />
+                  <Typography variant="body2" color="textSecondary">
+                    Henüz geçmiş kaydı yok
+                  </Typography>
+                </Box>
+              ) : (
+                <Timeline position="right">
+                  {historyData.map((item, index) => {
+                    const isFirst = index === 0;
+                    const isLast = index === historyData.length - 1;
+                    
+                    // Status'e göre renk ve ikon belirle
+                    let dotColor: "success" | "error" | "warning" | "primary" = "primary";
+                    let StatusIcon = HourglassEmpty;
+                    
+                    if (item.workFlowNodeStatus === 2) { // Completed
+                      dotColor = "success";
+                      StatusIcon = CheckCircle;
+                    } else if (item.workFlowNodeStatus === 3) { // Rejected/Cancelled
+                      dotColor = "error";
+                      StatusIcon = Cancel;
+                    } else if (item.workFlowNodeStatus === 1) { // In Progress
+                      dotColor = "warning";
+                      StatusIcon = HourglassEmpty;
+                    }
+
+                    // Approve ve Form items'ları birleştir
+                    const allItems = [
+                      ...(item.approveItems || []).map(ai => ({ ...ai, type: "approve" })),
+                      ...(item.formItems || []).map(fi => ({ ...fi, type: "form" })),
+                    ].sort((a, b) => {
+                      const dateA = a.createdDate ? new Date(a.createdDate).getTime() : 0;
+                      const dateB = b.createdDate ? new Date(b.createdDate).getTime() : 0;
+                      return dateB - dateA;
+                    });
+
+                    return (
+                      <TimelineItem key={index}>
+                        <TimelineOppositeContent
+                          sx={{ 
+                            flex: 0.2, 
+                            py: 1,
+                            display: { xs: "none", sm: "block" },
+                          }}
+                        >
+                          <Typography variant="caption" color="textSecondary">
+                            {item.nodeName || "N/A"}
+                          </Typography>
+                        </TimelineOppositeContent>
+                        <TimelineSeparator>
+                          <TimelineDot 
+                            color={dotColor}
+                            sx={{
+                              width: 32,
+                              height: 32,
+                            }}
+                          >
+                            <StatusIcon sx={{ fontSize: isFirst ? "24px" : "20px" }} />
+                          </TimelineDot>
+                          {!isLast && <TimelineConnector sx={{ minHeight: 40 }} />}
+                        </TimelineSeparator>
+                        <TimelineContent sx={{ py: 1, px: 1.5 }}>
+                          <Card
+                            sx={{
+                              p: 2,
+                              mb: 1.5,
+                              backgroundColor: isFirst ? "#f8f9fa" : "#fff",
+                              border: "1px solid #e0e0e0",
+                              borderRadius: 1,
+                              boxShadow: "none",
+                            }}
+                          >
+                            {/* Node Bilgisi */}
+                            <Typography variant="subtitle2" fontWeight={600} gutterBottom sx={{ display: { xs: "block", sm: "none" } }}>
+                              {item.nodeName || "Node"}
+                            </Typography>
+                            
+                            {item.nodeDescription && (
+                              <Typography variant="caption" color="textSecondary" sx={{ mb: 1, display: "block" }}>
+                                {item.nodeDescription}
+                              </Typography>
+                            )}
+
+                            <Divider sx={{ my: 1 }} />
+
+                            {/* Approve ve Form Items */}
+                            {allItems.map((subItem: any, subIndex) => (
+                              <Box key={subIndex} sx={{ mb: subIndex < allItems.length - 1 ? 2 : 0 }}>
+                                <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
+                                  <Avatar
+                                    sx={{
+                                      width: 28,
+                                      height: 28,
+                                      fontSize: "12px",
+                                    }}
+                                  >
+                                    {subItem.approveUser?.charAt(0) || subItem.formUser?.charAt(0) || "?"}
+                                  </Avatar>
+                                  <Box sx={{ flex: 1 }}>
+                                    <Typography variant="body2" fontWeight={600}>
+                                      {subItem.approveUserNameSurname || subItem.formUserNameSurname || "Kullanıcı"}
+                                    </Typography>
+                                    <Typography variant="caption" color="textSecondary">
+                                      {subItem.type === "approve" ? "Onay" : "Form"} • {subItem.createdDate ? new Date(subItem.createdDate).toLocaleString("tr-TR") : "Tarih yok"}
+                                    </Typography>
+                                  </Box>
+                                  {subItem.approverStatus !== undefined && (
+                                    <Chip
+                                      label={
+                                        subItem.approverStatus === 1 ? "Onaylandı" :
+                                        subItem.approverStatus === 2 ? "Reddedildi" :
+                                        "Bekliyor"
+                                      }
+                                      size="small"
+                                      color={
+                                        subItem.approverStatus === 1 ? "success" :
+                                        subItem.approverStatus === 2 ? "error" :
+                                        "warning"
+                                      }
+                                      sx={{ fontWeight: 600, fontSize: "11px" }}
+                                    />
+                                  )}
+                                </Box>
+                                
+                                {subItem.note && (
+                                  <Typography 
+                                    variant="caption" 
+                                    sx={{ 
+                                      mt: 0.5,
+                                      p: 1,
+                                      backgroundColor: "#f8f9fa",
+                                      borderRadius: 1,
+                                      borderLeft: "2px solid #dee2e6",
+                                      fontStyle: "italic",
+                                      display: "block",
+                                    }}
+                                  >
+                                    &ldquo;{subItem.note}&rdquo;
+                                  </Typography>
+                                )}
+                              </Box>
+                            ))}
+                          </Card>
+                        </TimelineContent>
+                      </TimelineItem>
+                    );
+                  })}
+                </Timeline>
+              )}
+            </Box>
+          </Box>
+        </Drawer>
       </Box>
     </>
   );

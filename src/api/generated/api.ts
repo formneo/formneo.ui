@@ -3609,18 +3609,21 @@ export interface WorkFlowDefinationDetailDto {
     'defination'?: string | null;
     'isActive'?: boolean;
     'revision'?: number;
+    'formId'?: string | null;
 }
 export interface WorkFlowDefinationInsertDto {
     'workflowName'?: string | null;
     'defination'?: string | null;
     'isActive'?: boolean;
     'revision'?: number;
+    'formId'?: string | null;
 }
 export interface WorkFlowDefinationListDto {
     'id'?: string;
     'workflowName'?: string | null;
     'isActive'?: boolean;
     'revision'?: number;
+    'formId'?: string | null;
 }
 export interface WorkFlowDefinationUpdateDto {
     'id'?: string;
@@ -3628,6 +3631,7 @@ export interface WorkFlowDefinationUpdateDto {
     'defination'?: string | null;
     'isActive'?: boolean;
     'revision'?: number;
+    'formId'?: string | null;
 }
 export interface WorkFlowHeadDetailDto {
     'id'?: string | null;
@@ -37723,7 +37727,6 @@ export const WorkFlowDefinationApiAxiosParamCreator = function (configuration?: 
          * @param {string} id 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
-         
          */
         apiWorkFlowDefinationIdForWorkflowGet: async (id: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'id' is not null or undefined

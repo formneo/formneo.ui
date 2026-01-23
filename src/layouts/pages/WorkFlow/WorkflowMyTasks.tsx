@@ -378,11 +378,17 @@ function WorkflowMyTasks() {
         try {
           const parsedDefination = JSON.parse(workflowData.defination);
           const formNode = parsedDefination.nodes?.find(
-            (n: any) => n.type === "formNode" && n.data?.selectedFormId
+            (n: any) =>
+              n.type === "formNode" &&
+              (n.data?.selectedFormId || n.data?.formId)
           );
-          if (formNode?.data?.selectedFormId) {
-            formId = formNode.data.selectedFormId;
-            formName = formNode.data.selectedFormName || formNode.data.name || "";
+          if (formNode?.data?.selectedFormId || formNode?.data?.formId) {
+            formId = formNode.data.selectedFormId || formNode.data.formId;
+            formName =
+              formNode.data.selectedFormName ||
+              formNode.data.formName ||
+              formNode.data.name ||
+              "";
           }
         } catch (error) {
           console.warn("Defination parse edilemedi:", error);

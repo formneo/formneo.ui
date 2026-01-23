@@ -38,6 +38,7 @@ import FormStopNode from "./components/FormStopNode.jsx";
 import FormStopTab from "./propertiespanel/FormStopTab.jsx";
 import FormNode from "./components/FormNode.jsx";
 import FormNodeTab from "./propertiespanel/FormNodeTab.jsx";
+import WorkflowSettingsTab from "./propertiespanel/WorkflowSettingsTab.jsx";
 import AlertNode from "./components/AlertNode.jsx";
 import AlertTab from "./propertiespanel/AlertTab.jsx";
 import UserTaskNode from "./components/UserTaskNode.jsx";
@@ -184,7 +185,7 @@ function generateUUID() {
 var globalArray = [];
 
 function Flow(props) {
-  const { onRegisterActions, isPropertiesOpen } = props;
+  const { onRegisterActions, isPropertiesOpen, workflowName, setWorkflowName, isActiveWorkflow, setIsActiveWorkflow } = props;
   const navigate = useNavigate();
   const dispatchBusy = useBusy();
   const location = useLocation();
@@ -199,8 +200,6 @@ function Flow(props) {
   const [firstNode, setFirstNode] = useState(1);
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
-
-  var [workflowName, setworkflowName] = useState("");
   const [selecteNodeType, setselecteNodeType] = useState({});
   const [selecteNodeData, setselecteNodeData] = useState(1);
   const [selectedNode, setselectedNode] = useState(1);
@@ -226,7 +225,9 @@ function Flow(props) {
       currentStep: null,
       formId: null,
       formName: null,
+      workflowName: workflowName || "",
     },
+    isActive: false, // ✅ Aktif/Pasif durumu
     nodeResults: {}, // Her node'un sonuçları
     formData: null, // Form verileri
     executionLog: [], // Adım adım log
@@ -237,8 +238,7 @@ function Flow(props) {
   const { id } = useParams();
   useEffect(() => {
     if (!id) {
-      setDisabled(true);
-      setShowWizard(true);
+      // ✅ Yeni workflow durumu - disabled zaten WorkFlowDetail'de ayarlanıyor
       return;
     }
 
@@ -250,16 +250,65 @@ function Flow(props) {
     
     api
       .apiWorkFlowDefinationIdForWorkflowGet(id)
-      .then((response) => {
+      .then(async (response) => {
         const workflowData = response.data;
         let flow = JSON.parse(workflowData.defination);
         if (flow) {
-          setworkflowName(workflowData.workflowName);
+          setWorkflowName(workflowData.workflowName);
           txtname.current?.setValue(workflowData.workflowName);
           const { x = 0, y = 0, zoom = 1 } = flow.viewport;
           setNodes(flow.nodes || []);
           setEdges(flow.edges || []);
           setViewport({ x, y, zoom });
+          
+          // ✅ Workflow metadata'sını güncelle
+          setWorkflowData((prev) => ({
+            ...prev,
+            isActive: workflowData.isActive || false,
+            metadata: {
+              ...prev.metadata,
+              workflowName: workflowData.workflowName,
+            },
+          }));
+          
+          // ✅ WorkFlowDetail state'ini güncelle
+          setIsActiveWorkflow(workflowData.isActive || false);
+
+          // ✅ Önce workflow tablosundaki formId'yi kullan
+          if (workflowData.formId) {
+            try {
+              const formApi = new FormDataApi(conf);
+              const formResponse = await formApi.apiFormDataIdGet(workflowData.formId);
+              const form = formResponse?.data;
+
+              if (form) {
+                setSelectedForm({
+                  id: form.id,
+                  formName: form.formName,
+                  formDesign: form.formDesign,
+                  formType: form.formType || "workflow",
+                });
+
+                try {
+                  const parsedForm = JSON.parse(form.formDesign || "{}");
+                  const buttons = parsedForm?.buttonPanel?.buttons || [];
+                  const fields = extractFieldsFromComponents(parsedForm.components || []);
+                  setParsedFormDesign({
+                    fields: fields,
+                    raw: parsedForm,
+                    buttons: buttons,
+                  });
+                } catch (err) {
+                  console.error("❌ Form design JSON parse edilemedi:", err);
+                }
+
+                // Form bulunduysa devam etme
+                return;
+              }
+            } catch (error) {
+              console.warn("⚠️ Form tablosundan form çekilemedi:", error);
+            }
+          }
 
           // ✅ Önce queryConditionNode'dan dene (mevcut mantık)
           const queryNodes = flow.nodes?.filter((n) => n.type === "queryConditionNode") || [];
@@ -303,6 +352,10 @@ function Flow(props) {
             console.log("⚠️ Hiçbir node'da form bilgisi bulunamadı");
             setSelectedForm(null);
             setParsedFormDesign(null);
+            dispatchAlert({ 
+              message: "Bu workflow için form bilgisi bulunamadı. Lütfen bir form seçin.", 
+              type: MessageBoxType.Warning 
+            });
           }
         }
       })
@@ -319,12 +372,11 @@ function Flow(props) {
   }, [id]);
   const handleWorkFlowName = (event) => {
     alert(txtname.current?.current);
-    setworkflowName(event.target.value);
+    setWorkflowName(event.target.value);
   };
 
   const handleUserInput = (e) => {
-    setworkflowName(e.target.value);
-    workflowName = e.target.value;
+    setWorkflowName(e.target.value);
   };
 
   const onDragOver = useCallback((event) => {
@@ -784,6 +836,22 @@ function Flow(props) {
   }, [nodes, selectedForm, parsedFormDesign]);
 
   const handlePropertiesChange = (newValue) => {
+    // ✅ isActive değişikliği
+    if (newValue.hasOwnProperty("isActive")) {
+      setWorkflowData((prev) => ({
+        ...prev,
+        isActive: newValue.isActive,
+      }));
+      setIsActiveWorkflow(newValue.isActive);
+      return;
+    }
+
+    // ✅ workflowName değişikliği
+    if (newValue.hasOwnProperty("workflowName")) {
+      setWorkflowName(newValue.workflowName);
+      return;
+    }
+
     // alert(newValue);
     let obje = nodes.find((o) => o.id === newValue.id);
     if (obje) {
@@ -841,11 +909,19 @@ function Flow(props) {
       return !hasIncomingEdge && !hasOutgoingEdge;
     });
 
-    const workflowName = txtname.current?.current?.toString()?.trim() || "";
+    // ✅ Props'tan gelen workflowName state'ini kullan
+    const currentWorkflowName = workflowName?.trim() || "";
     
-    if (!workflowName) {
+    if (!currentWorkflowName) {
       console.error("❌ Workflow adı boş!");
       dispatchAlert({ message: "Akış Adı Boş Bırakılamaz", type: MessageBoxType.Error });
+      return;
+    }
+
+    // ✅ Form seçimi kontrolü
+    if (!selectedForm || !selectedForm.id) {
+      console.error("❌ Form seçilmemiş!");
+      dispatchAlert({ message: "Lütfen bir form seçin. Workflow'un bir forma bağlı olması gerekir.", type: MessageBoxType.Error });
       return;
     }
 
@@ -867,9 +943,9 @@ function Flow(props) {
     if (isEdit) {
       const dto = {
         id,
-        workflowName,
+        workflowName: currentWorkflowName,
         defination: JSON.stringify(flow),
-        isActive: false,
+        isActive: isActiveWorkflow, // ✅ Kullanıcının seçtiği durum
         revision: 0,
         formId: selectedForm?.id || null, // ✅ FormId eklendi
       };
@@ -887,9 +963,9 @@ function Flow(props) {
         });
     } else {
       const dto = {
-        workflowName,
+        workflowName: currentWorkflowName,
         defination: JSON.stringify(flow),
-        isActive: false,
+        isActive: isActiveWorkflow, // ✅ Kullanıcının seçtiği durum
         revision: 0,
         formId: selectedForm?.id || null, // ✅ FormId eklendi
       };
@@ -910,7 +986,7 @@ function Flow(props) {
           });
         });
     }
-  }, [reactFlowInstance, isEdit, id, selectedForm]);
+  }, [reactFlowInstance, isEdit, id, selectedForm, workflowName, isActiveWorkflow, dispatchAlert]);
 
   useEffect(() => {
     if (typeof onRegisterActions === "function") {
@@ -1300,6 +1376,8 @@ function Flow(props) {
             prepareWorkflowDataForHttp(),
             nodes,
             edges,
+            workflowName,
+            isActiveWorkflow,
           )
         )}
       </SplitterPanel>
@@ -1317,7 +1395,9 @@ const renderComponent = (
   selectedForm,
   fullWorkflowData, // ← 7. parametre eklendi
   nodes = [], // ← 8. parametre eklendi
-  edges = [] // ← 9. parametre eklendi
+  edges = [], // ← 9. parametre eklendi
+  workflowName = "", // ← 10. parametre eklendi
+  isActiveWorkflow = false // ← 11. parametre eklendi
 ) => {
   if (type === "queryConditionNode") {
     console.log("parsedFormDesign gönderildi:", parsedFormDesign);
@@ -1488,7 +1568,26 @@ const renderComponent = (
       return null;
 
     default:
-      return null;
+      // ✅ Hiçbir node seçili değilse Workflow Ayarları göster
+      return (
+        <WorkflowSettingsTab
+          selectedForm={selectedForm}
+          workflowName={workflowName || ""}
+          isActive={isActiveWorkflow}
+          onActiveChange={(value) => {
+            // Active state değiştiğinde callback
+            if (handlePropertiesChange) {
+              handlePropertiesChange({ isActive: value });
+            }
+          }}
+          onWorkflowNameChange={(value) => {
+            // Workflow adı değiştiğinde callback
+            if (handlePropertiesChange) {
+              handlePropertiesChange({ workflowName: value });
+            }
+          }}
+        />
+      );
   }
 };
 
@@ -1505,8 +1604,13 @@ function WorkFlowDetail(props) {
   // 👇 Bu state seçilen formun tüm verisini tutar
   const [selectedForm, setSelectedForm] = useState(null);
   const [parsedFormDesign, setParsedFormDesign] = useState(null);
+  const [workflowName, setWorkflowName] = useState(""); // ✅ Workflow adı state'i
+  const [isActiveWorkflow, setIsActiveWorkflow] = useState(false); // ✅ Workflow aktif/pasif durumu
   const navigate = useNavigate();
   const dispatchAlert = useAlert();
+  
+  // ✅ Edit modu kontrolü (id varsa edit, yoksa yeni kayıt)
+  const isEdit = !!id;
 
   const handleWizardConfirm = (selectedType) => {
     setWorkflowType(selectedType);
@@ -1886,13 +1990,62 @@ function WorkFlowDetail(props) {
       >
         <MDBox sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
           <MuiIcon color="info">schema</MuiIcon>
-          <span style={{ fontWeight: 700, color: "#344767" }}>Workflow</span>
-          <CustomInputComponent ref={txtname} />
+          <MDBox>
+            <span style={{ fontSize: "11px", color: "#6b7280", display: "block", lineHeight: 1.2 }}>
+              Workflow Tasarımı
+            </span>
+            <span style={{ fontWeight: 700, color: "#344767", fontSize: "16px" }}>
+              {workflowName || "Yeni Workflow"}
+            </span>
+          </MDBox>
         </MDBox>
         <MDBox sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-          <MDButton color="secondary" variant="outlined" onClick={() => setFormListOpen(true)}>
-            <MuiIcon sx={{ mr: .5 }}>description</MuiIcon> Form Seç
-          </MDButton>
+          {/* Form Bilgisi */}
+          {selectedForm ? (
+            <MDBox
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                gap: 1,
+                px: 2,
+                py: 0.8,
+                borderRadius: 2,
+                backgroundColor: isEdit ? "#f0f9ff" : "#ecfdf5",
+                border: isEdit ? "1px solid #bae6fd" : "1px solid #a7f3d0",
+              }}
+            >
+              <MuiIcon sx={{ fontSize: "20px !important", color: isEdit ? "#0284c7" : "#10b981" }}>
+                description
+              </MuiIcon>
+              <MDBox>
+                <span style={{ fontSize: "11px", color: "#6b7280", display: "block", lineHeight: 1.2 }}>
+                  Seçili Form
+                </span>
+                <span style={{ fontSize: "13px", fontWeight: 600, color: "#1f2937" }}>
+                  {selectedForm.formName}
+                </span>
+              </MDBox>
+              {!isEdit && (
+                <MuiIcon
+                  sx={{ fontSize: "18px !important", color: "#10b981", cursor: "pointer" }}
+                  onClick={() => setFormListOpen(true)}
+                  title="Formu değiştir"
+                >
+                  edit
+                </MuiIcon>
+              )}
+            </MDBox>
+          ) : (
+            <MDButton
+              color="warning"
+              variant="outlined"
+              onClick={() => setFormListOpen(true)}
+              title="Workflow için bir form seçin"
+            >
+              <MuiIcon sx={{ mr: 0.5 }}>warning</MuiIcon>
+              Form Seç
+            </MDButton>
+          )}
           <MDButton color="dark" variant="outlined" onClick={() => setIsPropertiesOpen((v) => !v)}>
             <MuiIcon sx={{ mr: .5 }}>view_sidebar</MuiIcon> Özellikler
           </MDButton>
@@ -1920,41 +2073,17 @@ function WorkFlowDetail(props) {
       <div style={{ width: "100%", height: "calc(100vh - 200px)", display: "flex", overflow: "auto" }}>
         <ReactFlowProvider>
           <Sidebar disabled={disabled} />
-          {selectedForm && (
-            <div
-              style={{
-                position: "fixed",
-                bottom: "20px",
-                left: "300px",
-                zIndex: 1000,
-                background: "linear-gradient(135deg,rgb(90, 112, 233) 0%,rgb(5, 99, 150) 100%)",
-                color: "white",
-                padding: "10px 16px",
-                borderRadius: "12px",
-                fontSize: "12px",
-                fontWeight: "600",
-                boxShadow: "0 4px 15px rgba(16, 117, 185, 0.3)",
-                display: "flex",
-                alignItems: "center",
-                gap: "8px",
-                maxWidth: "150px",
-              }}
-            >
-              <span style={{ fontSize: "14px" }}>📋</span>
-              <div>
-                <span style={{ fontWeight: "700" }}>{selectedForm.formName}</span>
-                <span style={{ marginLeft: "6px", opacity: "0.8", fontSize: "10px" }}>
-                  ({selectedForm.id})
-                </span>
-              </div>
-            </div>
-          )}
+          {/* Form badge kaldırıldı - artık header'da gösteriliyor */}
           <Flow
             parentCallback={setDisabled}
             parsedFormDesign={parsedFormDesign}
             selectedForm={selectedForm}
             setSelectedForm={setSelectedForm}
             setParsedFormDesign={setParsedFormDesign}
+            workflowName={workflowName}
+            setWorkflowName={setWorkflowName}
+            isActiveWorkflow={isActiveWorkflow}
+            setIsActiveWorkflow={setIsActiveWorkflow}
             onRegisterActions={({ onSave, onCancel }) => {
               setSaveFlow(() => onSave);
               setCancelFlow(() => onCancel);
