@@ -101,9 +101,11 @@ export interface ApproveItems {
     'uniqNumber'?: number;
     'concurrencyToken'?: number;
     'workflowItemId'?: string;
-    'approveUser'?: string | null;
+    'approveUserId'?: string | null;
+    'approveUser'?: UserApp;
     'approveUserNameSurname'?: string | null;
-    'approvedUser_Runtime'?: string | null;
+    'approvedUser_RuntimeId'?: string | null;
+    'approvedUser_Runtime'?: UserApp;
     'approvedUser_RuntimeNameSurname'?: string | null;
     'approvedUser_RuntimeNote'?: string | null;
     'approvedUser_RuntimeNumberManDay'?: string | null;
@@ -118,7 +120,9 @@ export interface ApproveItemsDto {
     'workflowItemId'?: string;
     'shortId'?: string | null;
     'shortWorkflowItemId'?: string | null;
+    'approveUserId'?: string | null;
     'approveUser'?: string | null;
+    'approvedUser_RuntimeId'?: string | null;
     'approvedUser_Runtime'?: string | null;
     'approvedUser_RuntimeNote'?: string | null;
     'approvedUser_RuntimeNumberManDay'?: string | null;
@@ -1495,7 +1499,8 @@ export interface FormItems {
     'workflowItemId'?: string;
     'formDesign'?: string | null;
     'formId'?: string | null;
-    'formUser'?: string | null;
+    'formUserId'?: string | null;
+    'formUser'?: UserApp;
     'formUserNameSurname'?: string | null;
     'formData'?: string | null;
     'formDescription'?: string | null;
@@ -1514,6 +1519,7 @@ export interface FormItemsDto {
     'shortWorkflowItemId'?: string | null;
     'formDesign'?: string | null;
     'formId'?: string | null;
+    'formUserId'?: string | null;
     'formUser'?: string | null;
     'formUserNameSurname'?: string | null;
     'formData'?: string | null;
@@ -3610,6 +3616,7 @@ export interface WorkFlowDefinationDetailDto {
     'isActive'?: boolean;
     'revision'?: number;
     'formId'?: string | null;
+    'formName'?: string | null;
 }
 export interface WorkFlowDefinationInsertDto {
     'workflowName'?: string | null;
@@ -3624,6 +3631,7 @@ export interface WorkFlowDefinationListDto {
     'isActive'?: boolean;
     'revision'?: number;
     'formId'?: string | null;
+    'formName'?: string | null;
 }
 export interface WorkFlowDefinationUpdateDto {
     'id'?: string;
@@ -37301,6 +37309,39 @@ export const WorkFlowApiAxiosParamCreator = function (configuration?: Configurat
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
+        apiWorkFlowGetMyStartedFormsGet: async (options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            const localVarPath = `/api/WorkFlow/GetMyStartedForms`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication Bearer required
+            // http bearer authentication required
+            await setBearerAuthToObject(localVarHeaderParameter, configuration)
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
         apiWorkFlowGetMyTasksMyTasksGet: async (options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             const localVarPath = `/api/WorkFlow/GetMyTasks/my-tasks`;
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
@@ -37478,6 +37519,17 @@ export const WorkFlowApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
+        async apiWorkFlowGetMyStartedFormsGet(options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.apiWorkFlowGetMyStartedFormsGet(options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['WorkFlowApi.apiWorkFlowGetMyStartedFormsGet']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
         async apiWorkFlowGetMyTasksMyTasksGet(options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<MyTasksDto>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.apiWorkFlowGetMyTasksMyTasksGet(options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
@@ -37552,6 +37604,14 @@ export const WorkFlowApiFactory = function (configuration?: Configuration, baseP
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
+        apiWorkFlowGetMyStartedFormsGet(options?: RawAxiosRequestConfig): AxiosPromise<void> {
+            return localVarFp.apiWorkFlowGetMyStartedFormsGet(options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
         apiWorkFlowGetMyTasksMyTasksGet(options?: RawAxiosRequestConfig): AxiosPromise<MyTasksDto> {
             return localVarFp.apiWorkFlowGetMyTasksMyTasksGet(options).then((request) => request(axios, basePath));
         },
@@ -37607,6 +37667,15 @@ export class WorkFlowApi extends BaseAPI {
      */
     public apiWorkFlowGetDetailIdGet(id: string, options?: RawAxiosRequestConfig) {
         return WorkFlowApiFp(this.configuration).apiWorkFlowGetDetailIdGet(id, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    public apiWorkFlowGetMyStartedFormsGet(options?: RawAxiosRequestConfig) {
+        return WorkFlowApiFp(this.configuration).apiWorkFlowGetMyStartedFormsGet(options).then((request) => request(this.axios, this.basePath));
     }
 
     /**

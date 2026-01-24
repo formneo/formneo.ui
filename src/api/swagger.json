@@ -15135,6 +15135,18 @@
         }
       }
     },
+    "/api/WorkFlow/GetMyStartedForms": {
+      "get": {
+        "tags": [
+          "WorkFlow"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
     "/api/WorkFlowDefination": {
       "get": {
         "tags": [
@@ -15645,17 +15657,23 @@
             "type": "string",
             "format": "uuid"
           },
-          "approveUser": {
+          "approveUserId": {
             "type": "string",
             "nullable": true
+          },
+          "approveUser": {
+            "$ref": "#/components/schemas/UserApp"
           },
           "approveUserNameSurname": {
             "type": "string",
             "nullable": true
           },
-          "approvedUser_Runtime": {
+          "approvedUser_RuntimeId": {
             "type": "string",
             "nullable": true
+          },
+          "approvedUser_Runtime": {
+            "$ref": "#/components/schemas/UserApp"
           },
           "approvedUser_RuntimeNameSurname": {
             "type": "string",
@@ -15701,7 +15719,15 @@
             "type": "string",
             "nullable": true
           },
+          "approveUserId": {
+            "type": "string",
+            "nullable": true
+          },
           "approveUser": {
+            "type": "string",
+            "nullable": true
+          },
+          "approvedUser_RuntimeId": {
             "type": "string",
             "nullable": true
           },
@@ -20696,9 +20722,12 @@
             "format": "uuid",
             "nullable": true
           },
-          "formUser": {
+          "formUserId": {
             "type": "string",
             "nullable": true
+          },
+          "formUser": {
+            "$ref": "#/components/schemas/UserApp"
           },
           "formUserNameSurname": {
             "type": "string",
@@ -20758,6 +20787,10 @@
           "formId": {
             "type": "string",
             "format": "uuid",
+            "nullable": true
+          },
+          "formUserId": {
+            "type": "string",
             "nullable": true
           },
           "formUser": {
@@ -28053,6 +28086,10 @@
             "type": "string",
             "format": "uuid",
             "nullable": true
+          },
+          "formName": {
+            "type": "string",
+            "nullable": true
           }
         },
         "additionalProperties": false
@@ -28104,6 +28141,10 @@
           "formId": {
             "type": "string",
             "format": "uuid",
+            "nullable": true
+          },
+          "formName": {
+            "type": "string",
             "nullable": true
           }
         },

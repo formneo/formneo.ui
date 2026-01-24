@@ -93,8 +93,10 @@ function WorkflowMyTasks() {
   const [activeTab, setActiveTab] = useState(0); // 0: Onay Kutum, 1: Başlattıklarım, 2: Yeni Süreç
   const [inboxSubTab, setInboxSubTab] = useState(0); // 0: Bana Atananlar, 1: Grup İşleri, 2: Tümü
   const [workflowTasks, setWorkflowTasks] = useState<WorkflowTask[]>([]);
+  const [myStartedForms, setMyStartedForms] = useState<any[]>([]); // Başlattıklarım için ayrı state
   const [availableWorkflows, setAvailableWorkflows] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingStarted, setLoadingStarted] = useState(true);
   const [loadingWorkflows, setLoadingWorkflows] = useState(true);
   const [filter, setFilter] = useState<"all" | "pending" | "in-progress" | "completed">("all");
   const [workflowSearchQuery, setWorkflowSearchQuery] = useState("");
@@ -102,14 +104,16 @@ function WorkflowMyTasks() {
   // Dashboard Metrikleri
   const myAssignedTasks = workflowTasks; // Bana atanan görevler
   const groupTasks = workflowTasks.filter(t => t.type === "userTask"); // Grup işleri (UserTask'lar)
-  const myStartedTasks = workflowTasks; // Benim başlattıklarım
   const pendingCount = workflowTasks.filter(t => t.status === "pending").length;
   const inProgressCount = workflowTasks.filter(t => t.status === "in-progress").length;
 
   useEffect(() => {
-    if (activeTab === 0 || activeTab === 1) {
-      // Onay Kutum veya Başlattıklarım
+    if (activeTab === 0) {
+      // Onay Kutum
       fetchWorkflowInstances();
+    } else if (activeTab === 1) {
+      // Başlattıklarım
+      fetchMyStartedForms();
     } else if (activeTab === 2) {
       // Yeni Süreç
       fetchAvailableWorkflows();
@@ -228,6 +232,33 @@ function WorkflowMyTasks() {
       setWorkflowTasks([]);
     } finally {
       setLoading(false);
+    }
+  };
+
+  /**
+   * ✅ Kullanıcının başlattığı formları çek
+   * /api/WorkFlow/GetMyStartedForms endpoint'ini kullanır
+   */
+  const fetchMyStartedForms = async () => {
+    setLoadingStarted(true);
+    try {
+      const conf = getConfiguration();
+      const workflowApi = new WorkFlowApi(conf);
+
+      // ✅ API'den kullanıcının başlattığı formları çek
+      const response: any = await workflowApi.apiWorkFlowGetMyStartedFormsGet();
+      
+      // ✅ Veri response.data.data içinde
+      const data: any[] = response?.data?.data || [];
+      
+      console.log("✅ Başlattığım formlar yüklendi:", data.length, "adet");
+      
+      setMyStartedForms(Array.isArray(data) ? data : []);
+    } catch (error) {
+      console.error("❌ Başlatılan formlar çekilirken hata:", error);
+      setMyStartedForms([]);
+    } finally {
+      setLoadingStarted(false);
     }
   };
 
@@ -674,7 +705,7 @@ function WorkflowMyTasks() {
                       }}
                     />
                     <Chip
-                      label={myStartedTasks.length}
+                      label={myStartedForms.length}
                       size="small"
                       sx={{
                         height: 20,
@@ -762,7 +793,7 @@ function WorkflowMyTasks() {
                       Başlattığım
                     </Typography>
                     <Typography variant="caption" fontWeight={700} sx={{ color: "#2563eb", fontSize: "0.75rem" }}>
-                      {myStartedTasks.length}
+                      {myStartedForms.length}
                     </Typography>
                   </Box>
                 </Box>
@@ -899,7 +930,7 @@ function WorkflowMyTasks() {
                       {
                         field: "formName",
                         headerName: "Süreç Adı",
-                        width: 250,
+                        width: 280,
                         flex: 1,
                         renderCell: (params) => (
                           <Box>
@@ -1027,7 +1058,7 @@ function WorkflowMyTasks() {
                                   <MDButton
                                     variant="gradient"
                                     color="success"
-                                    size="small"
+                                size="small" 
                                     onClick={(e) => {
                                       e.stopPropagation();
                                       handleWorkflowClick(params.row);
@@ -1174,83 +1205,134 @@ function WorkflowMyTasks() {
                 <CardContent sx={{ py: 2 }}>
                   <div style={{ height: 500, width: "100%" }}>
                     <DataGrid
-                      rows={myStartedTasks}
+                      rows={myStartedForms}
+                      getRowId={(row) => row.id || row.workflowHeadId || row.uniqNumber || Math.random().toString()}
                       columns={[
                         {
-                          field: "formName",
+                          field: "surecAdi",
                           headerName: "Süreç Adı",
-                          width: 250,
+                          width: 280,
                           flex: 1,
-                          renderCell: (params) => (
+                        renderCell: (params) => (
                             <Box>
                               <Typography variant="body2" fontWeight={700} sx={{ color: "#1e293b", mb: 0.5 }}>
-                                {params.value || "Görev"}
-                              </Typography>
-                              <Typography variant="caption" sx={{ color: "#64748b", fontSize: "0.75rem" }}>
-                                {params.row.workflowName}
-                            </Typography>
-                          </Box>
-                          ),
+                                {params.value || "Süreç"}
+                          </Typography>
+                              {params.row.formAdi && (
+                                <Typography variant="caption" sx={{ color: "#64748b", fontSize: "0.7rem" }}>
+                                  📄 {params.row.formAdi}
+                                </Typography>
+                              )}
+                            </Box>
+                        ),
                       },
                       {
-                          field: "shortId",
-                          headerName: "Süreç ID",
-                          width: 120,
-                          renderCell: (params) => (
-                            <Chip
-                              label={params.value || "-"}
-                              size="small"
+                          field: "uniqNumber",
+                          headerName: "No",
+                          width: 90,
+                        renderCell: (params) => (
+                              <Chip 
+                              label={`#${params.value}`}
+                                size="small" 
                               sx={{
                                 bgcolor: "#f1f5f9",
                                 color: "#475569",
-                                fontWeight: 600,
+                                fontWeight: 700,
                                 fontFamily: "monospace",
                               }}
-                            />
-                          ),
-                        },
-                        {
-                          field: "status",
-                          headerName: "Durum",
+                          />
+                        ),
+                      },
+                      {
+                          field: "mevcutAdim",
+                          headerName: "Mevcut Adım",
                         width: 180,
-                          flex: 1,
-                        renderCell: (params) => {
-                            const statusConfig = {
-                              "pending": { color: "#f59e0b", bg: "#fef3c7", text: "Beklemede" },
-                              "in-progress": { color: "#3b82f6", bg: "#dbeafe", text: "Devam Ediyor" },
-                              "completed": { color: "#10b981", bg: "#d1fae5", text: "Tamamlandı" },
-                              "cancelled": { color: "#ef4444", bg: "#fecdd3", text: "İptal" },
+                        renderCell: (params) => (
+                            <Box>
+                              <Typography variant="body2" sx={{ color: "#1e293b", fontWeight: 600, fontSize: "0.813rem" }}>
+                            {params.value || "-"}
+                          </Typography>
+                              {params.row.baslatanAdSoyad && (
+                                <Typography variant="caption" sx={{ color: "#64748b", fontSize: "0.7rem" }}>
+                                  👤 {params.row.baslatanAdSoyad}
+                                </Typography>
+                              )}
+                          </Box>
+                        ),
+                      },
+                      {
+                          field: "durumEnum",
+                          headerName: "Durum",
+                          width: 160,
+                          renderCell: (params) => {
+                            // durumEnum: 0=Başlatılmadı, 1=Devam Ediyor, 2=Tamamlandı, 3=Beklemede, 4=Geri Gönderildi
+                            const statusMap: any = {
+                              0: { color: "#94a3b8", bg: "#f1f5f9", icon: "⚪" },
+                              1: { color: "#3b82f6", bg: "#dbeafe", icon: "▶️" },
+                              2: { color: "#10b981", bg: "#d1fae5", icon: "✅" },
+                              3: { color: "#f59e0b", bg: "#fef3c7", icon: "⏳" },
+                              4: { color: "#ef4444", bg: "#fecdd3", icon: "🔙" },
                             };
-                            const config = statusConfig[params.value as keyof typeof statusConfig] || statusConfig["pending"];
+                            const statusValue = params.value ?? 1;
+                            const config = statusMap[statusValue] || statusMap[1];
+                            const text = params.row.durum || "Devam Ediyor";
                             
                             return (
                               <Chip
-                                label={config.text}
+                                label={`${config.icon} ${text}`}
                                 size="small"
                                 sx={{
                                   bgcolor: config.bg,
                                   color: config.color,
                                   fontWeight: 600,
+                                  fontSize: "0.75rem",
                                 }}
                               />
-                          );
+                            );
+                          },
                         },
-                      },
                         {
-                          field: "createdDate",
+                          field: "baslangicTarihi",
                           headerName: "Başlatma Tarihi",
                           width: 160,
-                          renderCell: (params) =>
-                            params.value ? (
+                        renderCell: (params) =>
+                          params.value ? (
                               <Box>
-                                <Typography variant="body2" fontWeight={600} sx={{ color: "#475569" }}>
+                                <Typography variant="body2" fontWeight={600} sx={{ color: "#475569", fontSize: "0.813rem" }}>
                                   {format(new Date(params.value), "dd MMM yyyy", { locale: tr })}
                                 </Typography>
-                                <Typography variant="caption" sx={{ color: "#94a3b8" }}>
+                                <Typography variant="caption" sx={{ color: "#94a3b8", fontSize: "0.7rem" }}>
                                   {format(new Date(params.value), "HH:mm", { locale: tr })}
-                                </Typography>
-                              </Box>
+                              </Typography>
+                          </Box>
                             ) : "-",
+                        },
+                        {
+                          field: "sureDetayli",
+                          headerName: "Geçen Süre",
+                          width: 140,
+                          renderCell: (params) => (
+                            <Box>
+                              <Typography variant="body2" sx={{ color: "#64748b", fontSize: "0.813rem" }}>
+                                ⏱️ {params.value || "-"}
+                            </Typography>
+                          </Box>
+                          ),
+                      },
+                      {
+                          field: "baslatanDepartman",
+                          headerName: "Başlatan",
+                          width: 200,
+                          renderCell: (params) => (
+                            <Box>
+                              <Typography variant="body2" fontWeight={600} sx={{ color: "#1e293b", fontSize: "0.813rem" }}>
+                                {params.row.baslatanAdSoyad || "-"}
+                              </Typography>
+                              <Typography variant="caption" sx={{ color: "#64748b", fontSize: "0.7rem" }}>
+                                {params.value || ""} {params.row.baslatanPozisyon ? `- ${params.row.baslatanPozisyon}` : ""}
+                              </Typography>
+                            </Box>
+                          ),
                       },
                       {
                         field: "actions",
@@ -1258,31 +1340,39 @@ function WorkflowMyTasks() {
                         width: 150,
                         sortable: false,
                         renderCell: (params) => (
+                            <Box display="flex" gap={0.75}>
+                              <Tooltip title="Süreç Detayı">
                         <MDButton
                           variant="gradient"
                           color="info"
                             size="small"
                           onClick={(e) => {
                             e.stopPropagation();
-                              handleWorkflowClick(params.row);
-                          }}
-                              sx={{
-                                minWidth: "auto",
-                                px: 2,
-                                py: 0.75,
-                                fontWeight: 600,
-                                fontSize: "0.75rem",
-                                borderRadius: 2,
-                                textTransform: "none",
-                              }}
-                            >
-                              Görüntüle
+                                    // Workflow head ID ile detay sayfasına git
+                                    navigate(`/workflows/history/${params.row.id}`);
+                                  }}
+                                  sx={{
+                                    minWidth: "auto",
+                                    px: 2,
+                                    py: 0.75,
+                                    fontWeight: 600,
+                                    fontSize: "0.75rem",
+                                    borderRadius: 2,
+                                    textTransform: "none",
+                                  }}
+                                >
+                                  Detay
                         </MDButton>
+                              </Tooltip>
+                            </Box>
                         ),
                       },
                     ]}
-                    loading={loading}
-                    onRowClick={(params: GridRowParams) => handleWorkflowClick(params.row)}
+                      loading={loadingStarted}
+                      onRowClick={(params: GridRowParams) => {
+                        // Workflow head ID ile history sayfasına git
+                        navigate(`/workflows/history/${params.row.id}`);
+                      }}
                       pageSizeOptions={[10, 25, 50]}
                     initialState={{
                       pagination: {
@@ -1295,14 +1385,43 @@ function WorkflowMyTasks() {
                           bgcolor: "#f8fafc",
                           borderRadius: 2,
                           borderBottom: "2px solid #e2e8f0",
+                          "& .MuiDataGrid-columnHeaderTitle": {
+                            fontWeight: 700,
+                            color: "#1e293b",
+                            fontSize: "0.875rem",
+                          },
                         },
-                      "& .MuiDataGrid-row:hover": {
+                        "& .MuiDataGrid-row": {
+                          borderBottom: "1px solid #f1f5f9",
+                          "&:hover": {
                         cursor: "pointer",
+                            bgcolor: "#f8fafc",
+                            transform: "scale(1.001)",
+                          },
+                          "&.Mui-selected": {
+                            bgcolor: "#eff6ff !important",
+                            "&:hover": {
+                              bgcolor: "#dbeafe !important",
+                            },
+                          },
+                        },
+                        "& .MuiDataGrid-cell": {
+                          borderBottom: "none",
+                          py: 2,
+                          "&:focus": {
+                        outline: "none",
+                          },
+                        },
+                        "& .MuiDataGrid-footerContainer": {
+                          borderTop: "2px solid #e2e8f0",
                           bgcolor: "#f8fafc",
                       },
                     }}
                     localeText={{
                         noRowsLabel: "📋 Henüz süreç başlatmadınız",
+                        MuiTablePagination: {
+                          labelRowsPerPage: "Sayfa başına:",
+                        },
                     }}
                   />
                 </div>
@@ -1614,7 +1733,7 @@ function WorkflowMyTasks() {
                     </Card>
             )}
           </>
-          )}
+        )}
           </Box>
           {/* Sağ İçerik Alanı Sonu */}
         </Box>
