@@ -17,6 +17,10 @@ import {
   ListItemText,
   ListItemIcon,
   Divider,
+  Badge,
+  LinearProgress,
+  IconButton,
+  Tooltip,
 } from "@mui/material";
 import {
   Assignment as AssignmentIcon,
@@ -26,6 +30,12 @@ import {
   List as ListIcon,
   Search as SearchIcon,
   Description as DescriptionIcon,
+  CheckCircle as CheckCircleIcon,
+  HourglassEmpty as HourglassEmptyIcon,
+  TrendingUp as TrendingUpIcon,
+  Inbox as InboxIcon,
+  Speed as SpeedIcon,
+  Info as InfoIcon,
 } from "@mui/icons-material";
 import { DataGrid, GridColDef, GridRowParams } from "@mui/x-data-grid";
 import DashboardLayout from "examples/LayoutContainers/DashboardLayout";
@@ -80,13 +90,18 @@ interface WorkflowTask {
 
 function WorkflowMyTasks() {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState(0); // 0: Devam Eden Görevlerim, 1: Yeni Süreç Başlat
+  const [activeTab, setActiveTab] = useState(0); // 0: Süreç Takibi, 1: Onay Listem
   const [workflowTasks, setWorkflowTasks] = useState<WorkflowTask[]>([]);
   const [availableWorkflows, setAvailableWorkflows] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingWorkflows, setLoadingWorkflows] = useState(true);
   const [filter, setFilter] = useState<"all" | "pending" | "in-progress" | "completed">("all");
   const [workflowSearchQuery, setWorkflowSearchQuery] = useState("");
+  
+  // Dashboard Metrikleri
+  const startedCount = workflowTasks.length;
+  const inProgressCount = workflowTasks.filter(t => t.status === "in-progress").length;
+  const pendingCount = workflowTasks.filter(t => t.status === "pending").length;
 
   useEffect(() => {
     if (activeTab === 0) {
@@ -476,150 +491,471 @@ function WorkflowMyTasks() {
   return (
     <DashboardLayout>
       <DashboardNavbar />
-      <MDBox my={3}>
-        <Box sx={{ mb: 3 }}>
-          <Typography variant="h4" fontWeight={600} gutterBottom>
-            İş Akışları
-          </Typography>
-          <Typography variant="body2" color="textSecondary">
-            Devam eden görevlerinizi görüntüleyin veya yeni süreç başlatın
-          </Typography>
+      <MDBox pt={0} pb={2} px={3}>
+        {/* Modern Header - Kompakt */}
+        <Box 
+          sx={{ 
+            mb: 2,
+            mt: -2,
+            display: "flex", 
+            justifyContent: "space-between", 
+            alignItems: "center",
+            background: "linear-gradient(135deg, #2563eb 0%, #1e40af 100%)",
+            padding: 1.5,
+            borderRadius: 2,
+            boxShadow: "0 2px 12px rgba(37, 99, 235, 0.25)",
+          }}
+        >
+          <Box>
+            <Typography 
+              variant="h6" 
+              fontWeight={700} 
+              sx={{ 
+                color: "#ffffff", 
+                mb: 0,
+                textShadow: "0 2px 4px rgba(0,0,0,0.2)",
+              }}
+            >
+              İş Süreci Yönetimi
+            </Typography>
+            <Typography 
+              variant="caption" 
+              sx={{ 
+                color: "#ffffff",
+                fontWeight: 500,
+                textShadow: "0 1px 3px rgba(0,0,0,0.2)",
+                display: "block",
+                mt: 0.25,
+              }}
+            >
+              Süreçlerinizi takip edin ve yeni iş akışları başlatın
+            </Typography>
+          </Box>
+          <MDButton
+            variant="contained"
+            color="white"
+            size="small"
+            startIcon={<AddCircleIcon sx={{ fontSize: 18 }} />}
+            onClick={() => setActiveTab(1)}
+            sx={{
+              bgcolor: "white",
+              color: "#2563eb",
+              fontWeight: 700,
+              px: 2,
+              py: 0.75,
+              fontSize: "0.813rem",
+              borderRadius: 1.5,
+              boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+              "&:hover": {
+                bgcolor: "#f8fafc",
+                transform: "translateY(-1px)",
+                boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+              },
+              transition: "all 0.2s ease",
+            }}
+          >
+            Yeni Süreç Başlat
+          </MDButton>
         </Box>
 
-        {/* Sekmeler */}
-        <Box sx={{ borderBottom: 1, borderColor: "divider", mb: 3 }}>
-          <Tabs value={activeTab} onChange={(e, newValue) => setActiveTab(newValue)}>
+        {/* Dashboard Özet Kartları - Kompakt */}
+        <Grid container spacing={2} sx={{ mb: 2.5 }}>
+          {/* Başlatılan Süreç Sayısı */}
+          <Grid item xs={12} md={4}>
+            <Card 
+              sx={{ 
+                borderRadius: 2,
+                boxShadow: "0 1px 4px rgba(0,0,0,0.08)",
+                border: "1px solid #e2e8f0",
+                transition: "all 0.2s ease",
+                "&:hover": {
+                  boxShadow: "0 4px 12px rgba(37, 99, 235, 0.12)",
+                  transform: "translateY(-2px)",
+                },
+              }}
+            >
+              <CardContent sx={{ py: 2, px: 2.5 }}>
+                <Box display="flex" justifyContent="space-between" alignItems="flex-start">
+                  <Box>
+                    <Typography variant="caption" color="textSecondary" sx={{ mb: 0.5, fontWeight: 500, display: "block" }}>
+                      Başlatılan Süreçler
+                    </Typography>
+                    <Typography variant="h4" fontWeight={700} sx={{ color: "#2563eb", mb: 0.25 }}>
+                      {startedCount}
+                    </Typography>
+                    <Typography variant="caption" sx={{ color: "#10b981", display: "flex", alignItems: "center", gap: 0.5, fontSize: "0.7rem" }}>
+                      <TrendingUpIcon sx={{ fontSize: 12 }} />
+                      Toplam süreç
+                    </Typography>
+                  </Box>
+                  <Box
+                    sx={{
+                      width: 48,
+                      height: 48,
+                      borderRadius: 2,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      background: "linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%)",
+                    }}
+                  >
+                    <PlayArrowIcon sx={{ fontSize: 28, color: "#2563eb" }} />
+                  </Box>
+                </Box>
+              </CardContent>
+            </Card>
+          </Grid>
+
+          {/* Devam Eden İşler */}
+          <Grid item xs={12} md={4}>
+            <Card 
+              sx={{ 
+                borderRadius: 2,
+                boxShadow: "0 1px 4px rgba(0,0,0,0.08)",
+                border: "1px solid #fef3c7",
+                transition: "all 0.2s ease",
+                "&:hover": {
+                  boxShadow: "0 4px 12px rgba(245, 158, 11, 0.12)",
+                  transform: "translateY(-2px)",
+                },
+              }}
+            >
+              <CardContent sx={{ py: 2, px: 2.5 }}>
+                <Box display="flex" justifyContent="space-between" alignItems="flex-start">
+                  <Box>
+                    <Typography variant="caption" color="textSecondary" sx={{ mb: 0.5, fontWeight: 500, display: "block" }}>
+                      Devam Eden İşler
+                    </Typography>
+                    <Typography variant="h4" fontWeight={700} sx={{ color: "#f59e0b", mb: 0.25 }}>
+                      {inProgressCount}
+                    </Typography>
+                    <Typography variant="caption" sx={{ color: "#f59e0b", display: "flex", alignItems: "center", gap: 0.5, fontSize: "0.7rem" }}>
+                      <SpeedIcon sx={{ fontSize: 12 }} />
+                      Aktif süreçler
+                    </Typography>
+                  </Box>
+                  <Box
+                    sx={{
+                      width: 48,
+                      height: 48,
+                      borderRadius: 2,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      background: "linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)",
+                    }}
+                  >
+                    <HourglassEmptyIcon sx={{ fontSize: 28, color: "#f59e0b" }} />
+                  </Box>
+                </Box>
+              </CardContent>
+            </Card>
+          </Grid>
+
+          {/* Bekleyen Görevler */}
+          <Grid item xs={12} md={4}>
+            <Card 
+              sx={{ 
+                borderRadius: 2,
+                boxShadow: "0 1px 4px rgba(0,0,0,0.08)",
+                border: "1px solid #fecdd3",
+                transition: "all 0.2s ease",
+                "&:hover": {
+                  boxShadow: "0 4px 12px rgba(239, 68, 68, 0.12)",
+                  transform: "translateY(-2px)",
+                },
+              }}
+            >
+              <CardContent sx={{ py: 2, px: 2.5 }}>
+                <Box display="flex" justifyContent="space-between" alignItems="flex-start">
+                  <Box>
+                    <Typography variant="caption" color="textSecondary" sx={{ mb: 0.5, fontWeight: 500, display: "block" }}>
+                      Bekleyen Görevler
+                    </Typography>
+                    <Typography variant="h4" fontWeight={700} sx={{ color: "#ef4444", mb: 0.25 }}>
+                      {pendingCount}
+                    </Typography>
+                    <Typography variant="caption" sx={{ color: "#ef4444", display: "flex", alignItems: "center", gap: 0.5, fontSize: "0.7rem" }}>
+                      <InboxIcon sx={{ fontSize: 12 }} />
+                      Onay bekliyor
+                    </Typography>
+                  </Box>
+                  <Box
+                    sx={{
+                      width: 48,
+                      height: 48,
+                      borderRadius: 2,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      background: "linear-gradient(135deg, #fecdd3 0%, #fca5a5 100%)",
+                    }}
+                  >
+                    <AssignmentIcon sx={{ fontSize: 28, color: "#ef4444" }} />
+                  </Box>
+                </Box>
+              </CardContent>
+            </Card>
+          </Grid>
+        </Grid>
+
+        {/* Modern Tab Navigasyonu - Kompakt */}
+        <Box sx={{ borderBottom: 2, borderColor: "#e2e8f0", mb: 2.5 }}>
+          <Tabs 
+            value={activeTab} 
+            onChange={(e, newValue) => setActiveTab(newValue)}
+            sx={{
+              minHeight: "unset",
+              "& .MuiTabs-indicator": {
+                backgroundColor: "#2563eb",
+                height: 3,
+                borderRadius: "3px 3px 0 0",
+              },
+            }}
+          >
             <Tab
-              icon={<ListIcon />}
+              icon={<ListIcon sx={{ fontSize: 20 }} />}
               iconPosition="start"
-              label="Devam Eden Görevlerim"
-              sx={{ textTransform: "none", fontSize: "1rem" }}
+              label="Süreç Takibi (Benim Başlattıklarım)"
+              sx={{ 
+                textTransform: "none", 
+                fontSize: "0.875rem",
+                fontWeight: 600,
+                color: "#64748b",
+                minHeight: "unset",
+                "&.Mui-selected": {
+                  color: "#2563eb",
+                },
+                px: 2.5,
+                py: 1.5,
+              }}
             />
             <Tab
-              icon={<AddCircleIcon />}
+              icon={
+                <Badge 
+                  badgeContent={pendingCount} 
+                  color="error"
+                  sx={{
+                    "& .MuiBadge-badge": {
+                      fontSize: "0.65rem",
+                      height: 16,
+                      minWidth: 16,
+                      fontWeight: 700,
+                    },
+                  }}
+                >
+                  <InboxIcon sx={{ fontSize: 20 }} />
+                </Badge>
+              }
               iconPosition="start"
-              label="Yeni Süreç Başlat"
-              sx={{ textTransform: "none", fontSize: "1rem" }}
+              label="Onay Listem (Inbox)"
+              sx={{ 
+                textTransform: "none", 
+                fontSize: "0.875rem",
+                fontWeight: 600,
+                color: "#64748b",
+                minHeight: "unset",
+                "&.Mui-selected": {
+                  color: "#2563eb",
+                },
+                px: 2.5,
+                py: 1.5,
+              }}
             />
           </Tabs>
         </Box>
 
-        {/* Devam Eden Görevlerim Sekmesi */}
+        {/* Süreç Takibi Sekmesi */}
         {activeTab === 0 && (
           <>
-            {/* Filtreler */}
-            <Box sx={{ mb: 3, display: "flex", gap: 1 }}>
+            {/* Modern Filtreler */}
+            <Box sx={{ mb: 2, display: "flex", gap: 1.5, flexWrap: "wrap" }}>
               <Chip
                 label="Tümü"
                 onClick={() => setFilter("all")}
-                color={filter === "all" ? "primary" : "default"}
+                sx={{
+                  bgcolor: filter === "all" ? "#2563eb" : "#f1f5f9",
+                  color: filter === "all" ? "white" : "#64748b",
+                  fontWeight: 600,
+                  px: 2,
+                  "&:hover": {
+                    bgcolor: filter === "all" ? "#1e40af" : "#e2e8f0",
+                  },
+                }}
                 clickable
               />
               <Chip
                 label="Beklemede"
                 onClick={() => setFilter("pending")}
-                color={filter === "pending" ? "warning" : "default"}
+                icon={<HourglassEmptyIcon sx={{ fontSize: 18, color: filter === "pending" ? "white" : "#f59e0b" }} />}
+                sx={{
+                  bgcolor: filter === "pending" ? "#f59e0b" : "#fef3c7",
+                  color: filter === "pending" ? "white" : "#92400e",
+                  fontWeight: 600,
+                  px: 2,
+                  "&:hover": {
+                    bgcolor: filter === "pending" ? "#d97706" : "#fde68a",
+                  },
+                }}
                 clickable
               />
               <Chip
                 label="Devam Ediyor"
                 onClick={() => setFilter("in-progress")}
-                color={filter === "in-progress" ? "info" : "default"}
+                icon={<SpeedIcon sx={{ fontSize: 18, color: filter === "in-progress" ? "white" : "#3b82f6" }} />}
+                sx={{
+                  bgcolor: filter === "in-progress" ? "#3b82f6" : "#dbeafe",
+                  color: filter === "in-progress" ? "white" : "#1e3a8a",
+                  fontWeight: 600,
+                  px: 2,
+                  "&:hover": {
+                    bgcolor: filter === "in-progress" ? "#2563eb" : "#bfdbfe",
+                  },
+                }}
                 clickable
               />
               <Chip
                 label="Tamamlandı"
                 onClick={() => setFilter("completed")}
-                color={filter === "completed" ? "success" : "default"}
+                icon={<CheckCircleIcon sx={{ fontSize: 18, color: filter === "completed" ? "white" : "#10b981" }} />}
+                sx={{
+                  bgcolor: filter === "completed" ? "#10b981" : "#d1fae5",
+                  color: filter === "completed" ? "white" : "#065f46",
+                  fontWeight: 600,
+                  px: 2,
+                  "&:hover": {
+                    bgcolor: filter === "completed" ? "#059669" : "#a7f3d0",
+                  },
+                }}
                 clickable
               />
             </Box>
 
-            {/* Workflow Görev Listesi - DataGrid */}
-              <Card>
-              <CardContent>
-                <div style={{ height: 600, width: "100%" }}>
+            {/* Modern Workflow Görev Listesi */}
+            <Card 
+              sx={{ 
+                borderRadius: 2,
+                boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
+                border: "1px solid #e2e8f0",
+              }}
+            >
+              <CardContent sx={{ py: 2 }}>
+                <div style={{ height: 500, width: "100%" }}>
                   <DataGrid
                     rows={filteredTasks}
                     columns={[
                       {
                         field: "formName",
-                        headerName: "Form Adı",
-                        width: 200,
+                        headerName: "Süreç Adı",
+                        width: 250,
                         flex: 1,
                         renderCell: (params) => (
-                          <Typography variant="body2" fontWeight={600}>
+                          <Box>
+                            <Typography variant="body2" fontWeight={700} sx={{ color: "#1e293b", mb: 0.5 }}>
                             {params.value || "Görev"}
                   </Typography>
+                            <Typography variant="caption" sx={{ color: "#64748b", fontSize: "0.75rem" }}>
+                              {params.row.workflowName}
+                            </Typography>
+                          </Box>
                         ),
                       },
                       {
-                        field: "workflowName",
-                        headerName: "İş Akışı",
-                        width: 200,
-                        flex: 1,
-                      },
-                      {
-                        field: "type",
-                        headerName: "Tip",
-                        width: 150,
+                        field: "shortId",
+                        headerName: "Süreç ID",
+                        width: 120,
                         renderCell: (params) => (
                               <Chip 
-                            label={params.value === "formTask" ? "Form Görevi" : "Kullanıcı Görevi"}
+                            label={params.value || "-"}
                                 size="small" 
-                            color={params.value === "formTask" ? "primary" : "secondary"}
+                            sx={{
+                              bgcolor: "#f1f5f9",
+                              color: "#475569",
+                              fontWeight: 600,
+                              fontFamily: "monospace",
+                            }}
                           />
                         ),
                       },
                       {
                         field: "status",
-                        headerName: "Durum",
-                        width: 150,
-                        renderCell: (params) => (
-                              <Chip 
-                            label={getStatusText(params.value)}
-                            color={getStatusColor(params.value) as any}
-                                size="small" 
-                          />
-                        ),
-                      },
-                      {
-                        field: "message",
-                        headerName: "Mesaj",
-                        width: 250,
+                        headerName: "Şu Anki Adım & Durum",
+                        width: 220,
                         flex: 1,
-                        renderCell: (params) => (
-                          <Typography variant="body2" color="textSecondary" noWrap>
-                            {params.value || "-"}
-                          </Typography>
-                        ),
+                        renderCell: (params) => {
+                          const statusConfig = {
+                            "pending": { 
+                              color: "#f59e0b", 
+                              bg: "#fef3c7", 
+                              text: "Beklemede",
+                              icon: <HourglassEmptyIcon sx={{ fontSize: 16 }} />,
+                              progress: 25
+                            },
+                            "in-progress": { 
+                              color: "#3b82f6", 
+                              bg: "#dbeafe", 
+                              text: "Devam Ediyor",
+                              icon: <SpeedIcon sx={{ fontSize: 16 }} />,
+                              progress: 60
+                            },
+                            "completed": { 
+                              color: "#10b981", 
+                              bg: "#d1fae5", 
+                              text: "Tamamlandı",
+                              icon: <CheckCircleIcon sx={{ fontSize: 16 }} />,
+                              progress: 100
+                            },
+                            "cancelled": { 
+                              color: "#ef4444", 
+                              bg: "#fecdd3", 
+                              text: "İptal",
+                              icon: <InfoIcon sx={{ fontSize: 16 }} />,
+                              progress: 0
+                            },
+                          };
+                          const config = statusConfig[params.value as keyof typeof statusConfig] || statusConfig["pending"];
+                          
+                          return (
+                            <Box sx={{ width: "100%" }}>
+                              <Box display="flex" alignItems="center" gap={0.5} mb={0.5}>
+                                {config.icon}
+                                <Typography 
+                                  variant="caption" 
+                                  fontWeight={600}
+                                  sx={{ color: config.color }}
+                                >
+                                  {config.text}
+                              </Typography>
+                          </Box>
+                              <LinearProgress
+                                variant="determinate"
+                                value={config.progress}
+                                sx={{
+                                  height: 6,
+                                  borderRadius: 3,
+                                  bgcolor: config.bg,
+                                  "& .MuiLinearProgress-bar": {
+                                    bgcolor: config.color,
+                                    borderRadius: 3,
+                                  },
+                                }}
+                              />
+                            </Box>
+                          );
+                        },
                       },
                       {
                         field: "createdDate",
-                        headerName: "Oluşturulma Tarihi",
-                        width: 180,
+                        headerName: "Tarih",
+                        width: 160,
                         renderCell: (params) =>
                           params.value ? (
-                            <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-                              <AccessTimeIcon sx={{ fontSize: 14, color: "text.secondary" }} />
-                              <Typography variant="body2" color="textSecondary">
-                                {format(new Date(params.value), "dd MMM yyyy HH:mm", { locale: tr })}
+                            <Box>
+                              <Typography variant="body2" fontWeight={600} sx={{ color: "#475569" }}>
+                                {format(new Date(params.value), "dd MMM yyyy", { locale: tr })}
                               </Typography>
-                          </Box>
-                          ) : (
-                            "-"
-                          ),
-                      },
-                      {
-                        field: "shortId",
-                        headerName: "ID",
-                        width: 120,
-                        renderCell: (params) =>
-                          params.value ? (
-                            <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-                              <PlayArrowIcon sx={{ fontSize: 14, color: "text.secondary" }} />
-                            <Typography variant="body2" color="textSecondary">
-                                {params.value}
+                              <Typography variant="caption" sx={{ color: "#94a3b8" }}>
+                                {format(new Date(params.value), "HH:mm", { locale: tr })}
                             </Typography>
                           </Box>
                           ) : (
@@ -627,33 +963,13 @@ function WorkflowMyTasks() {
                           ),
                       },
                       {
-                        field: "assignedUser",
-                        headerName: "Süreç Üzerinde",
-                        width: 180,
-                        renderCell: (params) => {
-                          // FormTask için formUserNameSurname, UserTask için approveUserNameSurname
-                          const userName = params.row.type === "formTask" 
-                            ? params.row.formUserNameSurname 
-                            : params.row.approveUserNameSurname;
-                          
-                          return userName ? (
-                            <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-                              <AssignmentIcon sx={{ fontSize: 14, color: "text.secondary" }} />
-                              <Typography variant="body2" color="textSecondary">
-                                {userName}
-                              </Typography>
-                            </Box>
-                          ) : (
-                            "-"
-                          );
-                        },
-                      },
-                      {
                         field: "actions",
-                        headerName: "İşlemler",
-                        width: 150,
+                        headerName: "Hızlı İşlemler",
+                        width: 200,
                         sortable: false,
                         renderCell: (params) => (
+                          <Box display="flex" gap={1}>
+                            <Tooltip title="Detayları Görüntüle">
                         <MDButton
                           variant="gradient"
                           color="info"
@@ -662,9 +978,39 @@ function WorkflowMyTasks() {
                             e.stopPropagation();
                               handleWorkflowClick(params.row);
                           }}
-                        >
-                            {params.row.type === "formTask" ? "Formu Aç" : "Görüntüle"}
+                                sx={{
+                                  minWidth: "auto",
+                                  px: 2,
+                                  py: 0.75,
+                                  fontWeight: 600,
+                                  fontSize: "0.75rem",
+                                  borderRadius: 2,
+                                  textTransform: "none",
+                                  boxShadow: "none",
+                                  "&:hover": {
+                                    boxShadow: "0 4px 12px rgba(37, 99, 235, 0.3)",
+                                    transform: "translateY(-2px)",
+                                  },
+                                  transition: "all 0.2s ease",
+                                }}
+                              >
+                                {params.row.type === "formTask" ? "Detay" : "Onayla"}
                         </MDButton>
+                            </Tooltip>
+                            <Tooltip title="Bilgi">
+                              <IconButton
+                                size="small"
+                                sx={{
+                                  bgcolor: "#f1f5f9",
+                                  "&:hover": {
+                                    bgcolor: "#e2e8f0",
+                                  },
+                                }}
+                              >
+                                <InfoIcon sx={{ fontSize: 18, color: "#64748b" }} />
+                              </IconButton>
+                            </Tooltip>
+                          </Box>
                         ),
                       },
                     ]}
@@ -677,17 +1023,52 @@ function WorkflowMyTasks() {
                       },
                     }}
                     sx={{
-                      "& .MuiDataGrid-row:hover": {
-                        cursor: "pointer",
-                        backgroundColor: "action.hover",
+                      border: "none",
+                      "& .MuiDataGrid-columnHeaders": {
+                        bgcolor: "#f8fafc",
+                        borderRadius: 2,
+                        borderBottom: "2px solid #e2e8f0",
+                        "& .MuiDataGrid-columnHeaderTitle": {
+                          fontWeight: 700,
+                          color: "#1e293b",
+                          fontSize: "0.875rem",
+                        },
                       },
-                      "& .MuiDataGrid-cell:focus": {
+                      "& .MuiDataGrid-row": {
+                        borderBottom: "1px solid #f1f5f9",
+                        "&:hover": {
+                        cursor: "pointer",
+                          bgcolor: "#f8fafc",
+                          transform: "scale(1.001)",
+                        },
+                        "&.Mui-selected": {
+                          bgcolor: "#eff6ff !important",
+                          "&:hover": {
+                            bgcolor: "#dbeafe !important",
+                          },
+                        },
+                      },
+                      "& .MuiDataGrid-cell": {
+                        borderBottom: "none",
+                        py: 2,
+                        "&:focus": {
                         outline: "none",
+                        },
+                      },
+                      "& .MuiDataGrid-footerContainer": {
+                        borderTop: "2px solid #e2e8f0",
+                        bgcolor: "#f8fafc",
+                      },
+                      "& .MuiTablePagination-root": {
+                        color: "#64748b",
                       },
                     }}
                     localeText={{
-                      noRowsLabel: "Görev bulunamadı",
-                      noResultsOverlayLabel: "Sonuç bulunamadı",
+                      noRowsLabel: "📋 Henüz süreç bulunamadı",
+                      noResultsOverlayLabel: "Arama sonucu bulunamadı",
+                      MuiTablePagination: {
+                        labelRowsPerPage: "Sayfa başına:",
+                      },
                     }}
                   />
                 </div>
@@ -696,50 +1077,116 @@ function WorkflowMyTasks() {
           </>
         )}
 
-        {/* Yeni Süreç Başlat Sekmesi - Kompakt Liste */}
+        {/* Onay Listem Sekmesi */}
         {activeTab === 1 && (
           <>
-            {/* Arama Kutusu */}
-            <Card sx={{ mb: 2 }}>
-              <CardContent>
+            {/* Modern Arama Kutusu */}
+            <Card 
+              sx={{ 
+                mb: 2,
+                borderRadius: 2,
+                boxShadow: "0 1px 4px rgba(0,0,0,0.08)",
+                border: "1px solid #e2e8f0",
+              }}
+            >
+              <CardContent sx={{ py: 1.5, "&:last-child": { pb: 1.5 } }}>
                 <TextField
                   fullWidth
-                  size="small"
-                  placeholder="Workflow ara..."
+                  placeholder="İş akışı ara... (örn: Satın Alma, İzin Talebi)"
                   value={workflowSearchQuery}
                   onChange={(e) => setWorkflowSearchQuery(e.target.value)}
                   InputProps={{
                     startAdornment: (
                       <InputAdornment position="start">
-                        <SearchIcon sx={{ color: "text.secondary" }} />
+                        <SearchIcon sx={{ color: "#64748b", fontSize: 24 }} />
                       </InputAdornment>
                     ),
+                  }}
+                  sx={{
+                    "& .MuiOutlinedInput-root": {
+                      borderRadius: 2,
+                      bgcolor: "#f8fafc",
+                      "& fieldset": {
+                        border: "2px solid transparent",
+                      },
+                      "&:hover fieldset": {
+                        border: "2px solid #cbd5e1",
+                      },
+                      "&.Mui-focused fieldset": {
+                        border: "2px solid #2563eb",
+                      },
+                      "& input": {
+                        fontSize: "1rem",
+                        fontWeight: 500,
+                        color: "#1e293b",
+                      },
+                    },
                   }}
                 />
               </CardContent>
             </Card>
 
-            {/* Workflow Listesi */}
+            {/* Modern Workflow Listesi */}
             {loadingWorkflows ? (
-              <Card>
-                <CardContent sx={{ textAlign: "center", py: 4 }}>
-                <Typography>Yükleniyor...</Typography>
+              <Card 
+                sx={{ 
+                  borderRadius: 2,
+                  boxShadow: "0 1px 4px rgba(0,0,0,0.08)",
+                }}
+              >
+                <CardContent sx={{ textAlign: "center", py: 5 }}>
+                  <Box sx={{ display: "inline-block" }}>
+                    <SpeedIcon sx={{ fontSize: 48, color: "#2563eb", mb: 1.5 }} />
+                  </Box>
+                  <Typography variant="body1" fontWeight={600} sx={{ color: "#1e293b" }}>
+                    Yükleniyor...
+                  </Typography>
+                  <Typography variant="caption" sx={{ color: "#64748b", mt: 0.5 }}>
+                    İş akışları getiriliyor
+                  </Typography>
                 </CardContent>
               </Card>
             ) : availableWorkflows.length === 0 ? (
-              <Card>
-                <CardContent sx={{ textAlign: "center", py: 4 }}>
-                  <AddCircleIcon sx={{ fontSize: 64, color: "text.secondary", mb: 2 }} />
-                  <Typography variant="h6" color="textSecondary">
-                    Workflow bulunamadı
+              <Card 
+                sx={{ 
+                  borderRadius: 2,
+                  boxShadow: "0 1px 4px rgba(0,0,0,0.08)",
+                  border: "2px dashed #cbd5e1",
+                }}
+              >
+                <CardContent sx={{ textAlign: "center", py: 5 }}>
+                  <Box
+                    sx={{
+                      width: 64,
+                      height: 64,
+                      borderRadius: 3,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      bgcolor: "#f1f5f9",
+                      margin: "0 auto",
+                      mb: 2,
+                    }}
+                  >
+                    <AddCircleIcon sx={{ fontSize: 40, color: "#94a3b8" }} />
+                  </Box>
+                  <Typography variant="body1" fontWeight={600} sx={{ color: "#475569", mb: 0.5 }}>
+                    İş Akışı Bulunamadı
                   </Typography>
-                  <Typography variant="body2" color="textSecondary">
-                    Başlatılabilecek aktif workflow bulunmamaktadır.
+                  <Typography variant="caption" sx={{ color: "#64748b" }}>
+                    Başlatılabilecek aktif iş akışı bulunmamaktadır.
                   </Typography>
                 </CardContent>
               </Card>
             ) : (
-              <Card>
+              <Card 
+                sx={{ 
+                  borderRadius: 2,
+                  boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
+                  border: "1px solid #e2e8f0",
+                  overflow: "hidden",
+                }}
+              >
                 <CardContent sx={{ p: 0 }}>
                   <List>
                     {(() => {
@@ -769,6 +1216,7 @@ function WorkflowMyTasks() {
                       sx={{
                               position: "relative",
                               "&:hover": {
+                                bgcolor: "#f8fafc",
                                 "&::before": {
                                   opacity: 1,
                                 },
@@ -779,32 +1227,28 @@ function WorkflowMyTasks() {
                                 left: 0,
                                 top: 0,
                                 bottom: 0,
-                                width: 4,
-                                backgroundColor: "success.main",
+                                width: 5,
+                                bgcolor: "#2563eb",
                                 opacity: 0,
-                                transition: "opacity 0.2s ease",
+                                transition: "all 0.3s ease",
+                                borderRadius: "0 4px 4px 0",
                               },
                             }}
                           >
                             <ListItemButton
-                              onClick={() => {
-                                handleStartNewWorkflow(workflow);
-                              }}
+                              onClick={() => handleStartNewWorkflow(workflow)}
                               sx={{
                                 py: 2,
                                 px: 3,
-                                transition: "all 0.2s ease-in-out",
+                                transition: "all 0.3s ease",
                                 "&:hover": {
-                                  backgroundColor: "action.hover",
-                                  transform: "translateX(4px)",
-                                },
-                                "&.Mui-disabled": {
-                                  opacity: 0.6,
+                                  bgcolor: "transparent",
+                                  pl: 3.5,
                                 },
                               }}
                             >
                               {/* İkon Container */}
-                              <ListItemIcon sx={{ minWidth: 56 }}>
+                              <ListItemIcon sx={{ minWidth: 60 }}>
                                 <Box
                                   sx={{
                                     width: 48,
@@ -813,16 +1257,18 @@ function WorkflowMyTasks() {
                         display: "flex",
                                     alignItems: "center",
                                     justifyContent: "center",
-                                    backgroundColor: "success.lighter",
-                        transition: "all 0.2s ease",
+                                    background: "linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%)",
+                                    transition: "all 0.3s ease",
+                                    boxShadow: "0 1px 4px rgba(37, 99, 235, 0.15)",
                         "&:hover": {
-                                      transform: "scale(1.05)",
+                                      transform: "rotate(5deg) scale(1.05)",
+                                      boxShadow: "0 2px 8px rgba(37, 99, 235, 0.25)",
                                     },
                                   }}
                                 >
-                                  <DescriptionIcon
+                                  <PlayArrowIcon
                                     sx={{
-                                      color: "success.main",
+                                      color: "#2563eb",
                                       fontSize: 24,
                                     }}
                                   />
@@ -842,10 +1288,10 @@ function WorkflowMyTasks() {
                                   >
                                     <Typography
                                       variant="body1"
-                                      fontWeight={600}
+                                      fontWeight={700}
                                       sx={{
+                                        color: "#1e293b",
                                         fontSize: "1rem",
-                                        color: "text.primary",
                                       }}
                                     >
                               {workflow.workflowName}
@@ -853,56 +1299,70 @@ function WorkflowMyTasks() {
                           <Chip 
                               label="Başlatılabilir"
                             size="small" 
-                              color="success"
+                                      icon={<CheckCircleIcon sx={{ fontSize: 12 }} />}
                               sx={{
-                                height: 22,
-                                fontSize: "0.7rem",
-                                fontWeight: 600,
+                                        height: 20,
+                                        bgcolor: "#d1fae5",
+                                        color: "#065f46",
+                                        fontSize: "0.65rem",
+                                        fontWeight: 700,
                                 "& .MuiChip-label": {
                                   px: 1,
                                 },
+                                        "& .MuiChip-icon": {
+                                          color: "#10b981",
+                                        },
                               }}
                           />
                         </Box>
                                 }
                                 secondary={
+                                  <Box sx={{ display: "flex", alignItems: "center", gap: 1, mt: 0.25 }}>
                                   <Typography
-                                    variant="body2"
-                                    color="text.secondary"
+                                      variant="caption"
                                     sx={{
-                                      fontSize: "0.875rem",
-                                      mt: 0.5,
+                                        color: "#64748b",
+                                        fontSize: "0.75rem",
                                       display: "flex",
                                       alignItems: "center",
                                       gap: 0.5,
                                     }}
                                   >
-                                    <DescriptionIcon sx={{ fontSize: 14 }} />
-                                    Tıklayarak başlatın
+                                      <InfoIcon sx={{ fontSize: 14 }} />
+                                      Yeni süreç başlatmak için tıklayın
                         </Typography>
+                                  </Box>
                                 }
                               />
 
                               {/* Aksiyon Butonu */}
-                              <Box sx={{ ml: 2 }}>
+                              <Box sx={{ ml: 1.5 }}>
                         <MDButton
                           variant="gradient"
-                                  color="success"
-                                  size="small"
-                          startIcon={<AddCircleIcon />}
+                                  color="info"
+                                  size="medium"
+                                  startIcon={<AddCircleIcon sx={{ fontSize: 18 }} />}
                           onClick={(e) => {
                             e.stopPropagation();
                               handleStartNewWorkflow(workflow);
                                   }}
                                   sx={{
-                                    minWidth: 100,
-                                    fontWeight: 600,
+                                    minWidth: 110,
+                                    px: 2.5,
+                                    py: 1,
+                                    fontWeight: 700,
+                                    fontSize: "0.8rem",
                                     textTransform: "none",
-                                    boxShadow: "none",
+                                    borderRadius: 2,
+                                    bgcolor: "#2563eb",
+                                    color: "white",
+                                    boxShadow: "0 2px 8px rgba(37, 99, 235, 0.3)",
                                     "&:hover": {
-                                      boxShadow: 2,
+                                      bgcolor: "#1e40af",
+                                      boxShadow: "0 4px 12px rgba(37, 99, 235, 0.4)",
                                       transform: "translateY(-1px)",
                                     },
+                                    transition: "all 0.2s ease",
                                   }}
                                 >
                                   Başlat
@@ -911,7 +1371,7 @@ function WorkflowMyTasks() {
                             </ListItemButton>
                           </ListItem>
                           {index < filteredWorkflows.length - 1 && (
-                            <Divider sx={{ ml: 3, mr: 3 }} />
+                            <Divider sx={{ mx: 3 }} />
                           )}
                         </React.Fragment>
                       ));
