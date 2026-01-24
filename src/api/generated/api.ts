@@ -2138,6 +2138,33 @@ export interface MenuUpdateDto {
     'isTenantOnly'?: boolean;
     'isGlobalOnly'?: boolean;
 }
+export interface MyStartedFormDto {
+    'id'?: string;
+    'surecAdi'?: string | null;
+    'formAdi'?: string | null;
+    'workFlowDefinationId'?: string;
+    'uniqNumber'?: number;
+    'baslatan'?: string | null;
+    'baslatanAdSoyad'?: string | null;
+    'baslatanDepartman'?: string | null;
+    'baslatanPozisyon'?: string | null;
+    'mevcutAdim'?: string | null;
+    'durum'?: string | null;
+    'durumEnum'?: WorkflowStatus;
+    'baslangicTarihi'?: string;
+    'sure'?: number;
+    'sureDetayli'?: string | null;
+    'kimdeOnayda'?: string | null;
+    'bekleyenKullanici'?: string | null;
+    'bekleyenDepartman'?: string | null;
+    'bekleyenPozisyon'?: string | null;
+}
+
+
+export interface MyStartedFormsResultDto {
+    'totalCount'?: number;
+    'data'?: Array<MyStartedFormDto> | null;
+}
 export interface MyTasksDto {
     'formTasks'?: Array<FormTaskItemDto> | null;
     'userTasks'?: Array<UserTaskItemDto> | null;
@@ -37519,7 +37546,7 @@ export const WorkFlowApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async apiWorkFlowGetMyStartedFormsGet(options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>> {
+        async apiWorkFlowGetMyStartedFormsGet(options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<MyStartedFormsResultDto>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.apiWorkFlowGetMyStartedFormsGet(options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['WorkFlowApi.apiWorkFlowGetMyStartedFormsGet']?.[localVarOperationServerIndex]?.url;
@@ -37604,7 +37631,7 @@ export const WorkFlowApiFactory = function (configuration?: Configuration, baseP
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        apiWorkFlowGetMyStartedFormsGet(options?: RawAxiosRequestConfig): AxiosPromise<void> {
+        apiWorkFlowGetMyStartedFormsGet(options?: RawAxiosRequestConfig): AxiosPromise<MyStartedFormsResultDto> {
             return localVarFp.apiWorkFlowGetMyStartedFormsGet(options).then((request) => request(axios, basePath));
         },
         /**

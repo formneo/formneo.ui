@@ -1211,13 +1211,13 @@ function WorkflowMyTasks() {
                         {
                           field: "surecAdi",
                           headerName: "Süreç Adı",
-                          width: 280,
-                          flex: 1,
-                        renderCell: (params) => (
-                            <Box>
+                          minWidth: 280,
+                          flex: 1.5,
+                          renderCell: (params) => (
+                            <Box sx={{ py: 1 }}>
                               <Typography variant="body2" fontWeight={700} sx={{ color: "#1e293b", mb: 0.5 }}>
                                 {params.value || "Süreç"}
-                          </Typography>
+                              </Typography>
                               {params.row.formAdi && (
                                 <Typography variant="caption" sx={{ color: "#64748b", fontSize: "0.7rem" }}>
                                   📄 {params.row.formAdi}
@@ -1239,6 +1239,7 @@ function WorkflowMyTasks() {
                                 color: "#475569",
                                 fontWeight: 700,
                                 fontFamily: "monospace",
+                                fontSize: "0.7rem",
                               }}
                           />
                         ),
@@ -1246,26 +1247,77 @@ function WorkflowMyTasks() {
                       {
                           field: "mevcutAdim",
                           headerName: "Mevcut Adım",
-                        width: 180,
+                          width: 140,
                         renderCell: (params) => (
-                            <Box>
-                              <Typography variant="body2" sx={{ color: "#1e293b", fontWeight: 600, fontSize: "0.813rem" }}>
+                            <Typography variant="body2" sx={{ color: "#1e293b", fontWeight: 600, fontSize: "0.813rem" }}>
                             {params.value || "-"}
                           </Typography>
-                              {params.row.baslatanAdSoyad && (
-                                <Typography variant="caption" sx={{ color: "#64748b", fontSize: "0.7rem" }}>
-                                  👤 {params.row.baslatanAdSoyad}
-                                </Typography>
-                              )}
-                          </Box>
                         ),
                       },
                       {
+                          field: "kimdeOnayda",
+                          headerName: "Kimde Bekliyor",
+                          minWidth: 220,
+                          flex: 1,
+                          renderCell: (params) => {
+                            const kimdeStatus = params.value;
+                            const bekleyen = params.row.bekleyenKullanici;
+                            const departman = params.row.bekleyenDepartman;
+                            const pozisyon = params.row.bekleyenPozisyon;
+                            
+                            if (!bekleyen) {
+                              return (
+                                <Box sx={{ py: 1 }}>
+                                  <Chip
+                                    label="Tamamlandı / Kimde Değil"
+                                    size="small"
+                                    icon={<CheckCircleIcon sx={{ fontSize: 12 }} />}
+                                    sx={{
+                                      height: 22,
+                                      fontSize: "0.7rem",
+                                      fontWeight: 600,
+                                      bgcolor: "#d1fae5",
+                                      color: "#065f46",
+                                    }}
+                                  />
+                                </Box>
+                              );
+                            }
+                            
+                            return (
+                              <Box sx={{ py: 1 }}>
+                                {kimdeStatus && (
+                                  <Chip
+                                    label={kimdeStatus}
+                                    size="small"
+                                    icon={<HourglassEmptyIcon sx={{ fontSize: 12 }} />}
+                                    sx={{
+                                      height: 20,
+                                      fontSize: "0.65rem",
+                                      fontWeight: 700,
+                                      bgcolor: "#fef3c7",
+                                      color: "#92400e",
+                                      mb: 0.5,
+                                    }}
+                                  />
+                                )}
+                                <Typography variant="body2" fontWeight={700} sx={{ color: "#1e293b", fontSize: "0.813rem", mb: 0.25 }}>
+                                  👤 {bekleyen}
+                              </Typography>
+                                {(departman || pozisyon) && (
+                                  <Typography variant="caption" sx={{ color: "#64748b", fontSize: "0.7rem" }}>
+                                    {departman}{pozisyon ? ` • ${pozisyon}` : ""}
+                                  </Typography>
+                                )}
+                          </Box>
+                            );
+                          },
+                        },
+                        {
                           field: "durumEnum",
                           headerName: "Durum",
-                          width: 160,
+                          width: 150,
                           renderCell: (params) => {
-                            // durumEnum: 0=Başlatılmadı, 1=Devam Ediyor, 2=Tamamlandı, 3=Beklemede, 4=Geri Gönderildi
                             const statusMap: any = {
                               0: { color: "#94a3b8", bg: "#f1f5f9", icon: "⚪" },
                               1: { color: "#3b82f6", bg: "#dbeafe", icon: "▶️" },
@@ -1294,81 +1346,130 @@ function WorkflowMyTasks() {
                         {
                           field: "baslangicTarihi",
                           headerName: "Başlatma Tarihi",
-                          width: 160,
+                          width: 150,
                         renderCell: (params) =>
                           params.value ? (
-                              <Box>
+                              <Box sx={{ py: 1 }}>
                                 <Typography variant="body2" fontWeight={600} sx={{ color: "#475569", fontSize: "0.813rem" }}>
                                   {format(new Date(params.value), "dd MMM yyyy", { locale: tr })}
                                 </Typography>
                                 <Typography variant="caption" sx={{ color: "#94a3b8", fontSize: "0.7rem" }}>
                                   {format(new Date(params.value), "HH:mm", { locale: tr })}
-                              </Typography>
+                            </Typography>
                           </Box>
                             ) : "-",
                         },
                         {
                           field: "sureDetayli",
                           headerName: "Geçen Süre",
-                          width: 140,
+                          width: 130,
                           renderCell: (params) => (
-                            <Box>
-                              <Typography variant="body2" sx={{ color: "#64748b", fontSize: "0.813rem" }}>
-                                ⏱️ {params.value || "-"}
+                            <Typography variant="body2" sx={{ color: "#64748b", fontSize: "0.813rem", fontWeight: 500 }}>
+                              {params.value || "-"}
                             </Typography>
-                          </Box>
                           ),
                       },
                       {
                           field: "baslatanDepartman",
                           headerName: "Başlatan",
-                          width: 200,
+                        width: 180,
                           renderCell: (params) => (
                             <Box>
                               <Typography variant="body2" fontWeight={600} sx={{ color: "#1e293b", fontSize: "0.813rem" }}>
                                 {params.row.baslatanAdSoyad || "-"}
                               </Typography>
                               <Typography variant="caption" sx={{ color: "#64748b", fontSize: "0.7rem" }}>
-                                {params.value || ""} {params.row.baslatanPozisyon ? `- ${params.row.baslatanPozisyon}` : ""}
+                                {params.value || ""}
                               </Typography>
                             </Box>
                           ),
                       },
                       {
+                        field: "bekleyenKullanici",
+                        headerName: "Kimde Onayda",
+                        width: 220,
+                        renderCell: (params) => {
+                          const bekleyen = params.value || params.row.onayBekleyen;
+                          const departman = params.row.bekleyenDepartman;
+                          const pozisyon = params.row.bekleyenPozisyon;
+                          const kimdeStatus = params.row.kimdeOnayda;
+                          
+                          if (!bekleyen) {
+                            return (
+                              <Typography variant="caption" sx={{ color: "#94a3b8", fontStyle: "italic" }}>
+                                Kimde değil
+                              </Typography>
+                            );
+                          }
+                          
+                          return (
+                            <Box>
+                              {kimdeStatus && (
+                                <Chip
+                                  label={kimdeStatus}
+                                  size="small"
+                                  icon={<HourglassEmptyIcon sx={{ fontSize: 12 }} />}
+                                  sx={{
+                                    height: 20,
+                                    fontSize: "0.65rem",
+                                    fontWeight: 700,
+                                    bgcolor: "#fef3c7",
+                                    color: "#92400e",
+                                    mb: 0.5,
+                                  }}
+                                />
+                              )}
+                              <Typography variant="body2" fontWeight={600} sx={{ color: "#1e293b", fontSize: "0.813rem" }}>
+                                {bekleyen}
+                              </Typography>
+                              {(departman || pozisyon) && (
+                                <Typography variant="caption" sx={{ color: "#64748b", fontSize: "0.7rem" }}>
+                                  {departman} {pozisyon ? `• ${pozisyon}` : ""}
+                                </Typography>
+                              )}
+                            </Box>
+                          );
+                        },
+                      },
+                      {
                         field: "actions",
                         headerName: "İşlemler",
-                        width: 150,
+                          width: 120,
                         sortable: false,
                         renderCell: (params) => (
-                            <Box display="flex" gap={0.75}>
-                              <Tooltip title="Süreç Detayı">
+                            <Tooltip title="Süreç Detayı ve Geçmişi">
                         <MDButton
                           variant="gradient"
                           color="info"
                             size="small"
                           onClick={(e) => {
                             e.stopPropagation();
-                                    // Workflow head ID ile detay sayfasına git
-                                    navigate(`/workflows/history/${params.row.id}`);
-                                  }}
-                                  sx={{
-                                    minWidth: "auto",
-                                    px: 2,
-                                    py: 0.75,
-                                    fontWeight: 600,
-                                    fontSize: "0.75rem",
-                                    borderRadius: 2,
-                                    textTransform: "none",
-                                  }}
-                                >
-                                  Detay
+                                  navigate(`/workflows/history/${params.row.id}`);
+                                }}
+                                sx={{
+                                  minWidth: "auto",
+                                  px: 2,
+                                  py: 0.75,
+                                  fontWeight: 600,
+                                  fontSize: "0.75rem",
+                                  borderRadius: 2,
+                                  textTransform: "none",
+                                  boxShadow: "none",
+                                  "&:hover": {
+                                    boxShadow: "0 4px 12px rgba(37, 99, 235, 0.3)",
+                                    transform: "translateY(-2px)",
+                                  },
+                                  transition: "all 0.2s ease",
+                                }}
+                              >
+                                Detay
                         </MDButton>
-                              </Tooltip>
-                            </Box>
+                            </Tooltip>
                         ),
                       },
                     ]}
                       loading={loadingStarted}
+                      getRowHeight={() => 'auto'}
                       onRowClick={(params: GridRowParams) => {
                         // Workflow head ID ile history sayfasına git
                         navigate(`/workflows/history/${params.row.id}`);
@@ -1407,7 +1508,7 @@ function WorkflowMyTasks() {
                         },
                         "& .MuiDataGrid-cell": {
                           borderBottom: "none",
-                          py: 2,
+                          py: 1.5,
                           "&:focus": {
                         outline: "none",
                           },

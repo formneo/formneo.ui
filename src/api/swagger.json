@@ -15142,7 +15142,24 @@
         ],
         "responses": {
           "200": {
-            "description": "Success"
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/MyStartedFormsResultDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MyStartedFormsResultDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MyStartedFormsResultDto"
+                }
+              }
+            }
           }
         }
       }
@@ -22756,6 +22773,104 @@
           },
           "isGlobalOnly": {
             "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "MyStartedFormDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "surecAdi": {
+            "type": "string",
+            "nullable": true
+          },
+          "formAdi": {
+            "type": "string",
+            "nullable": true
+          },
+          "workFlowDefinationId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "uniqNumber": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "baslatan": {
+            "type": "string",
+            "nullable": true
+          },
+          "baslatanAdSoyad": {
+            "type": "string",
+            "nullable": true
+          },
+          "baslatanDepartman": {
+            "type": "string",
+            "nullable": true
+          },
+          "baslatanPozisyon": {
+            "type": "string",
+            "nullable": true
+          },
+          "mevcutAdim": {
+            "type": "string",
+            "nullable": true
+          },
+          "durum": {
+            "type": "string",
+            "nullable": true
+          },
+          "durumEnum": {
+            "$ref": "#/components/schemas/WorkflowStatus"
+          },
+          "baslangicTarihi": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "sure": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "sureDetayli": {
+            "type": "string",
+            "nullable": true
+          },
+          "kimdeOnayda": {
+            "type": "string",
+            "nullable": true
+          },
+          "bekleyenKullanici": {
+            "type": "string",
+            "nullable": true
+          },
+          "bekleyenDepartman": {
+            "type": "string",
+            "nullable": true
+          },
+          "bekleyenPozisyon": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "MyStartedFormsResultDto": {
+        "type": "object",
+        "properties": {
+          "totalCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MyStartedFormDto"
+            },
+            "nullable": true
           }
         },
         "additionalProperties": false
