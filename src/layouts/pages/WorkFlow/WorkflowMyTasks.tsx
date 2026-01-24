@@ -90,7 +90,8 @@ interface WorkflowTask {
 
 function WorkflowMyTasks() {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState(0); // 0: Süreç Takibi, 1: Onay Listem
+  const [activeTab, setActiveTab] = useState(0); // 0: Onay Kutum, 1: Başlattıklarım, 2: Yeni Süreç
+  const [inboxSubTab, setInboxSubTab] = useState(0); // 0: Bana Atananlar, 1: Grup İşleri, 2: Tümü
   const [workflowTasks, setWorkflowTasks] = useState<WorkflowTask[]>([]);
   const [availableWorkflows, setAvailableWorkflows] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -99,14 +100,18 @@ function WorkflowMyTasks() {
   const [workflowSearchQuery, setWorkflowSearchQuery] = useState("");
   
   // Dashboard Metrikleri
-  const startedCount = workflowTasks.length;
-  const inProgressCount = workflowTasks.filter(t => t.status === "in-progress").length;
+  const myAssignedTasks = workflowTasks; // Bana atanan görevler
+  const groupTasks = workflowTasks.filter(t => t.type === "userTask"); // Grup işleri (UserTask'lar)
+  const myStartedTasks = workflowTasks; // Benim başlattıklarım
   const pendingCount = workflowTasks.filter(t => t.status === "pending").length;
+  const inProgressCount = workflowTasks.filter(t => t.status === "in-progress").length;
 
   useEffect(() => {
-    if (activeTab === 0) {
+    if (activeTab === 0 || activeTab === 1) {
+      // Onay Kutum veya Başlattıklarım
       fetchWorkflowInstances();
-    } else {
+    } else if (activeTab === 2) {
+      // Yeni Süreç
       fetchAvailableWorkflows();
     }
   }, [activeTab]);
@@ -536,7 +541,7 @@ function WorkflowMyTasks() {
             color="white"
             size="small"
             startIcon={<AddCircleIcon sx={{ fontSize: 18 }} />}
-            onClick={() => setActiveTab(1)}
+            onClick={() => setActiveTab(2)}
             sx={{
               bgcolor: "white",
               color: "#2563eb",
@@ -591,14 +596,11 @@ function WorkflowMyTasks() {
 
               {/* Menü İtemleri */}
               <List sx={{ p: 0 }}>
-                {/* Tüm Görevler */}
+                {/* Onay Kutum */}
                 <ListItem disablePadding sx={{ mb: 0.5 }}>
                   <ListItemButton
-                    selected={activeTab === 0 && filter === "all"}
-                    onClick={() => {
-                      setActiveTab(0);
-                      setFilter("all");
-                    }}
+                    selected={activeTab === 0}
+                    onClick={() => setActiveTab(0)}
                     sx={{
                       borderRadius: 1.5,
                       py: 1.5,
@@ -618,34 +620,34 @@ function WorkflowMyTasks() {
                       <InboxIcon sx={{ color: "#2563eb", fontSize: 20 }} />
                     </ListItemIcon>
                     <ListItemText
-                      primary="Tüm Görevler"
+                      primary="Onay Kutum"
                       primaryTypographyProps={{
                         fontSize: "0.875rem",
-                        fontWeight: 600,
-                      }}
-                    />
-                    <Chip
-                      label={workflowTasks.length}
-                      size="small"
-                      sx={{
-                        height: 20,
-                        fontSize: "0.7rem",
                         fontWeight: 700,
-                        bgcolor: "#f1f5f9",
-                        color: "#475569",
                       }}
                     />
+                    <Badge 
+                      badgeContent={pendingCount} 
+                      color="error"
+                      sx={{
+                        "& .MuiBadge-badge": {
+                          fontSize: "0.65rem",
+                          height: 18,
+                          minWidth: 18,
+                          fontWeight: 700,
+                        },
+                      }}
+                    >
+                      <Box sx={{ width: 8 }} />
+                    </Badge>
                   </ListItemButton>
                 </ListItem>
 
-                {/* Bekleyen Görevler */}
+                {/* Başlattıklarım */}
                 <ListItem disablePadding sx={{ mb: 0.5 }}>
                   <ListItemButton
-                    selected={activeTab === 0 && filter === "pending"}
-                    onClick={() => {
-                      setActiveTab(0);
-                      setFilter("pending");
-                    }}
+                    selected={activeTab === 1}
+                    onClick={() => setActiveTab(1)}
                     sx={{
                       borderRadius: 1.5,
                       py: 1.5,
@@ -662,17 +664,17 @@ function WorkflowMyTasks() {
                     }}
                   >
                     <ListItemIcon sx={{ minWidth: 36 }}>
-                      <HourglassEmptyIcon sx={{ color: "#f59e0b", fontSize: 20 }} />
+                      <PlayArrowIcon sx={{ color: "#f59e0b", fontSize: 20 }} />
                     </ListItemIcon>
                     <ListItemText
-                      primary="Bekleyen"
+                      primary="Başlattıklarım"
                       primaryTypographyProps={{
                         fontSize: "0.875rem",
                         fontWeight: 600,
                       }}
-              />
-              <Chip
-                      label={pendingCount}
+                    />
+                    <Chip
+                      label={myStartedTasks.length}
                       size="small"
                       sx={{
                         height: 20,
@@ -685,111 +687,17 @@ function WorkflowMyTasks() {
                   </ListItemButton>
                 </ListItem>
 
-                {/* Devam Eden */}
-                <ListItem disablePadding sx={{ mb: 0.5 }}>
-                  <ListItemButton
-                    selected={activeTab === 0 && filter === "in-progress"}
-                    onClick={() => {
-                      setActiveTab(0);
-                      setFilter("in-progress");
-                    }}
-                    sx={{
-                      borderRadius: 1.5,
-                      py: 1.5,
-                      "&.Mui-selected": {
-                        bgcolor: "#dbeafe",
-                        borderLeft: "3px solid #3b82f6",
-                        "&:hover": {
-                          bgcolor: "#bfdbfe",
-                        },
-                      },
-                      "&:hover": {
-                        bgcolor: "#f8fafc",
-                      },
-                    }}
-                  >
-                    <ListItemIcon sx={{ minWidth: 36 }}>
-                      <SpeedIcon sx={{ color: "#3b82f6", fontSize: 20 }} />
-                    </ListItemIcon>
-                    <ListItemText
-                      primary="Devam Eden"
-                      primaryTypographyProps={{
-                        fontSize: "0.875rem",
-                        fontWeight: 600,
-                      }}
-              />
-              <Chip
-                      label={inProgressCount}
-                      size="small"
-                      sx={{
-                        height: 20,
-                        fontSize: "0.7rem",
-                        fontWeight: 700,
-                        bgcolor: "#dbeafe",
-                        color: "#1e3a8a",
-                      }}
-                    />
-                  </ListItemButton>
-                </ListItem>
-
-                {/* Tamamlanan */}
-                <ListItem disablePadding sx={{ mb: 0.5 }}>
-                  <ListItemButton
-                    selected={activeTab === 0 && filter === "completed"}
-                    onClick={() => {
-                      setActiveTab(0);
-                      setFilter("completed");
-                    }}
-                    sx={{
-                      borderRadius: 1.5,
-                      py: 1.5,
-                      "&.Mui-selected": {
-                        bgcolor: "#d1fae5",
-                        borderLeft: "3px solid #10b981",
-                        "&:hover": {
-                          bgcolor: "#a7f3d0",
-                        },
-                      },
-                      "&:hover": {
-                        bgcolor: "#f8fafc",
-                      },
-                    }}
-                  >
-                    <ListItemIcon sx={{ minWidth: 36 }}>
-                      <CheckCircleIcon sx={{ color: "#10b981", fontSize: 20 }} />
-                    </ListItemIcon>
-                    <ListItemText
-                      primary="Tamamlanan"
-                      primaryTypographyProps={{
-                        fontSize: "0.875rem",
-                        fontWeight: 600,
-                      }}
-              />
-              <Chip
-                      label={workflowTasks.filter(t => t.status === "completed").length}
-                      size="small"
-                      sx={{
-                        height: 20,
-                        fontSize: "0.7rem",
-                        fontWeight: 700,
-                        bgcolor: "#d1fae5",
-                        color: "#065f46",
-                      }}
-                    />
-                  </ListItemButton>
-                </ListItem>
-
                 <Divider sx={{ my: 1.5 }} />
 
                 {/* Yeni Süreç Başlat */}
                 <ListItem disablePadding>
                   <ListItemButton
-                    selected={activeTab === 1}
-                    onClick={() => setActiveTab(1)}
+                    selected={activeTab === 2}
+                    onClick={() => setActiveTab(2)}
                     sx={{
                       borderRadius: 1.5,
                       py: 1.5,
-                      bgcolor: activeTab === 1 ? "#dcfce7" : "transparent",
+                      bgcolor: activeTab === 2 ? "#dcfce7" : "transparent",
                       "&.Mui-selected": {
                         bgcolor: "#dcfce7",
                         borderLeft: "3px solid #10b981",
@@ -830,31 +738,31 @@ function WorkflowMyTasks() {
                     display: "block",
                   }}
                 >
-                  İstatistikler
+                  Özet
                 </Typography>
                 <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
                   <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                     <Typography variant="caption" sx={{ color: "#64748b", fontSize: "0.75rem" }}>
-                      Toplam
+                      Bekleyen Onay
                     </Typography>
-                    <Typography variant="caption" fontWeight={700} sx={{ color: "#1e293b", fontSize: "0.75rem" }}>
-                      {startedCount}
+                    <Typography variant="caption" fontWeight={700} sx={{ color: "#ef4444", fontSize: "0.75rem" }}>
+                      {pendingCount}
                     </Typography>
-            </Box>
+        </Box>
                   <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                     <Typography variant="caption" sx={{ color: "#64748b", fontSize: "0.75rem" }}>
-                      Aktif
+                      Devam Eden
                     </Typography>
-                    <Typography variant="caption" fontWeight={700} sx={{ color: "#3b82f6", fontSize: "0.75rem" }}>
+                    <Typography variant="caption" fontWeight={700} sx={{ color: "#f59e0b", fontSize: "0.75rem" }}>
                       {inProgressCount}
                     </Typography>
                   </Box>
                   <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                     <Typography variant="caption" sx={{ color: "#64748b", fontSize: "0.75rem" }}>
-                      Bekleyen
+                      Başlattığım
                     </Typography>
-                    <Typography variant="caption" fontWeight={700} sx={{ color: "#f59e0b", fontSize: "0.75rem" }}>
-                      {pendingCount}
+                    <Typography variant="caption" fontWeight={700} sx={{ color: "#2563eb", fontSize: "0.75rem" }}>
+                      {myStartedTasks.length}
                     </Typography>
                   </Box>
                 </Box>
@@ -865,8 +773,113 @@ function WorkflowMyTasks() {
           {/* Sağ İçerik Alanı */}
           <Box sx={{ flex: 1, minWidth: 0 }}>
             
-            {/* Görev Listesi - DataGrid */}
-            {activeTab === 0 && (
+            {/* ONAY KUTUM - Alt Sekmeler ile */}
+        {activeTab === 0 && (
+          <>
+                {/* Alt Sekmeler */}
+                <Box sx={{ borderBottom: 1, borderColor: "#e2e8f0", mb: 2 }}>
+                  <Tabs 
+                    value={inboxSubTab} 
+                    onChange={(e, newValue) => setInboxSubTab(newValue)}
+                    sx={{
+                      minHeight: 40,
+                      "& .MuiTabs-indicator": {
+                        backgroundColor: "#2563eb",
+                        height: 2,
+                      },
+                    }}
+                  >
+                    <Tab
+                      label={
+                        <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                          <span>Bana Atananlar</span>
+              <Chip
+                            label={myAssignedTasks.length} 
+                            size="small"
+                            sx={{
+                              height: 18,
+                              fontSize: "0.65rem",
+                              fontWeight: 700,
+                              bgcolor: inboxSubTab === 0 ? "#2563eb" : "#e2e8f0",
+                              color: inboxSubTab === 0 ? "white" : "#64748b",
+                            }}
+                          />
+                        </Box>
+                      }
+                      sx={{ 
+                        textTransform: "none", 
+                        fontSize: "0.813rem",
+                        fontWeight: 600,
+                        color: "#64748b",
+                        minHeight: 40,
+                        "&.Mui-selected": {
+                          color: "#2563eb",
+                        },
+                        px: 2,
+                      }}
+                    />
+                    <Tab
+                      label={
+                        <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                          <span>Grup İşleri</span>
+              <Chip
+                            label={groupTasks.length} 
+                            size="small"
+                            sx={{
+                              height: 18,
+                              fontSize: "0.65rem",
+                              fontWeight: 700,
+                              bgcolor: inboxSubTab === 1 ? "#2563eb" : "#e2e8f0",
+                              color: inboxSubTab === 1 ? "white" : "#64748b",
+                            }}
+                          />
+                        </Box>
+                      }
+                      sx={{ 
+                        textTransform: "none", 
+                        fontSize: "0.813rem",
+                        fontWeight: 600,
+                        color: "#64748b",
+                        minHeight: 40,
+                        "&.Mui-selected": {
+                          color: "#2563eb",
+                        },
+                        px: 2,
+                      }}
+                    />
+                    <Tab
+                      label={
+                        <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                          <span>Tüm Görevler</span>
+              <Chip
+                            label={workflowTasks.length} 
+                            size="small"
+                            sx={{
+                              height: 18,
+                              fontSize: "0.65rem",
+                              fontWeight: 700,
+                              bgcolor: inboxSubTab === 2 ? "#2563eb" : "#e2e8f0",
+                              color: inboxSubTab === 2 ? "white" : "#64748b",
+                            }}
+                          />
+                        </Box>
+                      }
+                      sx={{ 
+                        textTransform: "none", 
+                        fontSize: "0.813rem",
+                        fontWeight: 600,
+                        color: "#64748b",
+                        minHeight: 40,
+                        "&.Mui-selected": {
+                          color: "#2563eb",
+                        },
+                        px: 2,
+                      }}
+                    />
+                  </Tabs>
+            </Box>
+
+                {/* DataGrid */}
               <Card 
                 sx={{ 
                   borderRadius: 2,
@@ -877,7 +890,11 @@ function WorkflowMyTasks() {
               <CardContent sx={{ py: 2 }}>
                 <div style={{ height: 500, width: "100%" }}>
                   <DataGrid
-                    rows={filteredTasks}
+                    rows={
+                      inboxSubTab === 0 ? myAssignedTasks :
+                      inboxSubTab === 1 ? groupTasks :
+                      workflowTasks
+                    }
                     columns={[
                       {
                         field: "formName",
@@ -960,7 +977,7 @@ function WorkflowMyTasks() {
                                   sx={{ color: config.color }}
                                 >
                                   {config.text}
-                              </Typography>
+                          </Typography>
                           </Box>
                               <LinearProgress
                                 variant="determinate"
@@ -991,7 +1008,7 @@ function WorkflowMyTasks() {
                               </Typography>
                               <Typography variant="caption" sx={{ color: "#94a3b8" }}>
                                 {format(new Date(params.value), "HH:mm", { locale: tr })}
-                            </Typography>
+                              </Typography>
                           </Box>
                           ) : (
                             "-"
@@ -1000,49 +1017,82 @@ function WorkflowMyTasks() {
                       {
                         field: "actions",
                         headerName: "Hızlı İşlemler",
-                        width: 200,
+                        width: 220,
                         sortable: false,
                         renderCell: (params) => (
-                          <Box display="flex" gap={1}>
-                            <Tooltip title="Detayları Görüntüle">
-                        <MDButton
-                          variant="gradient"
-                          color="info"
-                            size="small"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                              handleWorkflowClick(params.row);
-                          }}
-                                sx={{
-                                  minWidth: "auto",
-                                  px: 2,
-                                  py: 0.75,
-                                  fontWeight: 600,
-                                  fontSize: "0.75rem",
-                                  borderRadius: 2,
-                                  textTransform: "none",
-                                  boxShadow: "none",
-                                  "&:hover": {
-                                    boxShadow: "0 4px 12px rgba(37, 99, 235, 0.3)",
-                                    transform: "translateY(-2px)",
-                                  },
-                                  transition: "all 0.2s ease",
-                                }}
-                              >
-                                {params.row.type === "formTask" ? "Detay" : "Onayla"}
-                        </MDButton>
-                            </Tooltip>
-                            <Tooltip title="Bilgi">
+                          <Box display="flex" gap={0.75}>
+                            {params.row.status === "pending" && (
+                              <>
+                                <Tooltip title="Onayla">
+                                  <MDButton
+                                    variant="gradient"
+                                    color="success"
+                                    size="small"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleWorkflowClick(params.row);
+                                    }}
+                                    sx={{
+                                      minWidth: "auto",
+                                      px: 1.5,
+                                      py: 0.5,
+                                      fontWeight: 600,
+                                      fontSize: "0.7rem",
+                                      borderRadius: 1.5,
+                                      textTransform: "none",
+                                      bgcolor: "#10b981",
+                                      "&:hover": {
+                                        bgcolor: "#059669",
+                                      },
+                                    }}
+                                  >
+                                    ✓ Onayla
+                                  </MDButton>
+                                </Tooltip>
+                                <Tooltip title="Reddet">
+                                  <MDButton
+                                    variant="gradient"
+                                    color="error"
+                                    size="small"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      // Reddet işlemi
+                                    }}
+                                    sx={{
+                                      minWidth: "auto",
+                                      px: 1.5,
+                                      py: 0.5,
+                                      fontWeight: 600,
+                                      fontSize: "0.7rem",
+                                      borderRadius: 1.5,
+                                      textTransform: "none",
+                                      bgcolor: "#ef4444",
+                                      "&:hover": {
+                                        bgcolor: "#dc2626",
+                                      },
+                                    }}
+                                  >
+                                    ✕ Reddet
+                                  </MDButton>
+                                </Tooltip>
+                              </>
+                            )}
+                            <Tooltip title="Detay Görüntüle">
                               <IconButton
                                 size="small"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleWorkflowClick(params.row);
+                                }}
                                 sx={{
-                                  bgcolor: "#f1f5f9",
+                                  bgcolor: "#dbeafe",
+                                  color: "#2563eb",
                                   "&:hover": {
-                                    bgcolor: "#e2e8f0",
+                                    bgcolor: "#bfdbfe",
                                   },
                                 }}
                               >
-                                <InfoIcon sx={{ fontSize: 18, color: "#64748b" }} />
+                                <InfoIcon sx={{ fontSize: 16 }} />
                               </IconButton>
                             </Tooltip>
                           </Box>
@@ -1108,11 +1158,160 @@ function WorkflowMyTasks() {
                   />
                 </div>
               </CardContent>
-                    </Card>
-        )}
+              </Card>
+              </>
+            )}
 
-        {/* Onay Listem Sekmesi */}
-        {activeTab === 1 && (
+            {/* BAŞLATTIKLARIM */}
+            {activeTab === 1 && (
+              <Card 
+                sx={{ 
+                  borderRadius: 2,
+                  boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
+                  border: "1px solid #e2e8f0",
+                }}
+              >
+                <CardContent sx={{ py: 2 }}>
+                  <div style={{ height: 500, width: "100%" }}>
+                    <DataGrid
+                      rows={myStartedTasks}
+                      columns={[
+                        {
+                          field: "formName",
+                          headerName: "Süreç Adı",
+                          width: 250,
+                          flex: 1,
+                          renderCell: (params) => (
+                            <Box>
+                              <Typography variant="body2" fontWeight={700} sx={{ color: "#1e293b", mb: 0.5 }}>
+                                {params.value || "Görev"}
+                              </Typography>
+                              <Typography variant="caption" sx={{ color: "#64748b", fontSize: "0.75rem" }}>
+                                {params.row.workflowName}
+                            </Typography>
+                          </Box>
+                          ),
+                      },
+                      {
+                          field: "shortId",
+                          headerName: "Süreç ID",
+                          width: 120,
+                          renderCell: (params) => (
+                            <Chip
+                              label={params.value || "-"}
+                              size="small"
+                              sx={{
+                                bgcolor: "#f1f5f9",
+                                color: "#475569",
+                                fontWeight: 600,
+                                fontFamily: "monospace",
+                              }}
+                            />
+                          ),
+                        },
+                        {
+                          field: "status",
+                          headerName: "Durum",
+                        width: 180,
+                          flex: 1,
+                        renderCell: (params) => {
+                            const statusConfig = {
+                              "pending": { color: "#f59e0b", bg: "#fef3c7", text: "Beklemede" },
+                              "in-progress": { color: "#3b82f6", bg: "#dbeafe", text: "Devam Ediyor" },
+                              "completed": { color: "#10b981", bg: "#d1fae5", text: "Tamamlandı" },
+                              "cancelled": { color: "#ef4444", bg: "#fecdd3", text: "İptal" },
+                            };
+                            const config = statusConfig[params.value as keyof typeof statusConfig] || statusConfig["pending"];
+                            
+                            return (
+                              <Chip
+                                label={config.text}
+                                size="small"
+                                sx={{
+                                  bgcolor: config.bg,
+                                  color: config.color,
+                                  fontWeight: 600,
+                                }}
+                              />
+                          );
+                        },
+                      },
+                        {
+                          field: "createdDate",
+                          headerName: "Başlatma Tarihi",
+                          width: 160,
+                          renderCell: (params) =>
+                            params.value ? (
+                              <Box>
+                                <Typography variant="body2" fontWeight={600} sx={{ color: "#475569" }}>
+                                  {format(new Date(params.value), "dd MMM yyyy", { locale: tr })}
+                                </Typography>
+                                <Typography variant="caption" sx={{ color: "#94a3b8" }}>
+                                  {format(new Date(params.value), "HH:mm", { locale: tr })}
+                                </Typography>
+                              </Box>
+                            ) : "-",
+                      },
+                      {
+                        field: "actions",
+                        headerName: "İşlemler",
+                        width: 150,
+                        sortable: false,
+                        renderCell: (params) => (
+                        <MDButton
+                          variant="gradient"
+                          color="info"
+                            size="small"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                              handleWorkflowClick(params.row);
+                          }}
+                              sx={{
+                                minWidth: "auto",
+                                px: 2,
+                                py: 0.75,
+                                fontWeight: 600,
+                                fontSize: "0.75rem",
+                                borderRadius: 2,
+                                textTransform: "none",
+                              }}
+                            >
+                              Görüntüle
+                        </MDButton>
+                        ),
+                      },
+                    ]}
+                    loading={loading}
+                    onRowClick={(params: GridRowParams) => handleWorkflowClick(params.row)}
+                      pageSizeOptions={[10, 25, 50]}
+                    initialState={{
+                      pagination: {
+                        paginationModel: { pageSize: 25 },
+                      },
+                    }}
+                    sx={{
+                        border: "none",
+                        "& .MuiDataGrid-columnHeaders": {
+                          bgcolor: "#f8fafc",
+                          borderRadius: 2,
+                          borderBottom: "2px solid #e2e8f0",
+                        },
+                      "& .MuiDataGrid-row:hover": {
+                        cursor: "pointer",
+                          bgcolor: "#f8fafc",
+                      },
+                    }}
+                    localeText={{
+                        noRowsLabel: "📋 Henüz süreç başlatmadınız",
+                    }}
+                  />
+                </div>
+              </CardContent>
+                    </Card>
+            )}
+
+            {/* YENİ SÜREÇ BAŞLAT */}
+            {activeTab === 2 && (
           <>
             {/* Modern Arama Kutusu */}
             <Card 
@@ -1412,10 +1611,10 @@ function WorkflowMyTasks() {
                     })()}
                   </List>
                 </CardContent>
-              </Card>
+                    </Card>
             )}
           </>
-        )}
+          )}
           </Box>
           {/* Sağ İçerik Alanı Sonu */}
         </Box>
