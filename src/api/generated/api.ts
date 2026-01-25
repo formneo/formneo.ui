@@ -1603,6 +1603,15 @@ export interface FormTaskItemDto {
     'workFlowItem'?: WorkFlowItemDto;
     'createdDate'?: string;
     'uniqNumber'?: number;
+    'baslatanAdSoyad'?: string | null;
+    'baslatanDepartman'?: string | null;
+    'baslatanPozisyon'?: string | null;
+    'surecAdi'?: string | null;
+    'formAdi'?: string | null;
+    'mevcutAdim'?: string | null;
+    'sure'?: number;
+    'sureDetayli'?: string | null;
+    'durum'?: string | null;
 }
 
 
@@ -3465,6 +3474,15 @@ export interface UserTaskItemDto {
     'workFlowItem'?: WorkFlowItemDto;
     'createdDate'?: string;
     'uniqNumber'?: number;
+    'baslatanAdSoyad'?: string | null;
+    'baslatanDepartman'?: string | null;
+    'baslatanPozisyon'?: string | null;
+    'surecAdi'?: string | null;
+    'formAdi'?: string | null;
+    'mevcutAdim'?: string | null;
+    'sure'?: number;
+    'sureDetayli'?: string | null;
+    'durum'?: string | null;
 }
 
 

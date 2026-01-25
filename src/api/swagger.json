@@ -21024,6 +21024,42 @@
           "uniqNumber": {
             "type": "integer",
             "format": "int32"
+          },
+          "baslatanAdSoyad": {
+            "type": "string",
+            "nullable": true
+          },
+          "baslatanDepartman": {
+            "type": "string",
+            "nullable": true
+          },
+          "baslatanPozisyon": {
+            "type": "string",
+            "nullable": true
+          },
+          "surecAdi": {
+            "type": "string",
+            "nullable": true
+          },
+          "formAdi": {
+            "type": "string",
+            "nullable": true
+          },
+          "mevcutAdim": {
+            "type": "string",
+            "nullable": true
+          },
+          "sure": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "sureDetayli": {
+            "type": "string",
+            "nullable": true
+          },
+          "durum": {
+            "type": "string",
+            "nullable": true
           }
         },
         "additionalProperties": false
@@ -27555,6 +27591,42 @@
           "uniqNumber": {
             "type": "integer",
             "format": "int32"
+          },
+          "baslatanAdSoyad": {
+            "type": "string",
+            "nullable": true
+          },
+          "baslatanDepartman": {
+            "type": "string",
+            "nullable": true
+          },
+          "baslatanPozisyon": {
+            "type": "string",
+            "nullable": true
+          },
+          "surecAdi": {
+            "type": "string",
+            "nullable": true
+          },
+          "formAdi": {
+            "type": "string",
+            "nullable": true
+          },
+          "mevcutAdim": {
+            "type": "string",
+            "nullable": true
+          },
+          "sure": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "sureDetayli": {
+            "type": "string",
+            "nullable": true
+          },
+          "durum": {
+            "type": "string",
+            "nullable": true
           }
         },
         "additionalProperties": false

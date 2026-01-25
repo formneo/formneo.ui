@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
 import {
   Card,
   CardContent,
@@ -21,6 +22,12 @@ import {
   LinearProgress,
   IconButton,
   Tooltip,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  ButtonGroup,
+  Button,
 } from "@mui/material";
 import {
   Assignment as AssignmentIcon,
@@ -98,15 +105,23 @@ function WorkflowMyTasks() {
   const [loading, setLoading] = useState(true);
   const [loadingStarted, setLoadingStarted] = useState(true);
   const [loadingWorkflows, setLoadingWorkflows] = useState(true);
-  const [filter, setFilter] = useState<"all" | "pending" | "in-progress" | "completed">("all");
   const [workflowSearchQuery, setWorkflowSearchQuery] = useState("");
+  
+  // Filtreler - MVP (3 basit filtre)
+  const [selectedWorkflowDefId, setSelectedWorkflowDefId] = useState<string>(""); // Süreç tipi
+  const [selectedStatus, setSelectedStatus] = useState<string>(""); // Durum
+  const [selectedDateRange, setSelectedDateRange] = useState<string>(""); // Tarih aralığı
   
   // Dashboard Metrikleri
   const myAssignedTasks = workflowTasks; // Bana atanan görevler
   const groupTasks = workflowTasks.filter(t => t.type === "userTask"); // Grup işleri (UserTask'lar)
-  const pendingCount = workflowTasks.filter(t => t.status === "pending").length;
-  const inProgressCount = workflowTasks.filter(t => t.status === "in-progress").length;
 
+  // Component mount olduğunda workflow listesini çek (filtre dropdown için)
+  useEffect(() => {
+    fetchAvailableWorkflows();
+  }, []);
+  
+  // Tab veya filtreler değiştiğinde fetch
   useEffect(() => {
     if (activeTab === 0) {
       // Onay Kutum
@@ -115,10 +130,9 @@ function WorkflowMyTasks() {
       // Başlattıklarım
       fetchMyStartedForms();
     } else if (activeTab === 2) {
-      // Yeni Süreç
-      fetchAvailableWorkflows();
+      // Yeni Süreç - zaten yüklü
     }
-  }, [activeTab]);
+  }, [activeTab, selectedWorkflowDefId, selectedStatus, selectedDateRange]);
 
   /**
    * ✅ Kullanıcıya atanmış workflow görevlerini çek
@@ -128,10 +142,48 @@ function WorkflowMyTasks() {
     setLoading(true);
     try {
       const conf = getConfiguration();
-      const workflowApi = new WorkFlowApi(conf);
 
-      // ✅ API'den kullanıcının görevlerini çek
-      const response = await workflowApi.apiWorkFlowGetMyTasksMyTasksGet();
+      // Tarih hesaplama (eğer varsa)
+      let minDateStr: string | undefined = undefined;
+      if (selectedDateRange) {
+        const now = new Date();
+        let minDate: Date | null = null;
+        
+        if (selectedDateRange === "7") {
+          minDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+        } else if (selectedDateRange === "30") {
+          minDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+        } else if (selectedDateRange === "90") {
+          minDate = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
+        }
+        
+        if (minDate) {
+          const year = minDate.getFullYear();
+          const month = String(minDate.getMonth() + 1).padStart(2, '0');
+          const day = String(minDate.getDate()).padStart(2, '0');
+          minDateStr = `${year}-${month}-${day}`;
+        }
+      }
+
+      // ✅ Proje standardı: WorkFlowApi kullan
+      // Query parametrelerini URL'e ekle
+      let url = `/api/WorkFlow/GetMyTasks/my-tasks`;
+      const queryParams: string[] = [];
+      if (selectedWorkflowDefId) queryParams.push(`WorkFlowDefinationId=${selectedWorkflowDefId}`);
+      if (selectedStatus) queryParams.push(`Durum=${selectedStatus}`);
+      if (minDateStr) queryParams.push(`BaslangicTarihiMin=${minDateStr}`);
+      
+      if (queryParams.length > 0) {
+        url += `?${queryParams.join('&')}`;
+      }
+
+      // Axios instance üzerinden çağır (configuration ile)
+      // Axios ile çağır (token header'a ekle)
+      const response = await axios.get(`${conf.basePath}${url}`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
       const myTasks: MyTasksDto = response.data || {};
 
       const tasks: WorkflowTask[] = [];
@@ -243,10 +295,46 @@ function WorkflowMyTasks() {
     setLoadingStarted(true);
     try {
       const conf = getConfiguration();
-      const workflowApi = new WorkFlowApi(conf);
+      
+      // Tarih hesaplama (eğer varsa)
+      let minDateStr: string | undefined = undefined;
+      if (selectedDateRange) {
+        const now = new Date();
+        let minDate: Date | null = null;
+        
+        if (selectedDateRange === "7") {
+          minDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+        } else if (selectedDateRange === "30") {
+          minDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+        } else if (selectedDateRange === "90") {
+          minDate = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
+        }
+        
+        if (minDate) {
+          const year = minDate.getFullYear();
+          const month = String(minDate.getMonth() + 1).padStart(2, '0');
+          const day = String(minDate.getDate()).padStart(2, '0');
+          minDateStr = `${year}-${month}-${day}`;
+        }
+      }
 
-      // ✅ API'den kullanıcının başlattığı formları çek
-      const response: any = await workflowApi.apiWorkFlowGetMyStartedFormsGet();
+      // ✅ Proje standardı: Configuration ile axios kullan
+      let url = `/api/WorkFlow/GetMyStartedForms`;
+      const queryParams: string[] = [];
+      if (selectedWorkflowDefId) queryParams.push(`WorkFlowDefinationId=${selectedWorkflowDefId}`);
+      if (selectedStatus) queryParams.push(`Durum=${selectedStatus}`);
+      if (minDateStr) queryParams.push(`BaslangicTarihiMin=${minDateStr}`);
+      
+      if (queryParams.length > 0) {
+        url += `?${queryParams.join('&')}`;
+      }
+
+      // Axios ile çağır (token header'a ekle)
+      const response = await axios.get(`${conf.basePath}${url}`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
       
       // ✅ Veri response.data.data içinde
       const data: any[] = response?.data?.data || [];
@@ -517,12 +605,8 @@ function WorkflowMyTasks() {
   };
 
   /**
-   * ✅ Filtrelenmiş görevler
+   * ✅ Görevler artık backend'den filtrelenmiş geliyor
    */
-  const filteredTasks =
-    filter === "all"
-      ? workflowTasks
-      : workflowTasks.filter((task) => task.status === filter);
 
   return (
     <DashboardLayout>
@@ -657,20 +741,6 @@ function WorkflowMyTasks() {
                         fontWeight: 700,
                       }}
                     />
-                    <Badge 
-                      badgeContent={pendingCount} 
-                      color="error"
-                      sx={{
-                        "& .MuiBadge-badge": {
-                          fontSize: "0.65rem",
-                          height: 18,
-                          minWidth: 18,
-                          fontWeight: 700,
-                        },
-                      }}
-                    >
-                      <Box sx={{ width: 8 }} />
-                    </Badge>
                   </ListItemButton>
                 </ListItem>
 
@@ -702,17 +772,6 @@ function WorkflowMyTasks() {
                       primaryTypographyProps={{
                         fontSize: "0.875rem",
                         fontWeight: 600,
-                      }}
-                    />
-                    <Chip
-                      label={myStartedForms.length}
-                      size="small"
-                      sx={{
-                        height: 20,
-                        fontSize: "0.7rem",
-                        fontWeight: 700,
-                        bgcolor: "#fef3c7",
-                        color: "#92400e",
                       }}
                     />
                   </ListItemButton>
@@ -754,55 +813,174 @@ function WorkflowMyTasks() {
                   </ListItemButton>
                 </ListItem>
               </List>
-
-              {/* Özet İstatistikler */}
-              <Box sx={{ mt: 3, pt: 2, borderTop: "1px solid #e2e8f0" }}>
-                <Typography
-                  variant="caption"
-                  sx={{
-                    color: "#64748b",
-                    fontWeight: 600,
-                    fontSize: "0.7rem",
-                    textTransform: "uppercase",
-                    letterSpacing: "0.5px",
-                    mb: 1.5,
-                    display: "block",
-                  }}
-                >
-                  Özet
-                </Typography>
-                <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-                  <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                    <Typography variant="caption" sx={{ color: "#64748b", fontSize: "0.75rem" }}>
-                      Bekleyen Onay
-                    </Typography>
-                    <Typography variant="caption" fontWeight={700} sx={{ color: "#ef4444", fontSize: "0.75rem" }}>
-                      {pendingCount}
-                    </Typography>
-        </Box>
-                  <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                    <Typography variant="caption" sx={{ color: "#64748b", fontSize: "0.75rem" }}>
-                      Devam Eden
-                    </Typography>
-                    <Typography variant="caption" fontWeight={700} sx={{ color: "#f59e0b", fontSize: "0.75rem" }}>
-                      {inProgressCount}
-                    </Typography>
-                  </Box>
-                  <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                    <Typography variant="caption" sx={{ color: "#64748b", fontSize: "0.75rem" }}>
-                      Başlattığım
-                    </Typography>
-                    <Typography variant="caption" fontWeight={700} sx={{ color: "#2563eb", fontSize: "0.75rem" }}>
-                      {myStartedForms.length}
-                    </Typography>
-                  </Box>
-                </Box>
-              </Box>
             </CardContent>
           </Card>
 
           {/* Sağ İçerik Alanı */}
           <Box sx={{ flex: 1, minWidth: 0 }}>
+            
+            {/* MVP Filtreler - Modern & Minimal */}
+            <Box sx={{ mb: 2 }}>
+              {/* Süreç Tipi - Select (10 tane var) */}
+              <Card sx={{ mb: 1.5, borderRadius: 2, boxShadow: "0 1px 4px rgba(0,0,0,0.08)" }}>
+                <CardContent sx={{ py: 1.5, px: 2, "&:last-child": { pb: 1.5 } }}>
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+                    <Typography variant="body2" fontWeight={700} sx={{ color: "#64748b", minWidth: 80 }}>
+                      Süreç:
+                    </Typography>
+                    <FormControl size="small" sx={{ minWidth: 250 }}>
+                      <Select
+                        value={selectedWorkflowDefId}
+                        onChange={(e) => setSelectedWorkflowDefId(e.target.value)}
+                        displayEmpty
+                  sx={{
+                          bgcolor: "white",
+                          "& .MuiOutlinedInput-notchedOutline": { border: "none" },
+                    fontWeight: 600,
+                        }}
+                      >
+                        <MenuItem value="">
+                          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                            📋 Tüm Süreçler
+        </Box>
+                        </MenuItem>
+                        {availableWorkflows.map((workflow) => (
+                          <MenuItem key={workflow.id} value={workflow.id}>
+                            {workflow.workflowName || workflow.workFlowName || "İsimsiz"}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                  </Box>
+                </CardContent>
+              </Card>
+              
+              {/* Durum & Tarih - Chips */}
+              <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
+                {/* Durum Chips */}
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                  <Typography variant="caption" fontWeight={700} sx={{ color: "#64748b" }}>
+                    Durum:
+                    </Typography>
+                  <Box sx={{ display: "flex", gap: 0.75 }}>
+                    <Chip
+                      label="Tümü"
+                      onClick={() => setSelectedStatus("")}
+                      sx={{
+                        bgcolor: selectedStatus === "" ? "#2563eb" : "#f1f5f9",
+                        color: selectedStatus === "" ? "white" : "#64748b",
+                        fontWeight: 600,
+                        fontSize: "0.75rem",
+                        height: 28,
+                        cursor: "pointer",
+                        "&:hover": {
+                          bgcolor: selectedStatus === "" ? "#1e40af" : "#e2e8f0",
+                        },
+                      }}
+                    />
+                    <Chip
+                      label="▶️ Devam Ediyor"
+                      onClick={() => setSelectedStatus("1")}
+                      sx={{
+                        bgcolor: selectedStatus === "1" ? "#3b82f6" : "#f1f5f9",
+                        color: selectedStatus === "1" ? "white" : "#64748b",
+                        fontWeight: 600,
+                        fontSize: "0.75rem",
+                        height: 28,
+                        cursor: "pointer",
+                        "&:hover": {
+                          bgcolor: selectedStatus === "1" ? "#2563eb" : "#e2e8f0",
+                        },
+                      }}
+                    />
+                    <Chip
+                      label="✅ Tamamlandı"
+                      onClick={() => setSelectedStatus("2")}
+                      sx={{
+                        bgcolor: selectedStatus === "2" ? "#10b981" : "#f1f5f9",
+                        color: selectedStatus === "2" ? "white" : "#64748b",
+                        fontWeight: 600,
+                        fontSize: "0.75rem",
+                        height: 28,
+                        cursor: "pointer",
+                        "&:hover": {
+                          bgcolor: selectedStatus === "2" ? "#059669" : "#e2e8f0",
+                        },
+                      }}
+                    />
+                  </Box>
+                </Box>
+                
+                {/* Tarih Chips */}
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                  <Typography variant="caption" fontWeight={700} sx={{ color: "#64748b" }}>
+                    Tarih:
+                    </Typography>
+                  <Box sx={{ display: "flex", gap: 0.75 }}>
+                    <Chip
+                      label="Tümü"
+                      onClick={() => setSelectedDateRange("")}
+                      sx={{
+                        bgcolor: selectedDateRange === "" ? "#2563eb" : "#f1f5f9",
+                        color: selectedDateRange === "" ? "white" : "#64748b",
+                        fontWeight: 600,
+                        fontSize: "0.75rem",
+                        height: 28,
+                        cursor: "pointer",
+                        "&:hover": {
+                          bgcolor: selectedDateRange === "" ? "#1e40af" : "#e2e8f0",
+                        },
+                      }}
+                    />
+                    <Chip
+                      label="7 Gün"
+                      onClick={() => setSelectedDateRange("7")}
+                      sx={{
+                        bgcolor: selectedDateRange === "7" ? "#f59e0b" : "#f1f5f9",
+                        color: selectedDateRange === "7" ? "white" : "#64748b",
+                        fontWeight: 600,
+                        fontSize: "0.75rem",
+                        height: 28,
+                        cursor: "pointer",
+                        "&:hover": {
+                          bgcolor: selectedDateRange === "7" ? "#d97706" : "#e2e8f0",
+                        },
+                      }}
+                    />
+                    <Chip
+                      label="30 Gün"
+                      onClick={() => setSelectedDateRange("30")}
+                      sx={{
+                        bgcolor: selectedDateRange === "30" ? "#f59e0b" : "#f1f5f9",
+                        color: selectedDateRange === "30" ? "white" : "#64748b",
+                        fontWeight: 600,
+                        fontSize: "0.75rem",
+                        height: 28,
+                        cursor: "pointer",
+                        "&:hover": {
+                          bgcolor: selectedDateRange === "30" ? "#d97706" : "#e2e8f0",
+                        },
+                      }}
+                    />
+                    <Chip
+                      label="90 Gün"
+                      onClick={() => setSelectedDateRange("90")}
+                      sx={{
+                        bgcolor: selectedDateRange === "90" ? "#f59e0b" : "#f1f5f9",
+                        color: selectedDateRange === "90" ? "white" : "#64748b",
+                        fontWeight: 600,
+                        fontSize: "0.75rem",
+                        height: 28,
+                        cursor: "pointer",
+                        "&:hover": {
+                          bgcolor: selectedDateRange === "90" ? "#d97706" : "#e2e8f0",
+                        },
+                      }}
+                    />
+                  </Box>
+                </Box>
+              </Box>
+            </Box>
             
             {/* ONAY KUTUM - Alt Sekmeler ile */}
         {activeTab === 0 && (
@@ -821,22 +999,7 @@ function WorkflowMyTasks() {
                     }}
                   >
                     <Tab
-                      label={
-                        <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-                          <span>Bana Atananlar</span>
-              <Chip
-                            label={myAssignedTasks.length} 
-                            size="small"
-                            sx={{
-                              height: 18,
-                              fontSize: "0.65rem",
-                              fontWeight: 700,
-                              bgcolor: inboxSubTab === 0 ? "#2563eb" : "#e2e8f0",
-                              color: inboxSubTab === 0 ? "white" : "#64748b",
-                            }}
-                          />
-                        </Box>
-                      }
+                      label="Bana Atananlar"
                       sx={{ 
                         textTransform: "none", 
                         fontSize: "0.813rem",
@@ -850,22 +1013,7 @@ function WorkflowMyTasks() {
                       }}
                     />
                     <Tab
-                      label={
-                        <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-                          <span>Grup İşleri</span>
-              <Chip
-                            label={groupTasks.length} 
-                            size="small"
-                            sx={{
-                              height: 18,
-                              fontSize: "0.65rem",
-                              fontWeight: 700,
-                              bgcolor: inboxSubTab === 1 ? "#2563eb" : "#e2e8f0",
-                              color: inboxSubTab === 1 ? "white" : "#64748b",
-                            }}
-                          />
-                        </Box>
-                      }
+                      label="Grup İşleri"
                       sx={{ 
                         textTransform: "none", 
                         fontSize: "0.813rem",
@@ -879,22 +1027,7 @@ function WorkflowMyTasks() {
                       }}
                     />
                     <Tab
-                      label={
-                        <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-                          <span>Tüm Görevler</span>
-              <Chip
-                            label={workflowTasks.length} 
-                            size="small"
-                            sx={{
-                              height: 18,
-                              fontSize: "0.65rem",
-                              fontWeight: 700,
-                              bgcolor: inboxSubTab === 2 ? "#2563eb" : "#e2e8f0",
-                              color: inboxSubTab === 2 ? "white" : "#64748b",
-                            }}
-                          />
-                        </Box>
-                      }
+                      label="Tüm Görevler"
                       sx={{ 
                         textTransform: "none", 
                         fontSize: "0.813rem",
@@ -929,208 +1062,155 @@ function WorkflowMyTasks() {
                     columns={[
                       {
                         field: "formName",
-                        headerName: "Süreç Adı",
-                        width: 280,
-                        flex: 1,
+                        headerName: "Görev Adı",
+                        minWidth: 280,
+                        flex: 1.5,
                         renderCell: (params) => (
-                          <Box>
+                          <Box sx={{ py: 1 }}>
                             <Typography variant="body2" fontWeight={700} sx={{ color: "#1e293b", mb: 0.5 }}>
                             {params.value || "Görev"}
                   </Typography>
-                            <Typography variant="caption" sx={{ color: "#64748b", fontSize: "0.75rem" }}>
-                              {params.row.workflowName}
+                            <Typography variant="caption" sx={{ color: "#64748b", fontSize: "0.7rem" }}>
+                              📋 {params.row.workflowName || "İş Akışı"}
                             </Typography>
                           </Box>
                         ),
                       },
                       {
-                        field: "shortId",
-                        headerName: "Süreç ID",
-                        width: 120,
+                        field: "uniqNumber",
+                        headerName: "No",
+                        width: 90,
                         renderCell: (params) => (
                               <Chip 
-                            label={params.value || "-"}
+                            label={`#${params.value || params.row.shortId || "-"}`}
                                 size="small" 
                             sx={{
                               bgcolor: "#f1f5f9",
                               color: "#475569",
-                              fontWeight: 600,
+                              fontWeight: 700,
                               fontFamily: "monospace",
+                              fontSize: "0.7rem",
+                            }}
+                          />
+                        ),
+                      },
+                      {
+                        field: "type",
+                        headerName: "Tip",
+                        width: 130,
+                        renderCell: (params) => (
+                              <Chip 
+                            label={params.value === "formTask" ? "📝 Form" : "👥 Onay"}
+                                size="small" 
+                            sx={{
+                              bgcolor: params.value === "formTask" ? "#dbeafe" : "#fef3c7",
+                              color: params.value === "formTask" ? "#1e40af" : "#92400e",
+                              fontWeight: 600,
+                              fontSize: "0.7rem",
                             }}
                           />
                         ),
                       },
                       {
                         field: "status",
-                        headerName: "Şu Anki Adım & Durum",
-                        width: 220,
-                        flex: 1,
+                        headerName: "Durum",
+                        width: 150,
                         renderCell: (params) => {
                           const statusConfig = {
-                            "pending": { 
-                              color: "#f59e0b", 
-                              bg: "#fef3c7", 
-                              text: "Beklemede",
-                              icon: <HourglassEmptyIcon sx={{ fontSize: 16 }} />,
-                              progress: 25
-                            },
-                            "in-progress": { 
-                              color: "#3b82f6", 
-                              bg: "#dbeafe", 
-                              text: "Devam Ediyor",
-                              icon: <SpeedIcon sx={{ fontSize: 16 }} />,
-                              progress: 60
-                            },
-                            "completed": { 
-                              color: "#10b981", 
-                              bg: "#d1fae5", 
-                              text: "Tamamlandı",
-                              icon: <CheckCircleIcon sx={{ fontSize: 16 }} />,
-                              progress: 100
-                            },
-                            "cancelled": { 
-                              color: "#ef4444", 
-                              bg: "#fecdd3", 
-                              text: "İptal",
-                              icon: <InfoIcon sx={{ fontSize: 16 }} />,
-                              progress: 0
-                            },
+                            "pending": { color: "#f59e0b", bg: "#fef3c7", text: "Beklemede", icon: "⏳" },
+                            "in-progress": { color: "#3b82f6", bg: "#dbeafe", text: "Devam Ediyor", icon: "▶️" },
+                            "completed": { color: "#10b981", bg: "#d1fae5", text: "Tamamlandı", icon: "✅" },
+                            "cancelled": { color: "#ef4444", bg: "#fecdd3", text: "İptal", icon: "❌" },
                           };
                           const config = statusConfig[params.value as keyof typeof statusConfig] || statusConfig["pending"];
                           
                           return (
-                            <Box sx={{ width: "100%" }}>
-                              <Box display="flex" alignItems="center" gap={0.5} mb={0.5}>
-                                {config.icon}
-                                <Typography 
-                                  variant="caption" 
-                                  fontWeight={600}
-                                  sx={{ color: config.color }}
-                                >
-                                  {config.text}
-                          </Typography>
-                          </Box>
-                              <LinearProgress
-                                variant="determinate"
-                                value={config.progress}
+                              <Chip 
+                              label={`${config.icon} ${config.text}`}
+                                size="small" 
                                 sx={{
-                                  height: 6,
-                                  borderRadius: 3,
                                   bgcolor: config.bg,
-                                  "& .MuiLinearProgress-bar": {
-                                    bgcolor: config.color,
-                                    borderRadius: 3,
-                                  },
-                                }}
-                              />
-                            </Box>
+                                color: config.color,
+                                fontWeight: 600,
+                                fontSize: "0.75rem",
+                              }}
+                            />
                           );
                         },
                       },
                       {
+                        field: "message",
+                        headerName: "Mesaj / Açıklama",
+                        minWidth: 200,
+                        flex: 1,
+                        renderCell: (params) => (
+                          <Typography 
+                            variant="caption" 
+                            sx={{ 
+                              color: "#64748b",
+                              fontSize: "0.75rem",
+                              fontStyle: params.value ? "normal" : "italic",
+                            }}
+                          >
+                            {params.value || "Açıklama yok"}
+                          </Typography>
+                        ),
+                      },
+                      {
                         field: "createdDate",
-                        headerName: "Tarih",
-                        width: 160,
+                        headerName: "Oluşturulma",
+                        width: 150,
                         renderCell: (params) =>
                           params.value ? (
-                            <Box>
-                              <Typography variant="body2" fontWeight={600} sx={{ color: "#475569" }}>
+                            <Box sx={{ py: 1 }}>
+                              <Typography variant="body2" fontWeight={600} sx={{ color: "#475569", fontSize: "0.813rem" }}>
                                 {format(new Date(params.value), "dd MMM yyyy", { locale: tr })}
                               </Typography>
-                              <Typography variant="caption" sx={{ color: "#94a3b8" }}>
+                              <Typography variant="caption" sx={{ color: "#94a3b8", fontSize: "0.7rem" }}>
                                 {format(new Date(params.value), "HH:mm", { locale: tr })}
                               </Typography>
                           </Box>
-                          ) : (
-                            "-"
-                          ),
+                          ) : "-",
                       },
                       {
                         field: "actions",
-                        headerName: "Hızlı İşlemler",
-                        width: 220,
+                        headerName: "İşlemler",
+                        width: 120,
                         sortable: false,
                         renderCell: (params) => (
-                          <Box display="flex" gap={0.75}>
-                            {params.row.status === "pending" && (
-                              <>
-                                <Tooltip title="Onayla">
+                          <Tooltip title={params.row.type === "formTask" ? "Formu Aç" : "Görevi Görüntüle"}>
                                   <MDButton
                                     variant="gradient"
-                                    color="success"
-                                size="small" 
+                              color="info"
+                                    size="small"
                                     onClick={(e) => {
                                       e.stopPropagation();
                                       handleWorkflowClick(params.row);
                                     }}
                                     sx={{
                                       minWidth: "auto",
-                                      px: 1.5,
-                                      py: 0.5,
+                                px: 2,
+                                py: 0.75,
                                       fontWeight: 600,
-                                      fontSize: "0.7rem",
-                                      borderRadius: 1.5,
+                                fontSize: "0.75rem",
+                                borderRadius: 2,
                                       textTransform: "none",
-                                      bgcolor: "#10b981",
+                                boxShadow: "none",
                                       "&:hover": {
-                                        bgcolor: "#059669",
+                                  boxShadow: "0 4px 12px rgba(37, 99, 235, 0.3)",
+                                  transform: "translateY(-2px)",
                                       },
+                                transition: "all 0.2s ease",
                                     }}
                                   >
-                                    ✓ Onayla
+                              {params.row.type === "formTask" ? "Aç" : "Detay"}
                                   </MDButton>
                                 </Tooltip>
-                                <Tooltip title="Reddet">
-                                  <MDButton
-                                    variant="gradient"
-                                    color="error"
-                                    size="small"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      // Reddet işlemi
-                                    }}
-                                    sx={{
-                                      minWidth: "auto",
-                                      px: 1.5,
-                                      py: 0.5,
-                                      fontWeight: 600,
-                                      fontSize: "0.7rem",
-                                      borderRadius: 1.5,
-                                      textTransform: "none",
-                                      bgcolor: "#ef4444",
-                                      "&:hover": {
-                                        bgcolor: "#dc2626",
-                                      },
-                                    }}
-                                  >
-                                    ✕ Reddet
-                                  </MDButton>
-                                </Tooltip>
-                              </>
-                            )}
-                            <Tooltip title="Detay Görüntüle">
-                              <IconButton
-                                size="small"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleWorkflowClick(params.row);
-                                }}
-                                sx={{
-                                  bgcolor: "#dbeafe",
-                                  color: "#2563eb",
-                                  "&:hover": {
-                                    bgcolor: "#bfdbfe",
-                                  },
-                                }}
-                              >
-                                <InfoIcon sx={{ fontSize: 16 }} />
-                              </IconButton>
-                            </Tooltip>
-                          </Box>
                         ),
                       },
                     ]}
                     loading={loading}
+                    getRowHeight={() => 'auto'}
                     onRowClick={(params: GridRowParams) => handleWorkflowClick(params.row)}
                     pageSizeOptions={[10, 25, 50, 100]}
                     initialState={{
@@ -1166,7 +1246,7 @@ function WorkflowMyTasks() {
                       },
                       "& .MuiDataGrid-cell": {
                         borderBottom: "none",
-                        py: 2,
+                        py: 1.5,
                         "&:focus": {
                         outline: "none",
                         },
@@ -1180,7 +1260,7 @@ function WorkflowMyTasks() {
                       },
                     }}
                     localeText={{
-                      noRowsLabel: "📋 Henüz süreç bulunamadı",
+                      noRowsLabel: "📋 Görev bulunamadı",
                       noResultsOverlayLabel: "Arama sonucu bulunamadı",
                       MuiTablePagination: {
                         labelRowsPerPage: "Sayfa başına:",
@@ -1221,19 +1301,19 @@ function WorkflowMyTasks() {
                               {params.row.formAdi && (
                                 <Typography variant="caption" sx={{ color: "#64748b", fontSize: "0.7rem" }}>
                                   📄 {params.row.formAdi}
-                                </Typography>
+                            </Typography>
                               )}
-                            </Box>
-                        ),
+                          </Box>
+                          ),
                       },
                       {
                           field: "uniqNumber",
                           headerName: "No",
                           width: 90,
-                        renderCell: (params) => (
-                              <Chip 
+                          renderCell: (params) => (
+                            <Chip
                               label={`#${params.value}`}
-                                size="small" 
+                              size="small"
                               sx={{
                                 bgcolor: "#f1f5f9",
                                 color: "#475569",
@@ -1241,10 +1321,10 @@ function WorkflowMyTasks() {
                                 fontFamily: "monospace",
                                 fontSize: "0.7rem",
                               }}
-                          />
-                        ),
-                      },
-                      {
+                            />
+                          ),
+                        },
+                        {
                           field: "mevcutAdim",
                           headerName: "Mevcut Adım",
                           width: 140,
@@ -1259,7 +1339,7 @@ function WorkflowMyTasks() {
                           headerName: "Kimde Bekliyor",
                           minWidth: 220,
                           flex: 1,
-                          renderCell: (params) => {
+                        renderCell: (params) => {
                             const kimdeStatus = params.value;
                             const bekleyen = params.row.bekleyenKullanici;
                             const departman = params.row.bekleyenDepartman;
@@ -1340,23 +1420,23 @@ function WorkflowMyTasks() {
                                   fontSize: "0.75rem",
                                 }}
                               />
-                            );
-                          },
+                          );
                         },
+                      },
                         {
                           field: "baslangicTarihi",
                           headerName: "Başlatma Tarihi",
                           width: 150,
-                        renderCell: (params) =>
-                          params.value ? (
+                          renderCell: (params) =>
+                            params.value ? (
                               <Box sx={{ py: 1 }}>
                                 <Typography variant="body2" fontWeight={600} sx={{ color: "#475569", fontSize: "0.813rem" }}>
                                   {format(new Date(params.value), "dd MMM yyyy", { locale: tr })}
                                 </Typography>
                                 <Typography variant="caption" sx={{ color: "#94a3b8", fontSize: "0.7rem" }}>
                                   {format(new Date(params.value), "HH:mm", { locale: tr })}
-                            </Typography>
-                          </Box>
+                                </Typography>
+                              </Box>
                             ) : "-",
                         },
                         {
@@ -1445,15 +1525,15 @@ function WorkflowMyTasks() {
                           onClick={(e) => {
                             e.stopPropagation();
                                   navigate(`/workflows/history/${params.row.id}`);
-                                }}
-                                sx={{
-                                  minWidth: "auto",
-                                  px: 2,
-                                  py: 0.75,
-                                  fontWeight: 600,
-                                  fontSize: "0.75rem",
-                                  borderRadius: 2,
-                                  textTransform: "none",
+                          }}
+                              sx={{
+                                minWidth: "auto",
+                                px: 2,
+                                py: 0.75,
+                                fontWeight: 600,
+                                fontSize: "0.75rem",
+                                borderRadius: 2,
+                                textTransform: "none",
                                   boxShadow: "none",
                                   "&:hover": {
                                     boxShadow: "0 4px 12px rgba(37, 99, 235, 0.3)",
@@ -1490,7 +1570,7 @@ function WorkflowMyTasks() {
                             fontWeight: 700,
                             color: "#1e293b",
                             fontSize: "0.875rem",
-                          },
+                        },
                         },
                         "& .MuiDataGrid-row": {
                           borderBottom: "1px solid #f1f5f9",
@@ -1834,7 +1914,7 @@ function WorkflowMyTasks() {
                     </Card>
             )}
           </>
-        )}
+            )}
           </Box>
           {/* Sağ İçerik Alanı Sonu */}
         </Box>
