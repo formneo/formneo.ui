@@ -24,9 +24,11 @@ import {
 
 const CustomMenuList = () => {
   const [open, setOpen] = useState({
-    smartOptions: false,
-    documentOptions: false,
-    otherOptions: false,
+    flowControl: false,
+    userTasks: false,
+    communication: false,
+    integrations: false,
+    dataScript: false,
   });
 
   const handleClick = (group) => {
@@ -40,134 +42,160 @@ const CustomMenuList = () => {
 
   return (
     <MenuList>
+      {/* 1. Akış Kontrolü */}
       <MenuItem
-        onClick={() => handleClick("smartOptions")}
-        sx={{ bgcolor: "primary.main", color: "common.white" }}
+        onClick={() => handleClick("flowControl")}
+        sx={{ bgcolor: "#1976d2", color: "common.white" }}
       >
         <ListItemIcon>
-          <FaBookOpen style={{ color: "white" }} />
+          <FaPlay style={{ color: "white" }} />
         </ListItemIcon>
-        <ListItemText primary="Karar Yapıları" />
-        {open.smartOptions ? (
+        <ListItemText primary="Akış Kontrolü" />
+        {open.flowControl ? (
           <FaChevronDown style={{ color: "white" }} />
         ) : (
           <FaChevronRight style={{ color: "white" }} />
         )}
       </MenuItem>
-      <Collapse in={open.smartOptions} timeout="auto" unmountOnExit>
-        <MenuItem onDragStart={(event) => onDragStart(event, "setFieldNode")} draggable>
+      <Collapse in={open.flowControl} timeout="auto" unmountOnExit>
+        <MenuItem onDragStart={(event) => onDragStart(event, "startNode")} draggable>
           <ListItemIcon>
-            <FaPencilAlt />
+            <FaPlay style={{ color: "#4caf50" }} />
           </ListItemIcon>
-          <ListItemText inset>Alan Set</ListItemText>
+          <ListItemText inset>Başlangıç</ListItemText>
+        </MenuItem>
+        <MenuItem onDragStart={(event) => onDragStart(event, "stopNode")} draggable>
+          <ListItemIcon>
+            <FaStop style={{ color: "#f44336" }} />
+          </ListItemIcon>
+          <ListItemText inset>Bitiş</ListItemText>
+        </MenuItem>
+        <MenuItem onDragStart={(event) => onDragStart(event, "formStopNode")} draggable>
+          <ListItemIcon>
+            <FaWpforms style={{ marginRight: "2px", color: "#f44336" }} />
+            <FaStop style={{ color: "#f44336" }} />
+          </ListItemIcon>
+          <ListItemText inset>Form Bitişi</ListItemText>
         </MenuItem>
       </Collapse>
-      <Collapse in={open.smartOptions} timeout="auto" unmountOnExit>
-        <MenuItem onDragStart={(event) => onDragStart(event, "httpPostNode")} draggable>
-          <ListItemIcon>
-            <FaGlobe />
-          </ListItemIcon>
-          <ListItemText inset>Http Post</ListItemText>
-        </MenuItem>
-      </Collapse>
-      <Collapse in={open.smartOptions} timeout="auto" unmountOnExit>
-        <MenuItem onDragStart={(event) => onDragStart(event, "mailNode")} draggable>
-          <ListItemIcon>
-            <FaEnvelope />
-          </ListItemIcon>
-          <ListItemText inset>Mail Gönder</ListItemText>
-        </MenuItem>
-      </Collapse>
-      <Collapse in={open.smartOptions} timeout="auto" unmountOnExit>
-        <MenuItem onDragStart={(event) => onDragStart(event, "alertNode")} draggable>
-          <ListItemIcon>
-            <FaExclamationTriangle />
-          </ListItemIcon>
-          <ListItemText inset>Alert/Mesaj</ListItemText>
-        </MenuItem>
-      </Collapse>
-      <Collapse in={open.smartOptions} timeout="auto" unmountOnExit>
+
+      {/* 2. Kullanıcı Görevleri */}
+      <MenuItem
+        onClick={() => handleClick("userTasks")}
+        sx={{ bgcolor: "#9c27b0", color: "common.white" }}
+      >
+        <ListItemIcon>
+          <FaUserCheck style={{ color: "white" }} />
+        </ListItemIcon>
+        <ListItemText primary="Kullanıcı Görevleri" />
+        {open.userTasks ? (
+          <FaChevronDown style={{ color: "white" }} />
+        ) : (
+          <FaChevronRight style={{ color: "white" }} />
+        )}
+      </MenuItem>
+      <Collapse in={open.userTasks} timeout="auto" unmountOnExit>
         <MenuItem onDragStart={(event) => onDragStart(event, "userTaskNode")} draggable>
           <ListItemIcon>
-            <FaUserCheck />
+            <FaUserCheck style={{ color: "#9c27b0" }} />
           </ListItemIcon>
           <ListItemText inset>Kullanıcı Görevi</ListItemText>
         </MenuItem>
-      </Collapse>
-      <Collapse in={open.smartOptions} timeout="auto" unmountOnExit>
         <MenuItem onDragStart={(event) => onDragStart(event, "formTaskNode")} draggable>
           <ListItemIcon>
-            <FaTasks />
+            <FaTasks style={{ color: "#9c27b0" }} />
           </ListItemIcon>
           <ListItemText inset>Form Görevi</ListItemText>
         </MenuItem>
       </Collapse>
 
+      {/* 3. İletişim & Bildirimler */}
       <MenuItem
-        onClick={() => handleClick("documentOptions")}
-        sx={{ bgcolor: "secondary.main", color: "common.white" }}
+        onClick={() => handleClick("communication")}
+        sx={{ bgcolor: "#ff9800", color: "common.white" }}
       >
         <ListItemIcon>
-          <FaFile style={{ color: "white" }} />
+          <FaEnvelope style={{ color: "white" }} />
         </ListItemIcon>
-        <ListItemText primary="Scripts" />
-        {open.documentOptions ? (
+        <ListItemText primary="İletişim & Bildirimler" />
+        {open.communication ? (
           <FaChevronDown style={{ color: "white" }} />
         ) : (
           <FaChevronRight style={{ color: "white" }} />
         )}
       </MenuItem>
-      <Collapse in={open.documentOptions} timeout="auto" unmountOnExit>
+      <Collapse in={open.communication} timeout="auto" unmountOnExit>
+        <MenuItem onDragStart={(event) => onDragStart(event, "mailNode")} draggable>
+          <ListItemIcon>
+            <FaEnvelope style={{ color: "#ff9800" }} />
+          </ListItemIcon>
+          <ListItemText inset>E-posta Gönder</ListItemText>
+        </MenuItem>
+        <MenuItem onDragStart={(event) => onDragStart(event, "alertNode")} draggable>
+          <ListItemIcon>
+            <FaExclamationTriangle style={{ color: "#ff9800" }} />
+          </ListItemIcon>
+          <ListItemText inset>Bildirim Göster</ListItemText>
+        </MenuItem>
+      </Collapse>
+
+      {/* 4. Entegrasyonlar */}
+      <MenuItem
+        onClick={() => handleClick("integrations")}
+        sx={{ bgcolor: "#00bcd4", color: "common.white" }}
+      >
+        <ListItemIcon>
+          <FaGlobe style={{ color: "white" }} />
+        </ListItemIcon>
+        <ListItemText primary="Entegrasyonlar" />
+        {open.integrations ? (
+          <FaChevronDown style={{ color: "white" }} />
+        ) : (
+          <FaChevronRight style={{ color: "white" }} />
+        )}
+      </MenuItem>
+      <Collapse in={open.integrations} timeout="auto" unmountOnExit>
+        <MenuItem onDragStart={(event) => onDragStart(event, "httpPostNode")} draggable>
+          <ListItemIcon>
+            <FaGlobe style={{ color: "#00bcd4" }} />
+          </ListItemIcon>
+          <ListItemText inset>HTTP İsteği</ListItemText>
+        </MenuItem>
         <MenuItem onDragStart={(event) => onDragStart(event, "inputDataNode")} draggable>
           <ListItemIcon>
-            <FaPlug />
+            <FaPlug style={{ color: "#00bcd4" }} />
           </ListItemIcon>
-          <ListItemText inset>Api Call</ListItemText>
-        </MenuItem>
-      </Collapse>
-      <Collapse in={open.documentOptions} timeout="auto" unmountOnExit>
-        <MenuItem onDragStart={(event) => onDragStart(event, "scriptNode")} draggable>
-          <ListItemIcon>
-            <FaCode />
-          </ListItemIcon>
-          <ListItemText inset>Script</ListItemText>
+          <ListItemText inset>API Çağrısı</ListItemText>
         </MenuItem>
       </Collapse>
 
+      {/* 5. Veri & Script İşlemleri */}
       <MenuItem
-        onClick={() => handleClick("otherOptions")}
-        sx={{ bgcolor: "error.main", color: "common.white" }}
+        onClick={() => handleClick("dataScript")}
+        sx={{ bgcolor: "#4caf50", color: "common.white" }}
       >
         <ListItemIcon>
-          <FaVolumeUp style={{ color: "white" }} />
+          <FaCode style={{ color: "white" }} />
         </ListItemIcon>
-        <ListItemText primary="Diğer" />
-        {open.otherOptions ? (
+        <ListItemText primary="Veri & Script İşlemleri" />
+        {open.dataScript ? (
           <FaChevronDown style={{ color: "white" }} />
         ) : (
           <FaChevronRight style={{ color: "white" }} />
         )}
       </MenuItem>
-      <Collapse in={open.otherOptions} timeout="auto" unmountOnExit>
-        <MenuItem onDragStart={(event) => onDragStart(event, "startNode")} draggable>
+      <Collapse in={open.dataScript} timeout="auto" unmountOnExit>
+        <MenuItem onDragStart={(event) => onDragStart(event, "setFieldNode")} draggable>
           <ListItemIcon>
-            <FaPlay />
+            <FaPencilAlt style={{ color: "#4caf50" }} />
           </ListItemIcon>
-          <ListItemText inset>Start</ListItemText>
+          <ListItemText inset>Alan Değeri Ata</ListItemText>
         </MenuItem>
-
-        <MenuItem onDragStart={(event) => onDragStart(event, "stopNode")} draggable>
+        <MenuItem onDragStart={(event) => onDragStart(event, "scriptNode")} draggable>
           <ListItemIcon>
-            <FaStop />
+            <FaCode style={{ color: "#4caf50" }} />
           </ListItemIcon>
-          <ListItemText inset>Stop</ListItemText>
-        </MenuItem>
-        <MenuItem onDragStart={(event) => onDragStart(event, "formStopNode")} draggable>
-          <ListItemIcon>
-            <FaWpforms style={{ marginRight: "2px" }} />
-            <FaStop />
-          </ListItemIcon>
-          <ListItemText inset>Stop (Form)</ListItemText>
+          <ListItemText inset>JavaScript Kodu</ListItemText>
         </MenuItem>
       </Collapse>
     </MenuList>
