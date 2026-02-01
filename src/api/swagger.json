@@ -16196,17 +16196,17 @@
             "content": {
               "text/plain": {
                 "schema": {
-                  "$ref": "#/components/schemas/WorkFlowDefinationListDto"
+                  "$ref": "#/components/schemas/WorkFlowDefinationWithInitScriptDto"
                 }
               },
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/WorkFlowDefinationListDto"
+                  "$ref": "#/components/schemas/WorkFlowDefinationWithInitScriptDto"
                 }
               },
               "text/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/WorkFlowDefinationListDto"
+                  "$ref": "#/components/schemas/WorkFlowDefinationWithInitScriptDto"
                 }
               }
             }
@@ -30499,6 +30499,40 @@
           "formId": {
             "type": "string",
             "format": "uuid",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "WorkFlowDefinationWithInitScriptDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "workflowName": {
+            "type": "string",
+            "nullable": true
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "revision": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "formId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "formName": {
+            "type": "string",
+            "nullable": true
+          },
+          "initScript": {
+            "type": "string",
             "nullable": true
           }
         },

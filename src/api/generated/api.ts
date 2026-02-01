@@ -4025,6 +4025,15 @@ export interface WorkFlowDefinationUpdateDto {
     'revision'?: number;
     'formId'?: string | null;
 }
+export interface WorkFlowDefinationWithInitScriptDto {
+    'id'?: string;
+    'workflowName'?: string | null;
+    'isActive'?: boolean;
+    'revision'?: number;
+    'formId'?: string | null;
+    'formName'?: string | null;
+    'initScript'?: string | null;
+}
 export interface WorkFlowHeadDetailDto {
     'id'?: string | null;
     'workflowName'?: string | null;
@@ -39903,7 +39912,7 @@ export const WorkFlowDefinationApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async apiWorkFlowDefinationIdGet(id: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<WorkFlowDefinationListDto>> {
+        async apiWorkFlowDefinationIdGet(id: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<WorkFlowDefinationWithInitScriptDto>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.apiWorkFlowDefinationIdGet(id, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['WorkFlowDefinationApi.apiWorkFlowDefinationIdGet']?.[localVarOperationServerIndex]?.url;
@@ -39973,7 +39982,7 @@ export const WorkFlowDefinationApiFactory = function (configuration?: Configurat
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        apiWorkFlowDefinationIdGet(id: string, options?: RawAxiosRequestConfig): AxiosPromise<WorkFlowDefinationListDto> {
+        apiWorkFlowDefinationIdGet(id: string, options?: RawAxiosRequestConfig): AxiosPromise<WorkFlowDefinationWithInitScriptDto> {
             return localVarFp.apiWorkFlowDefinationIdGet(id, options).then((request) => request(axios, basePath));
         },
         /**

@@ -50,7 +50,7 @@ export default function WorkflowRuntime(): JSX.Element {
   const [submitting, setSubmitting] = useState<boolean>(false);
   const [currentUser, setCurrentUser] = useState<string>("");
   const scriptExecutedRef = useRef<boolean>(false); // Script'in çalıştırılıp çalıştırılmadığını takip et
-  
+
   // Timeline state
   const [timelineOpen, setTimelineOpen] = useState<boolean>(false);
   const [historyData, setHistoryData] = useState<WorkFlowItemDtoWithApproveItems[]>([]);
@@ -78,7 +78,7 @@ export default function WorkflowRuntime(): JSX.Element {
       // Script'teki setFieldVisible çağrılarını yakalamak için mock fonksiyonlar
       const visibilityMap: Record<string, boolean> = {};
       const readonlyMap: Record<string, boolean> = {};
-      
+
       const setFieldVisible = (fieldKey: string, visible: boolean) => {
         visibilityMap[fieldKey] = visible;
       };
@@ -96,6 +96,12 @@ export default function WorkflowRuntime(): JSX.Element {
         return formValues[fieldKey];
       };
 
+      // ✅ currentUser ve crypto mock'ları
+      const currentUserObj = { name: "Mock User" };
+      const cryptoObj = {
+        randomUUID: () => "mock-uuid-" + Date.now()
+      };
+
       // Script'i çalıştır ve visibility/readonly map'lerini doldur
       const scriptFunction = new Function(
         "setFieldVisible",
@@ -103,6 +109,8 @@ export default function WorkflowRuntime(): JSX.Element {
         "setFieldValue",
         "getFieldValue",
         "formValues",
+        "currentUser",
+        "crypto",
         script
       );
 
@@ -110,15 +118,17 @@ export default function WorkflowRuntime(): JSX.Element {
         scriptPreview: script.substring(0, 150),
         formValuesKeys: Object.keys(formValues),
       });
-      
+
       scriptFunction(
         setFieldVisible,
         setFieldReadonly,
         setFieldValue,
         getFieldValue,
-        formValues
+        formValues,
+        currentUserObj,
+        cryptoObj
       );
-      
+
       console.log("✅ applyScriptToSchema - Script çalıştırıldı, map'ler dolduruldu:", {
         visibilityMapSize: Object.keys(visibilityMap).length,
         readonlyMapSize: Object.keys(readonlyMap).length,
@@ -128,14 +138,14 @@ export default function WorkflowRuntime(): JSX.Element {
 
       // Schema'yı modifiye et
       const modifiedSchema = JSON.parse(JSON.stringify(schema)); // Deep copy
-      
+
       const applyToProperties = (properties: any, path: string = "") => {
         if (!properties) return;
-        
+
         Object.keys(properties).forEach(key => {
           const prop = properties[key];
           const fieldPath = path ? `${path}.${key}` : key;
-          
+
           // Visibility kontrolü
           if (visibilityMap.hasOwnProperty(fieldPath) || visibilityMap.hasOwnProperty(key)) {
             const visible = visibilityMap[fieldPath] ?? visibilityMap[key];
@@ -145,7 +155,7 @@ export default function WorkflowRuntime(): JSX.Element {
               prop["x-display"] = "visible";
             }
           }
-          
+
           // Readonly kontrolü
           if (readonlyMap.hasOwnProperty(fieldPath) || readonlyMap.hasOwnProperty(key)) {
             const readonly = readonlyMap[fieldPath] ?? readonlyMap[key];
@@ -155,7 +165,7 @@ export default function WorkflowRuntime(): JSX.Element {
               prop["x-pattern"] = "editable";
             }
           }
-          
+
           // Nested properties varsa recursive olarak işle
           if (prop.properties) {
             applyToProperties(prop.properties, fieldPath);
@@ -259,6 +269,17 @@ export default function WorkflowRuntime(): JSX.Element {
       // Form values'ı global değişken olarak erişilebilir yap
       const formValues = formInstance.values || {};
 
+      // ✅ currentUser ve crypto mock'ları (initScript için gerekli)
+      const currentUserObj = { name: currentUser || "Kullanıcı" };
+      const cryptoObj = {
+        randomUUID: () => {
+          return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+            const r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+            return v.toString(16);
+          });
+        }
+      };
+
       // Script'i güvenli bir şekilde çalıştır
       // Function constructor kullanarak script'i çalıştırıyoruz
       const scriptFunction = new Function(
@@ -267,18 +288,22 @@ export default function WorkflowRuntime(): JSX.Element {
         "setFieldValue",
         "getFieldValue",
         "formValues",
+        "currentUser",
+        "crypto",
         script
       );
 
-      console.log("🚀 FieldScript çalıştırılıyor...");
+      console.log("🚀 Script çalıştırılıyor...");
       scriptFunction(
         setFieldVisible,
         setFieldReadonly,
         setFieldValue,
         getFieldValue,
-        formValues
+        formValues,
+        currentUserObj,
+        cryptoObj
       );
-      console.log("✅ FieldScript başarıyla çalıştırıldı");
+      console.log("✅ Script başarıyla çalıştırıldı");
     } catch (error) {
       console.error("❌ FieldScript çalıştırılırken hata:", error);
       console.error("❌ Script içeriği:", script);
@@ -312,14 +337,14 @@ export default function WorkflowRuntime(): JSX.Element {
       const conf = getConfiguration();
       const workflowItemApi = new WorkFlowItemApi(conf);
       const response = await workflowItemApi.apiWorkFlowItemGetApproveItemsWorkFlowHeadIdGet(workflowHeadId);
-      
+
       // Tarihe göre sırala (en yeni en üstte)
       const sortedData = (response.data || []).sort((a, b) => {
         const dateA = a.approveItems?.[0]?.createdDate ? new Date(a.approveItems[0].createdDate).getTime() : 0;
         const dateB = b.approveItems?.[0]?.createdDate ? new Date(b.approveItems[0].createdDate).getTime() : 0;
         return dateB - dateA;
       });
-      
+
       setHistoryData(sortedData);
     } catch (error) {
       console.error("History yüklenirken hata:", error);
@@ -361,8 +386,8 @@ export default function WorkflowRuntime(): JSX.Element {
         setFormName(form.formName || "İsimsiz Form");
 
         // Form design'ı parse et
-        const parsed = typeof form.formDesign === "string" 
-          ? JSON.parse(form.formDesign) 
+        const parsed = typeof form.formDesign === "string"
+          ? JSON.parse(form.formDesign)
           : form.formDesign;
 
 
@@ -376,50 +401,67 @@ export default function WorkflowRuntime(): JSX.Element {
           };
         }
 
-        // ✅ FieldScript varsa schema'yı modifiye et (flash önleme)
-        // Script'i schema yüklenirken çalıştırıp schema'yı modifiye ediyoruz
-        // Böylece alanlar render edilmeden önce gizli olur
-        const fieldScript = taskDetail?.nodeScript;
 
 
-        console.log("🔍 FieldScript kontrolü:", {
-          hasFieldScript: !!fieldScript,
-          fieldScriptLength: fieldScript?.length || 0,
+        // ✅ Script'i belirle (initScript veya fieldScript)
+        // Yeni workflow ise initScript (FormNode), devam eden ise fieldScript (FormTaskNode)
+
+        console.log("🔍 WorkflowInstance kontrolü:", {
+          isNewInstance,
+          hasWorkflowInstance: !!workflowInstance,
+          workflowInstanceKeys: workflowInstance ? Object.keys(workflowInstance) : [],
+          initScript: (workflowInstance as any)?.initScript?.substring(0, 100),
         });
-        
-        if (fieldScript && fieldScript.trim()) {
+
+        const initScript = isNewInstance ? (workflowInstance as any)?.initScript : null;
+        const fieldScript = !isNewInstance ? taskDetail?.nodeScript : null;
+        const activeScript = initScript || fieldScript;
+
+        console.log("🔍 Script kontrolü:", {
+          isNewInstance,
+          hasInitScript: !!initScript,
+          hasFieldScript: !!fieldScript,
+          usingScript: initScript ? "initScript (FormNode)" : fieldScript ? "fieldScript (FormTaskNode)" : "none",
+          scriptLength: activeScript?.length || 0,
+        });
+
+        alert("11");
+        alert(initScript);
+        alert(activeScript);
+        if (activeScript && activeScript.trim()) {
           // FormData henüz yüklenmemiş olabilir, ama varsa kullan
           // workflowInstance veya taskDetail'den formData'yı al
           let initialFormValues: any = {};
           try {
             const incomingFormData = workflowInstance?.formData || taskDetail?.formData;
             if (incomingFormData) {
-              const parsed = typeof incomingFormData === "string" 
-                ? JSON.parse(incomingFormData) 
+              const parsed = typeof incomingFormData === "string"
+                ? JSON.parse(incomingFormData)
                 : incomingFormData;
               if (parsed && typeof parsed === "object") {
                 initialFormValues = parsed.formData && typeof parsed.formData === "object"
                   ? parsed.formData
                   : parsed.formData && typeof parsed.formData === "string"
-                  ? JSON.parse(parsed.formData)
-                  : parsed;
+                    ? JSON.parse(parsed.formData)
+                    : parsed;
               }
             }
           } catch (e) {
             // FormData parse edilemezse boş obje kullan
             console.warn("⚠️ FormData parse edilemedi, boş obje kullanılıyor");
           }
-          
+
           try {
-            console.log("🔧 FieldScript schema'ya uygulanıyor...", {
-              scriptLength: fieldScript.length,
-              scriptPreview: fieldScript.substring(0, 200),
+            console.log("🔧 Script schema'ya uygulanıyor...", {
+              scriptType: initScript ? "initScript" : "fieldScript",
+              scriptLength: activeScript.length,
+              scriptPreview: activeScript.substring(0, 200),
               hasInitialFormValues: Object.keys(initialFormValues).length > 0,
               initialFormValues,
             });
-            finalSchema = applyScriptToSchema(fieldScript, finalSchema, initialFormValues);
-            console.log("✅ Schema fieldScript'e göre modifiye edildi (flash önlendi)", {
-              modifiedSchema: finalSchema,
+            finalSchema = applyScriptToSchema(activeScript, finalSchema, initialFormValues);
+            console.log("✅ Schema script'e göre modifiye edildi (flash önlendi)", {
+              scriptType: initScript ? "initScript" : "fieldScript",
             });
           } catch (error) {
             console.warn("⚠️ Schema modifikasyonu sırasında hata, orijinal schema kullanılıyor:", error);
@@ -435,13 +477,13 @@ export default function WorkflowRuntime(): JSX.Element {
 
       } catch (err: any) {
         let errorMsg = "Form yüklenirken bir hata oluştu";
-        
+
         if (err.response) {
           errorMsg = err.response.data?.message || err.response.data || errorMsg;
         } else if (err.message) {
           errorMsg = err.message;
         }
-        
+
         setError(errorMsg);
       } finally {
         setLoading(false);
@@ -449,14 +491,14 @@ export default function WorkflowRuntime(): JSX.Element {
     };
 
     load();
-  }, [workflowInstance?.formId, taskDetail?.fieldScript]);
+  }, [workflowInstance?.formId, isNewInstance, (workflowInstance as any)?.initScript, taskDetail?.fieldScript]);
 
   // ✅ FormData'yı location.state'den al ve form'a initial values olarak ver
   // Schema yüklendikten SONRA formData'yı set et (Formily için önemli)
   useEffect(() => {
     // FormData kaynakları: workflowInstance.formData veya taskDetail.formData
     const incomingFormData = workflowInstance?.formData || taskDetail?.formData;
-    
+
     console.log("🔍 FormData kontrolü:", {
       hasIncomingFormData: !!incomingFormData,
       hasForm: !!form,
@@ -464,22 +506,22 @@ export default function WorkflowRuntime(): JSX.Element {
       loading,
       incomingFormData,
     });
-    
+
     // Schema yüklenmiş ve formData varsa form'a yükle
     if (incomingFormData && form && schema && !loading) {
       try {
         // Eğer formData string ise parse et, değilse direkt kullan
-        const parsedFormData = typeof incomingFormData === "string" 
-          ? JSON.parse(incomingFormData) 
+        const parsedFormData = typeof incomingFormData === "string"
+          ? JSON.parse(incomingFormData)
           : incomingFormData;
-        
+
         console.log("📦 Parsed FormData:", parsedFormData);
-        
+
         if (parsedFormData && typeof parsedFormData === "object") {
           // ✅ FormData nested yapıda olabilir (formData.formData içinde asıl veriler)
           // Eğer formData içinde formData property'si varsa, onu kullan
           let actualFormData = parsedFormData;
-          
+
           if (parsedFormData.formData && typeof parsedFormData.formData === "object") {
             // Nested yapı: formData.formData içindeki verileri kullan
             actualFormData = parsedFormData.formData;
@@ -493,18 +535,18 @@ export default function WorkflowRuntime(): JSX.Element {
               console.warn("⚠️ FormData.formData parse edilemedi, orijinal kullanılıyor");
             }
           }
-          
+
           // Formily form'una initial values olarak set et
           // Formily'de form values'ları set etmek için setValues kullanılır
           if (actualFormData && typeof actualFormData === "object") {
             form.setInitialValues(actualFormData);
             form.setValues(actualFormData);
-            
+
             setFormData(actualFormData);
             console.log("✅ FormData form'a yüklendi:", actualFormData);
             console.log("✅ Form values kontrolü:", form.values);
             console.log("✅ Form initialValues kontrolü:", form.initialValues);
-            
+
             // Form'un güncellendiğinden emin olmak için bir sonraki render'da kontrol et
             setTimeout(() => {
               console.log("⏰ 100ms sonra form values:", form.values);
@@ -525,14 +567,17 @@ export default function WorkflowRuntime(): JSX.Element {
     }
   }, [workflowInstance?.formData, taskDetail?.formData, form, schema, loading]);
 
-  // ✅ FieldScript'i çalıştır - FormData yüklendikten sonra (değer atamaları için)
+  // ✅ Script'i çalıştır - FormData yüklendikten sonra (değer atamaları için)
   // Not: Visibility kontrolleri schema yüklenirken yapıldı (flash önleme)
   // Burada sadece değer atamaları ve dinamik kontroller yapılır
   useEffect(() => {
-    const fieldScript = taskDetail?.fieldScript;
-    
-    // Yeni bir taskDetail geldiğinde ref'i sıfırla
-    if (fieldScript) {
+    // Script'i belirle (initScript veya fieldScript)
+    const initScript = isNewInstance ? (workflowInstance as any)?.initScript : null;
+    const fieldScript = !isNewInstance ? taskDetail?.fieldScript : null;
+    const activeScript = initScript || fieldScript;
+
+    // Yeni bir script geldiğinde ref'i sıfırla
+    if (activeScript) {
       scriptExecutedRef.current = false;
     }
 
@@ -540,9 +585,9 @@ export default function WorkflowRuntime(): JSX.Element {
     if (scriptExecutedRef.current) {
       return;
     }
-    
+
     // Script yoksa veya form/schema hazır değilse çık
-    if (!fieldScript || !fieldScript.trim() || !form || !schema || loading) {
+    if (!activeScript || !activeScript.trim() || !form || !schema || loading) {
       return;
     }
 
@@ -552,16 +597,21 @@ export default function WorkflowRuntime(): JSX.Element {
       const formValues = form.values;
       // FormData yüklenmişse script'i çalıştır (değer atamaları için)
       // Visibility zaten schema'da ayarlandı, burada sadece dinamik kontroller yapılır
-      if (formValues && Object.keys(formValues).length > 0) {
-        console.log("🔧 FieldScript çalıştırılıyor (runtime - değer atamaları)...", {
-          scriptLength: fieldScript.length,
-          scriptPreview: fieldScript.substring(0, 200),
-          formValuesKeys: Object.keys(formValues),
-          formValues: formValues,
+
+      // Yeni workflow için form boş başlayabilir, beklemeden çalıştır
+      const shouldExecute = isNewInstance || (formValues && Object.keys(formValues).length > 0);
+
+      if (shouldExecute) {
+        console.log("🔧 Script çalıştırılıyor (runtime)...", {
+          scriptType: initScript ? "initScript (FormNode)" : "fieldScript (FormTaskNode)",
+          scriptLength: activeScript.length,
+          scriptPreview: activeScript.substring(0, 200),
+          formValuesKeys: formValues ? Object.keys(formValues) : [],
+          isNewInstance,
         });
-        executeFieldScript(fieldScript, form);
+        executeFieldScript(activeScript, form);
         scriptExecutedRef.current = true; // Script çalıştırıldı olarak işaretle
-        console.log("✅ FieldScript başarıyla çalıştırıldı!");
+        console.log("✅ Script başarıyla çalıştırıldı!");
       } else {
         // FormData henüz yüklenmemiş, tekrar dene
         console.log("⏳ FormData henüz yüklenmedi, script çalıştırma erteleniyor...", {
@@ -572,7 +622,7 @@ export default function WorkflowRuntime(): JSX.Element {
     }, 100); // FormData yüklendikten sonra kısa bir bekleme (visibility zaten schema'da)
 
     return () => clearTimeout(timeout);
-  }, [taskDetail?.fieldScript, form, schema, loading, formData]);
+  }, [isNewInstance, (workflowInstance as any)?.initScript, taskDetail?.fieldScript, form, schema, loading, formData]);
 
   /**
    * ✅ Form butonuna tıklandığında - Backend'e workflow başlatma isteği gönder
@@ -634,7 +684,7 @@ export default function WorkflowRuntime(): JSX.Element {
         };
 
         const response = await workflowApi.apiWorkFlowContiunePost(continueDto);
-        
+
         if (!response || !response.data) {
           throw new Error("Backend'den geçersiz yanıt alındı");
         }
@@ -670,7 +720,7 @@ export default function WorkflowRuntime(): JSX.Element {
         };
 
         const response = await workflowApi.apiWorkFlowStartPost(startDto);
-        
+
         if (!response || !response.data) {
           throw new Error("Backend'den geçersiz yanıt alındı");
         }
@@ -727,11 +777,11 @@ export default function WorkflowRuntime(): JSX.Element {
     } catch (error: any) {
       // ✅ Detaylı hata mesajı oluştur
       let errorMessage = "Workflow başlatılırken bir hata oluştu";
-      
+
       if (error.response) {
         // Backend'den gelen hata
         const responseData = error.response.data;
-        
+
         if (responseData?.message) {
           errorMessage = responseData.message;
         } else if (typeof responseData === "string") {
@@ -741,7 +791,7 @@ export default function WorkflowRuntime(): JSX.Element {
         } else if (responseData?.title) {
           errorMessage = responseData.title;
         }
-        
+
         // HTTP status koduna göre ek bilgi
         const status = error.response.status;
         if (status === 400) {
@@ -758,7 +808,7 @@ export default function WorkflowRuntime(): JSX.Element {
       } else if (error.message) {
         errorMessage = error.message;
       }
-      
+
       // Kullanıcıya detaylı hata mesajı göster
       message.error(
         `❌ ${errorMessage}\n\nButon: ${button.label}\nAction: ${button.action || "Tanımlı değil"}`,
@@ -998,7 +1048,7 @@ export default function WorkflowRuntime(): JSX.Element {
         }
 
       `}</style>
-      
+
       <Box
         sx={{
           position: "fixed",
@@ -1013,10 +1063,10 @@ export default function WorkflowRuntime(): JSX.Element {
       >
         <DashboardLayout>
           <DashboardNavbar />
-          <MDBox 
+          <MDBox
             my={0.5}
             pt={0.5}
-            sx={{ 
+            sx={{
               paddingBottom: formButtons.length > 0 ? "80px" : "20px",
               overflowY: "auto",
               overflowX: "hidden",
@@ -1044,7 +1094,7 @@ export default function WorkflowRuntime(): JSX.Element {
                   </Typography>
                 )}
               </Box>
-              
+
               {/* Timeline Button */}
               {!isNewInstance && (
                 <Button
@@ -1060,11 +1110,11 @@ export default function WorkflowRuntime(): JSX.Element {
             </Box>
 
             {/* Form Container */}
-            <MDBox 
+            <MDBox
               p={2}
-              sx={{ 
-                backgroundColor: "#fff", 
-                borderRadius: 1, 
+              sx={{
+                backgroundColor: "#fff",
+                borderRadius: 1,
                 boxShadow: "0 1px 3px rgba(0,0,0,0.08)",
                 border: "1px solid #e0e0e0",
                 mx: 2,
@@ -1072,11 +1122,11 @@ export default function WorkflowRuntime(): JSX.Element {
             >
               <FormProvider form={form}>
                 <AntdFormily.Form>
-                                  <AntdFormily.FormLayout 
-                                    layout="vertical"
-                                    size="large"
-                                    colon={false}
-                                  >
+                  <AntdFormily.FormLayout
+                    layout="vertical"
+                    size="large"
+                    colon={false}
+                  >
                     <SchemaField schema={schema} />
                   </AntdFormily.FormLayout>
                 </AntdFormily.Form>
@@ -1166,8 +1216,8 @@ export default function WorkflowRuntime(): JSX.Element {
                   </Typography>
                 )}
               </Box>
-              <IconButton 
-                onClick={() => setTimelineOpen(false)} 
+              <IconButton
+                onClick={() => setTimelineOpen(false)}
                 size="small"
               >
                 <CloseIcon />
@@ -1181,9 +1231,9 @@ export default function WorkflowRuntime(): JSX.Element {
                   <Typography variant="body2">Yükleniyor...</Typography>
                 </Box>
               ) : historyData.length === 0 ? (
-                <Box 
-                  sx={{ 
-                    textAlign: "center", 
+                <Box
+                  sx={{
+                    textAlign: "center",
                     py: 6,
                     px: 2,
                   }}
@@ -1198,11 +1248,11 @@ export default function WorkflowRuntime(): JSX.Element {
                   {historyData.map((item, index) => {
                     const isFirst = index === 0;
                     const isLast = index === historyData.length - 1;
-                    
+
                     // Status'e göre renk ve ikon belirle
                     let dotColor: "success" | "error" | "warning" | "primary" = "primary";
                     let StatusIcon = HourglassEmpty;
-                    
+
                     if (item.workFlowNodeStatus === 2) { // Completed
                       dotColor = "success";
                       StatusIcon = CheckCircle;
@@ -1227,8 +1277,8 @@ export default function WorkflowRuntime(): JSX.Element {
                     return (
                       <TimelineItem key={index}>
                         <TimelineOppositeContent
-                          sx={{ 
-                            flex: 0.2, 
+                          sx={{
+                            flex: 0.2,
                             py: 1,
                             display: { xs: "none", sm: "block" },
                           }}
@@ -1238,7 +1288,7 @@ export default function WorkflowRuntime(): JSX.Element {
                           </Typography>
                         </TimelineOppositeContent>
                         <TimelineSeparator>
-                          <TimelineDot 
+                          <TimelineDot
                             color={dotColor}
                             sx={{
                               width: 32,
@@ -1264,7 +1314,7 @@ export default function WorkflowRuntime(): JSX.Element {
                             <Typography variant="subtitle2" fontWeight={600} gutterBottom sx={{ display: { xs: "block", sm: "none" } }}>
                               {item.nodeName || "Node"}
                             </Typography>
-                            
+
                             {item.nodeDescription && (
                               <Typography variant="caption" color="textSecondary" sx={{ mb: 1, display: "block" }}>
                                 {item.nodeDescription}
@@ -1298,24 +1348,24 @@ export default function WorkflowRuntime(): JSX.Element {
                                     <Chip
                                       label={
                                         subItem.approverStatus === 1 ? "Onaylandı" :
-                                        subItem.approverStatus === 2 ? "Reddedildi" :
-                                        "Bekliyor"
+                                          subItem.approverStatus === 2 ? "Reddedildi" :
+                                            "Bekliyor"
                                       }
                                       size="small"
                                       color={
                                         subItem.approverStatus === 1 ? "success" :
-                                        subItem.approverStatus === 2 ? "error" :
-                                        "warning"
+                                          subItem.approverStatus === 2 ? "error" :
+                                            "warning"
                                       }
                                       sx={{ fontWeight: 600, fontSize: "11px" }}
                                     />
                                   )}
                                 </Box>
-                                
+
                                 {subItem.note && (
-                                  <Typography 
-                                    variant="caption" 
-                                    sx={{ 
+                                  <Typography
+                                    variant="caption"
+                                    sx={{
                                       mt: 0.5,
                                       p: 1,
                                       backgroundColor: "#f8f9fa",

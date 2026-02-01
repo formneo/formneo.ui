@@ -428,7 +428,6 @@ function WorkflowMyTasks() {
       // ✅ FormTask ise runtime sayfasına yönlendir
       if (finalIsFormTask) {
 
-        
         navigate(`/workflows/runtime/${workflowInstanceId}`, {
           state: {
             workflowInstance: {
@@ -512,14 +511,24 @@ function WorkflowMyTasks() {
       const workflowApi = new WorkFlowDefinationApi(conf);
       const formApi = new FormDataApi(conf);
 
-      // ✅ Workflow detayını çek (defination dahil)
+      // ✅ Workflow detayını çek (initScript API'den dönüyor)
       const workflowDetail = await workflowApi.apiWorkFlowDefinationIdGet(workflow.id);
       const workflowData = workflowDetail.data as any;
       
+
       let formId: string | null = workflowData?.formId || null;
       let formName: string = "";
+      
+      // ✅ InitScript'i direkt API'den al (parse etmeye gerek yok)
+      let initScript: string | null = workflowData?.initScript || null;
 
-      // Eğer workflow'da formId yoksa, defination'dan node'lardan bul
+      console.log("✅ WorkFlowDefinationApi'den initScript alındı:", {
+        hasInitScript: !!initScript,
+        initScriptLength: initScript?.length || 0,
+        initScriptPreview: initScript ? initScript.substring(0, 100) + "..." : "YOK",
+      });
+
+      // Eğer workflow'da formId yoksa, defination'dan bul
       if (!formId && workflowData?.defination) {
         try {
           const parsedDefination = JSON.parse(workflowData.defination);
@@ -528,7 +537,8 @@ function WorkflowMyTasks() {
               n.type === "formNode" &&
               (n.data?.selectedFormId || n.data?.formId)
           );
-          if (formNode?.data?.selectedFormId || formNode?.data?.formId) {
+          
+          if (formNode && (formNode.data?.selectedFormId || formNode.data?.formId)) {
             formId = formNode.data.selectedFormId || formNode.data.formId;
             formName =
               formNode.data.selectedFormName ||
@@ -552,9 +562,9 @@ function WorkflowMyTasks() {
       }
 
       if (!formId) {
-      alert("Bu workflow için form tanımlanmamış!");
-      return;
-    }
+        alert("Bu workflow için form tanımlanmamış!");
+        return;
+      }
 
       // ✅ Form sayfasına yönlendir
     navigate(`/workflows/runtime/new`, {
@@ -564,10 +574,20 @@ function WorkflowMyTasks() {
           workflowName: workflow.workflowName,
           formId: formId,
           formName: formName,
-          defination: workflowData?.defination || null, // ✅ Defination'ı da gönder
+          defination: workflowData?.defination || null,
+          initScript: initScript, // ✅ API'den gelen initScript (yeni workflow için)
         },
         isNewInstance: true,
       },
+    });
+    
+    console.log("🚀 Yeni workflow başlatılıyor:", {
+      workflowId: workflow.id,
+      workflowName: workflow.workflowName,
+      formId,
+      formName,
+      hasInitScript: !!initScript,
+      initScriptLength: initScript?.length || 0,
     });
     } catch (error) {
       console.error("Workflow başlatılırken hata:", error);
