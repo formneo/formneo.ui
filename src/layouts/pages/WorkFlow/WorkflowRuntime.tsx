@@ -87,8 +87,10 @@ export default function WorkflowRuntime(): JSX.Element {
         readonlyMap[fieldKey] = readonly;
       };
 
-      const setFieldValue = (_fieldKey: string, _value: any) => {
+      const setFieldValue = (fieldKey: string, value: any) => {
         // Schema modifikasyonunda değer atama yapmıyoruz
+        // Sadece script'in hata vermemesi için mock fonksiyon
+        console.log(`🔧 applyScriptToSchema - setFieldValue çağrıldı: ${fieldKey} =`, value);
       };
 
       const getFieldValue = (fieldKey: string): any => {
@@ -97,9 +99,14 @@ export default function WorkflowRuntime(): JSX.Element {
       };
 
       // ✅ currentUser ve crypto mock'ları
-      const currentUserObj = { name: "Mock User" };
+      const currentUserObj = { name: currentUser || "Mock User" };
       const cryptoObj = {
-        randomUUID: () => "mock-uuid-" + Date.now()
+        randomUUID: () => {
+          return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+            const r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+            return v.toString(16);
+          });
+        }
       };
 
       // Script'i çalıştır ve visibility/readonly map'lerini doldur
@@ -206,6 +213,9 @@ export default function WorkflowRuntime(): JSX.Element {
     console.log("▶️ executeFieldScript başladı:", {
       scriptPreview: script.substring(0, 100) + "...",
       scriptLength: script.length,
+      formInstanceMounted: formInstance.mounted,
+      formInstanceFields: formInstance.fields ? Object.keys(formInstance.fields) : [],
+      formInstanceValuesKeys: formInstance.values ? Object.keys(formInstance.values) : [],
     });
 
     try {
@@ -251,9 +261,25 @@ export default function WorkflowRuntime(): JSX.Element {
 
       const setFieldValue = (fieldKey: string, value: any) => {
         try {
-          formInstance.setFieldValue(fieldKey, value);
+          // Önce field'ı bul
+          const field = formInstance.query(fieldKey).take();
+          if (field) {
+            // Field bulunduysa, setValue ile değeri ata (reactive)
+            field.setValue(value);
+            console.log(`✅ setFieldValue (field.setValue): ${fieldKey} =`, value);
+          } else {
+            // Field bulunamadıysa da formInstance üzerinden dene
+            console.warn(`⚠️ setFieldValue - Field query ile bulunamadı, formInstance üzerinden deneniyor: ${fieldKey}`);
+            formInstance.setFieldValue(fieldKey, value);
+            console.log(`✅ setFieldValue (formInstance.setFieldValue): ${fieldKey} =`, value);
+          }
         } catch (error) {
-          console.warn(`⚠️ setFieldValue hatası (${fieldKey}):`, error);
+          console.error(`❌ setFieldValue hatası (${fieldKey}):`, error);
+          console.error("Hata detayı:", {
+            fieldKey,
+            value,
+            formInstanceFields: formInstance.fields ? Object.keys(formInstance.fields) : "yok",
+          });
         }
       };
 
@@ -414,7 +440,7 @@ export default function WorkflowRuntime(): JSX.Element {
         });
 
         const initScript = isNewInstance ? (workflowInstance as any)?.initScript : null;
-        const fieldScript = !isNewInstance ? taskDetail?.nodeScript : null;
+        const fieldScript = !isNewInstance ? taskDetail?.fieldScript : null;
         const activeScript = initScript || fieldScript;
 
         console.log("🔍 Script kontrolü:", {
@@ -595,6 +621,16 @@ export default function WorkflowRuntime(): JSX.Element {
     // formData state'i set edildikten sonra script'i çalıştır
     const timeout = setTimeout(() => {
       const formValues = form.values;
+      const formFields = form.fields;
+      
+      console.log("⏰ Script çalıştırma kontrolü:", {
+        hasFormValues: !!formValues,
+        formValuesLength: formValues ? Object.keys(formValues).length : 0,
+        hasFormFields: !!formFields,
+        formFieldsLength: formFields ? Object.keys(formFields).length : 0,
+        isNewInstance,
+      });
+      
       // FormData yüklenmişse script'i çalıştır (değer atamaları için)
       // Visibility zaten schema'da ayarlandı, burada sadece dinamik kontroller yapılır
 
@@ -607,6 +643,7 @@ export default function WorkflowRuntime(): JSX.Element {
           scriptLength: activeScript.length,
           scriptPreview: activeScript.substring(0, 200),
           formValuesKeys: formValues ? Object.keys(formValues) : [],
+          formFieldsKeys: formFields ? Object.keys(formFields) : [],
           isNewInstance,
         });
         executeFieldScript(activeScript, form);
@@ -619,7 +656,7 @@ export default function WorkflowRuntime(): JSX.Element {
           hasFormValues: !!formValues,
         });
       }
-    }, 100); // FormData yüklendikten sonra kısa bir bekleme (visibility zaten schema'da)
+    }, 200); // Form mount olması için biraz daha fazla bekleme
 
     return () => clearTimeout(timeout);
   }, [isNewInstance, (workflowInstance as any)?.initScript, taskDetail?.fieldScript, form, schema, loading, formData]);
