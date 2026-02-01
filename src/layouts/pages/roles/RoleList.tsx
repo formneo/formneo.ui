@@ -38,7 +38,7 @@ function RolesList() {
       var conf = getConfiguration();
       var api = new RoleMenuApi(conf);
       var response = await api.apiRoleMenuAllOnlyHeadGet();
-      console.log(response.data);
+      
       setData(response.data as any);
     } catch (error) {
       dispatchAlert({ message: t("ns1:RolePage.RoleList.HataOlustu"), type: MessageBoxType.Error });

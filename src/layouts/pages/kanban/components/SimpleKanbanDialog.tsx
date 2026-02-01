@@ -6,8 +6,8 @@ interface SimpleKanbanDialogProps {
 }
 
 const SimpleKanbanDialog: React.FC<SimpleKanbanDialogProps> = ({ props, assigneeData = [] }) => {
-    console.log('Dialog assigneeData:', assigneeData);
-    console.log('Dialog props:', props);
+    
+    
 
     return (
         <div style={{ padding: '20px', minWidth: '400px' }}>

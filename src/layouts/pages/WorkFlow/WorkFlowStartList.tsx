@@ -42,7 +42,7 @@ const WorkflowDetail: React.FC = () => {
   const fetchCurrentUser = async () => {
     try {
       setUserLoading(true);
-      console.log("👤 Current user çekiliyor...");
+      
 
       const conf = getConfiguration();
       const userApi = new UserApi(conf);
@@ -56,7 +56,7 @@ const WorkflowDetail: React.FC = () => {
       };
       setCurrentUser(mappedUser);
 
-      console.log("✅ Current user loaded:", mappedUser);
+      
     } catch (error) {
       console.error("❌ Current user çekilirken hata:", error);
 
@@ -93,7 +93,7 @@ const WorkflowDetail: React.FC = () => {
   // Backend'den tüm workflow instance'ları çek
   const fetchWorkflowInstances = async (definationId: string) => {
     try {
-      console.log("📋 Workflow instances çekiliyor:", definationId);
+      
 
       const conf = getConfiguration();
       const api = new WorkFlowApi(conf);
@@ -104,7 +104,7 @@ const WorkflowDetail: React.FC = () => {
       //   );
 
       // setWorkflowInstances(response.data || []);
-      // console.log("✅ Workflow instances loaded:", response.data);
+      // 
     } catch (error) {
       console.error("❌ Workflow instances çekilirken hata:", error);
       setWorkflowInstances([]);
@@ -132,7 +132,7 @@ const WorkflowDetail: React.FC = () => {
       const formId = "";//workflowResponse.data?.formId;
 
       if (formId) {
-        console.log("✅ FormId workflow'dan alındı:", formId);
+        
 
         // FormId ile direkt formu çek
         const formApi = new FormDataApi(conf);
@@ -141,7 +141,7 @@ const WorkflowDetail: React.FC = () => {
         if (formResponse.data) {
           const parsedDesign = JSON.parse(formResponse.data.formDesign ?? "{}");
           setFormDesign(parsedDesign);
-          console.log("✅ Form Design FormId ile alındı:", parsedDesign);
+          
           return; // Başarılı, çık
         }
       }
@@ -156,7 +156,7 @@ const WorkflowDetail: React.FC = () => {
       if (matchedForm) {
         const parsedDesign = JSON.parse(matchedForm.formDesign ?? "{}");
         setFormDesign(parsedDesign);
-        console.log("✅ Form Design eski yöntemle bulundu:", parsedDesign);
+        
       } else {
         console.warn("🚫 Bu workflow ID'ye ait form bulunamadı:", workflowId);
         setFormDesign(null);
@@ -178,7 +178,7 @@ const WorkflowDetail: React.FC = () => {
       return;
     }
 
-    console.log("Form açılıyor, formDesign:", formDesign);
+    
     setShowForm(true);
   };
 
@@ -189,9 +189,9 @@ const WorkflowDetail: React.FC = () => {
   //       return;
   //     }
 
-  //     console.log("🚀 Form submit başladı");
-  //     console.log("👤 Current user:", currentUser);
-  //     console.log("📝 Form data:", submission.data);
+  //     
+  //     
+  //     
 
   //     const formDataJson = JSON.stringify(submission.data);
   //     const conf = getConfiguration();
@@ -206,10 +206,10 @@ const WorkflowDetail: React.FC = () => {
   //       payloadJson: formDataJson,
   //     };
 
-  //     console.log("📤 Backend'e gönderilecek DTO:", startDto);
+  //     
 
   //     const result = await api.apiWorkFlowStartWithFormPost(startDto);
-  //     console.log("✅ Backend response:", result);
+  //     
 
   //     if (result.data) {
   //       // Success notification
@@ -311,7 +311,7 @@ const WorkflowDetail: React.FC = () => {
   };
 
   const handleViewWorkflowDetails = (workflow: any) => {
-    console.log("Workflow detayları:", workflow);
+    
     alert(
       `İş Akışı: ${workflow.workflowName}\nDurum: ${getStatusText(
         workflow.status
@@ -322,7 +322,7 @@ const WorkflowDetail: React.FC = () => {
   };
 
   const handleViewApproveItems = (workflow: any) => {
-    console.log("Approve items görüntüle:", workflow);
+    
     alert(
       `Bu workflow'da ${workflow.approveItemCount} onay adımı var.\nWorkflow ID: ${workflow.workflowHeadId}`
     );

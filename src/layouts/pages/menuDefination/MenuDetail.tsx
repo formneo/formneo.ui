@@ -233,7 +233,7 @@ const MenuDetail = () => {
       dispatchBusy({ isBusy: true });
       var conf = getConfiguration();
       var api = new MenuApi(conf);
-      console.log(formData.order, "formData order");
+      
 
       await api.apiMenuPut({
         id: id,
@@ -475,7 +475,7 @@ const MenuDetail = () => {
                       }
                       onChange={(event, newValue) => {
                         const selectedMenu = parentMenu.find((item: any) => item.name === newValue);
-                        console.log(selectedMenu, "selectedMenu");
+                        
                         setFormData((prev) => ({
                           ...prev,
                           parentCode: selectedMenu?.id || "",

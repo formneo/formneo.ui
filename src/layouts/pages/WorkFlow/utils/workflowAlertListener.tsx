@@ -59,7 +59,7 @@ export const subscribeToWorkflowEvents = (
   //
   // connection.start();
 
-  console.log(`Subscribing to workflow events: ${workflowInstanceId}`);
+  
 };
 
 /**
@@ -97,7 +97,7 @@ export const pollWorkflowStatus = async (
   //
   // setInterval(checkWorkflowStatus, interval);
 
-  console.log(`Polling workflow status: ${workflowInstanceId} (every ${interval}ms)`);
+  
 };
 
 /**
@@ -134,7 +134,7 @@ export const fetchAndProcessWorkflowAlerts = async (
     //   });
     // });
 
-    console.log(`Fetching workflow alerts: ${workflowInstanceId}`);
+    
   } catch (error) {
     console.error("Error fetching workflow alerts:", error);
   }

@@ -20,12 +20,7 @@ const UserDetail = () => {
   // User ID'yi query param, location state veya route param'dan al
   const userId = useMemo(() => {
     const id = searchParams.get("id") || location.state?.userId || paramId || "";
-    console.log("User ID:", { 
-      searchParamsId: searchParams.get("id"), 
-      locationStateUserId: location.state?.userId, 
-      paramId, 
-      finalUserId: id 
-    });
+
     return id;
   }, [searchParams, location.state, paramId]);
 
@@ -33,7 +28,7 @@ const UserDetail = () => {
   const isTenantMode = useMemo(() => {
     if (typeof window === "undefined") return false;
     const tenantId = localStorage.getItem("selectedTenantId");
-    console.log("Tenant Mode Check:", { tenantId, isTenantMode: !!tenantId });
+    
     return Boolean(tenantId);
   }, []);
 

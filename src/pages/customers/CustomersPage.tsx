@@ -358,7 +358,7 @@ function normalizeCustomerFromDto(dto: any): Customer {
     const name = String(dto?.name ?? dto?.custx ?? dto?.title ?? "");
     
     // Debug: Backend'den gelen status ve isActive değerlerini logla
-    console.log("Customer DTO:", { id, name, status: dto?.status, isActive: dto?.isActive });
+    
     const firstAddress = Array.isArray(dto?.addresses) && dto.addresses.length ? dto.addresses[0] : undefined;
     const country = String(firstAddress?.country ?? dto?.country ?? "");
     const city = (firstAddress?.city ?? dto?.city) ? String(firstAddress?.city ?? dto?.city) : undefined;

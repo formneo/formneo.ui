@@ -64,7 +64,7 @@ export class DSParameterSelectComponent extends SelectComponent {
   setValue(value, flags = {}) {
     // Eğer obje geliyorsa, sadece value'yu al
     if (value && typeof value === 'object' && !Array.isArray(value)) {
-      console.log('⚠️ setValue obje aldı, string\'e çeviriliyor:', value);
+      
       value = value.value || value.key || value;
     }
     return super.setValue(value, flags);
@@ -87,11 +87,11 @@ export class DSParameterSelectComponent extends SelectComponent {
         categoryKey = categoryKey.value || categoryKey.key || categoryKey;
       }
       
-      console.log('🔍 Parametreler yükleniyor');
-      console.log('  - Module (raw):', this.component.parameterModule);
-      console.log('  - Module (key):', moduleKey);
-      console.log('  - Category (raw):', this.component.parameterCategory);
-      console.log('  - Category (key):', categoryKey);
+      
+      
+      
+      
+      
       
       // Eğer module seçili ama category boşsa: ilk kategoriyi otomatik seç
       if (moduleKey && (!categoryKey || String(categoryKey).trim() === '')) {
@@ -112,7 +112,7 @@ export class DSParameterSelectComponent extends SelectComponent {
             if (firstKey) {
               this.component.parameterCategory = firstKey;
               categoryKey = firstKey;
-              console.log('✅ Otomatik kategori seçildi:', firstKey);
+              
             }
           }
         } catch (autoErr) {
@@ -130,7 +130,7 @@ export class DSParameterSelectComponent extends SelectComponent {
       const getConfiguration = (await import('../../../../../confiuration')).default;
       const { LookupApi } = await import('../../../../../api/generated');
       
-      console.log('📡 API çağrısı yapılıyor: /api/Lookup/items/' + categoryKey);
+      
       
       const conf = getConfiguration();
       const api = new LookupApi(conf);
@@ -141,7 +141,7 @@ export class DSParameterSelectComponent extends SelectComponent {
       
       if (response.data && Array.isArray(response.data)) {
         const parameters = response.data;
-        console.log('✅ Parametreler yüklendi:', parameters.length, 'parametre');
+        
         
         // Form.io select component'ine data set et
         this.component.dataSrc = 'values';
@@ -174,7 +174,7 @@ export class DSParameterSelectComponent extends SelectComponent {
           this.redraw();
         }
         
-        console.log('✅ Parametre dropdown güncellendi');
+        
       } else {
         console.error('❌ API yanıtı beklendiği gibi değil:', response);
         this.loadFallbackParameters();
@@ -192,7 +192,7 @@ export class DSParameterSelectComponent extends SelectComponent {
     const moduleKey = this.component.parameterModule;
     const categoryKey = this.component.parameterCategory;
     
-    console.log('⚠️ API çalışmadı, test verisi yükleniyor...');
+    
     
     // Module ve kategori bazlı örnek data
     let testData = [];
@@ -230,7 +230,7 @@ export class DSParameterSelectComponent extends SelectComponent {
       this.redraw();
     }
     
-    console.log('✅ Test parametre verileri yüklendi');
+    
   }
 
   /**
@@ -278,18 +278,18 @@ let categoriesLoadingPromise = null;
 
 async function preloadModules() {
   if (cachedModules) {
-    console.log('✅ Modules zaten cache\'de:', cachedModules.length);
+    
     return cachedModules;
   }
   
   if (modulesLoadingPromise) {
-    console.log('⏳ Modules zaten yükleniyor, bekleniyor...');
+    
     return modulesLoadingPromise;
   }
   
   modulesLoadingPromise = (async () => {
     try {
-      console.log('🔄 Modules yükleniyor...');
+      
       const getConfiguration = (await import('../../../../../confiuration')).default;
       const { LookupApi } = await import('../../../../../api/generated');
       
@@ -304,7 +304,7 @@ async function preloadModules() {
         value: m.key 
       }));
       
-      console.log('✅ Modules yüklendi ve cache\'lendi:', cachedModules);
+      
       return cachedModules;
     } catch (e) {
       console.error('❌ Module yükleme hatası:', e);
@@ -322,18 +322,18 @@ async function preloadModules() {
 
 async function preloadAllCategories() {
   if (cachedAllCategories) {
-    console.log('✅ Categories zaten cache\'de:', cachedAllCategories.length);
+    
     return cachedAllCategories;
   }
   
   if (categoriesLoadingPromise) {
-    console.log('⏳ Categories zaten yükleniyor, bekleniyor...');
+    
     return categoriesLoadingPromise;
   }
   
   categoriesLoadingPromise = (async () => {
     try {
-      console.log('🔄 Tüm kategoriler yükleniyor...');
+      
       const getConfiguration = (await import('../../../../../confiuration')).default;
       const { LookupApi } = await import('../../../../../api/generated');
       
@@ -353,11 +353,11 @@ async function preloadAllCategories() {
       // Global window'a yaz (Form.io custom script'ten erişebilsin)
       if (typeof window !== 'undefined') {
         window.__categoryCache = cachedAllCategories;
-        console.log('✅ Category cache window\'a yazıldı:', window.__categoryCache.length);
-        console.log('📋 İlk kategori örneği:', cachedAllCategories[0]);
+        
+        
       }
       
-      console.log('✅ Tüm kategoriler yüklendi ve cache\'lendi:', cachedAllCategories.length);
+      
       return cachedAllCategories;
     } catch (e) {
       console.error('❌ Category yükleme hatası:', e);
@@ -380,7 +380,7 @@ function getCategoriesByModule(moduleKey) {
   }
   
   const filtered = cachedAllCategories.filter(c => c.moduleId === moduleKey);
-  console.log(`🔍 Module "${moduleKey}" için ${filtered.length} kategori bulundu`);
+  
   
   if (filtered.length === 0) {
     return [{ label: '⚠️ Bu module\'de kategori yok', value: '' }];
@@ -408,7 +408,7 @@ async function ensureApiHelpers() {
       const conf = getConfiguration();
       if (conf?.basePath) {
         window.__apiBaseUrl = conf.basePath;
-        console.log('🔧 API Base URL (config):', window.__apiBaseUrl);
+        
       }
 
       // Basit cache ve promise memoization
@@ -467,9 +467,9 @@ ensureApiHelpers();
 DSParameterSelectComponent.editForm = (...args) => {
   const editForm = SelectComponent.editForm(...args);
 
-  console.log('📝 Edit form açılıyor');
-  console.log('  - Module cache:', cachedModules ? 'VAR (' + cachedModules.length + ')' : 'YOK');
-  console.log('  - Category cache:', cachedAllCategories ? 'VAR (' + cachedAllCategories.length + ')' : 'YOK');
+  
+  
+  
   
   const moduleValues = cachedModules || [{ label: '⏳ Yükleniyor...', value: '' }];
 

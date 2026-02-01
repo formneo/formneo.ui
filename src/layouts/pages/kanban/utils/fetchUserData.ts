@@ -12,7 +12,7 @@ const fetchUserData = async (): Promise<UserAppDtoWithoutPhoto[]> => {
         return response.data;
 
     } catch (error) {
-        console.log(error);
+        
         return [];
     }
 }

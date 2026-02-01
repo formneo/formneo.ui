@@ -88,26 +88,26 @@ const QueryConditionTab: React.FC<QueryConditionTabProps> = ({
     };
     
     traverse(components);
-    console.log(`✅ extractFieldsFromComponents: ${fields.length} field bulundu`);
+    
     return fields;
   }, []);
 
   // ✅ En güncel form design'ını belirle
   const currentFormDesign = useMemo(() => {
-    console.log("🔍 currentFormDesign useMemo çalışıyor:");
-    console.log("- parsedFormDesign:", parsedFormDesign);
-    console.log("- savedParsedFormDesign:", savedParsedFormDesign);
-    console.log("- selectedForm:", selectedForm?.formName);
+    
+    
+    
+    
     
     // Önce parsedFormDesign'u kontrol et (en güncel)
     if (parsedFormDesign && parsedFormDesign.fields && parsedFormDesign.fields.length > 0) {
-      console.log("✅ Using parsedFormDesign with fields:", parsedFormDesign.fields.length);
+      
       return parsedFormDesign;
     }
     
     // Sonra savedParsedFormDesign'i kontrol et
     if (savedParsedFormDesign && savedParsedFormDesign.fields && savedParsedFormDesign.fields.length > 0) {
-      console.log("✅ Using savedParsedFormDesign with fields:", savedParsedFormDesign.fields.length);
+      
       return savedParsedFormDesign;
     }
     
@@ -117,11 +117,11 @@ const QueryConditionTab: React.FC<QueryConditionTabProps> = ({
     // ✅ Agresif extract stratejisi: Önce selectedForm.formDesign'i dene
     if (selectedForm?.formDesign && (!design || !design.fields || design.fields.length === 0)) {
       try {
-        console.log("🔍 Trying selectedForm.formDesign directly...");
+        
         const raw = JSON.parse(selectedForm.formDesign);
         if (raw && raw.components && Array.isArray(raw.components) && raw.components.length > 0) {
           const extractedFields = extractFieldsFromComponents(raw.components);
-          console.log("✅ Extracted from selectedForm.formDesign:", extractedFields.length, "fields");
+          
           if (extractedFields.length > 0) {
             return {
               fields: extractedFields,
@@ -141,32 +141,32 @@ const QueryConditionTab: React.FC<QueryConditionTabProps> = ({
     
     try {
       let raw = design.raw;
-      console.log("- design.raw:", raw ? "Var" : "Yok");
+      
       
       if (!raw && selectedForm?.formDesign) {
-        console.log("🔍 Parsing selectedForm.formDesign");
+        
         raw = JSON.parse(selectedForm.formDesign);
-        console.log("- parsed raw:", raw ? "Başarılı" : "Başarısız");
+        
       }
       if (!raw && node?.data?.parsedFormDesign?.raw) {
-        console.log("🔍 Using node.data.parsedFormDesign.raw");
+        
         raw = node.data.parsedFormDesign.raw;
       }
       
-      console.log("- Final raw:", raw ? "Var" : "Yok");
-      console.log("- raw.components:", raw?.components ? `${raw.components.length} component` : "Yok");
+      
+      
       
       if (raw && raw.components && Array.isArray(raw.components)) {
-        console.log("🔍 Extracting fields from components:", raw.components.length, "components");
+        
         const extractedFields = extractFieldsFromComponents(raw.components);
-        console.log("✅ Extracted fields:", extractedFields.length, "fields");
+        
         if (extractedFields.length > 0) {
           const result = {
             ...design,
             fields: extractedFields,
             raw: raw,
           };
-          console.log("✅ Returning design with fields:", result);
+          
           return result;
         } else {
           console.warn("⚠️ No fields extracted from components");
@@ -184,7 +184,7 @@ const QueryConditionTab: React.FC<QueryConditionTabProps> = ({
       console.error("❌ Error extracting fields:", error);
     }
     
-    console.log("📤 Returning design (fields yok):", design);
+    
     return design;
   }, [parsedFormDesign, savedParsedFormDesign, selectedForm, node, extractFieldsFromComponents]);
 
@@ -239,15 +239,15 @@ const QueryConditionTab: React.FC<QueryConditionTabProps> = ({
 
   // ✅ Data source'a göre field'ları hazırla
   const availableFields = useMemo(() => {
-    console.log("🔍 AvailableFields calculation:");
-    console.log("- dataSource:", dataSource);
-    console.log("- currentFormDesign:", currentFormDesign);
-    console.log("- currentFormDesign.fields:", currentFormDesign?.fields);
+    
+    
+    
+    
     
     if (dataSource === "formData") {
       // Form field'ları
       const fields = currentFormDesign?.fields || [];
-      console.log("✅ FormData fields:", fields);
+      
       return fields;
     } else if (dataSource === "previousNode" && selectedPreviousNode) {
       // Previous node'un output field'ları
@@ -295,13 +295,13 @@ const QueryConditionTab: React.FC<QueryConditionTabProps> = ({
 
   // ✅ Debug bilgileri
   useEffect(() => {
-    console.log("🔍 QueryConditionTab props:");
-    console.log("- parsedFormDesign:", parsedFormDesign);
-    console.log("- selectedForm:", selectedForm);
-    console.log("- node.data:", node?.data);
-    console.log("- savedFormId:", savedFormId);
-    console.log("- savedFormName:", savedFormName);
-    console.log("- currentFormDesign:", currentFormDesign);
+    
+    
+    
+    
+    
+    
+    
   }, [parsedFormDesign, selectedForm, node, savedFormId, savedFormName, currentFormDesign]);
 
   // ✅ Node data değiştiğinde query'yi güncelle - eklendi

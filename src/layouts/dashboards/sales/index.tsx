@@ -124,7 +124,7 @@ function Sales(): JSX.Element {
 
     //     dispatchBusy({ isBusy: false });
     //   } catch (error) {
-    //     console.log("error", error);
+    //     
     //   } finally {
     //     dispatchBusy({ isBusy: false });
     //   }

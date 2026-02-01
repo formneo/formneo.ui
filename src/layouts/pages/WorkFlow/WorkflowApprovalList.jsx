@@ -227,7 +227,7 @@ function WorkflowApprovalList() {
       setApproveDataCount(result.data?.count || 0);
       setPageCount(Math.ceil((result.data?.count || 0) / itemsPerPage));
 
-      console.log("✅ Form bazlı onaylar yüklendi:", result.data);
+      
       console.log(
         "✅ FormId kontrol:",
         result.data.approveItemsDtoList?.map((item) => ({
@@ -248,9 +248,9 @@ function WorkflowApprovalList() {
 
   // Form detayına git
   async function goToFormDetail(workflowHeadId) {
-    console.log("🔍 goToFormDetail çağrıldı");
-    console.log("📋 WorkflowHeadId:", workflowHeadId);
-    console.log("📋 Type:", typeof workflowHeadId);
+    
+    
+    
     try {
       navigate(`/form-approval-detail/${workflowHeadId}`);
     } catch (error) {
@@ -333,7 +333,7 @@ function WorkflowApprovalList() {
   const handlePageClick = (event) => {
     const newOffset = (event.selected * itemsPerPage) % approveDataCount;
     getFormBasedApproves(selectedStatus, newOffset, itemsPerPage, "", "");
-    console.log(`User requested page number ${event.selected}, which is offset ${newOffset}`);
+    
     setItemOffset(newOffset);
   };
 

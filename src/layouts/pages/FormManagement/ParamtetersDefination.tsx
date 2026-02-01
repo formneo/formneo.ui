@@ -166,10 +166,10 @@ const ParamtetersDefination = (): JSX.Element => {
     const dataTypes = await formProperty.apiFormDataGetFormTypesEnumGet();
     const workFlowDefinationData =
       await workflowdefination.apiWorkFlowDefinationGetWorkFlowListByMenuGet();
-    console.log("murat log1 prio", dataPriorities.data);
-    console.log("murat log2 catego", dataCategories.data);
-    console.log("murat log3 type", dataTypes.data);
-    console.log("murat log4 definiton", workFlowDefinationData.data);
+    
+    
+    
+    
     setMyFormPriorities(dataPriorities.data as any);
     setMyFormCategories(dataCategories.data as any);
     setMyFormTypes(dataTypes.data as any);
@@ -196,27 +196,27 @@ const ParamtetersDefination = (): JSX.Element => {
 
   const saveForm = async (values: any) => {
     try {
-      console.log("Form gönderiliyor...", values);
+      
       var conf = getConfiguration();
       const formRepo = new FormDataApi(conf);
       values.formDesign = JSON.stringify(jsonSchema);
       values.javaScriptCode = jsEditorValue;
-      console.log("workflow ıd ", values.workflowId);
+      
 
       if (id) {
-        console.log("Form güncelleniyor...");
+        
         const json1 = JSON.parse(prevFormDataJson);
         const json2 = JSON.parse(values.formDesign);
         const cleaned1 = removeKeysFromJson(json1);
         const cleaned2 = removeKeysFromJson(json2);
         const areEqual = JSON.stringify(cleaned1) === JSON.stringify(cleaned2);
-        console.log("Formlar aynı mı?", areEqual);
+        
 
 
 
-        console.log("Form başarıyla güncellendi");
+        
       } else {
-        console.log("Yeni form oluşturuluyor...");
+        
         await formRepo.apiFormDataPost({
           formName: values.formName,
           canEdit: true,
@@ -231,9 +231,9 @@ const ParamtetersDefination = (): JSX.Element => {
           formType: values.formType,
           workFlowDefinationId: values.workflowId == "" ? null : values.workflowId,
         });
-        console.log("Form başarıyla oluşturuldu");
+        
       }
-      console.log("Navigating to /parameters...");
+      
       navigate("/parameters", { replace: true });
     } catch (error) {
       console.error("Form gönderme hatası:", error);
@@ -269,7 +269,7 @@ const ParamtetersDefination = (): JSX.Element => {
         var confg = getConfiguration();
         const formRepo = new FormDataApi(confg);
         var data = await formRepo.apiFormDataIdGet(id);
-        console.log("getbyid data", data);
+        
         formikProps.setFieldValue("formName", data.data.formName);
         formikProps.setFieldValue("parentFormId", data.data.parentFormId);
         formikProps.setFieldValue("formDescription", data.data.formDescription);
@@ -288,7 +288,7 @@ const ParamtetersDefination = (): JSX.Element => {
         if (data.data.workFlowDefinationId != null) {
           formikProps.values.formType = 2;
         }
-        console.log("fethtest", data.data.formPriority);
+        
         setSelectedFormPiority(data.data.formPriorityText);
         // JavaScript kodunu state'e kaydet
         setJsEditorValue(
@@ -331,7 +331,7 @@ const ParamtetersDefination = (): JSX.Element => {
     // setLoading(dispatch, true);
     // let formApi = new FormDataApi(configuration);
     // var formDetail = await formApi.apiFormDataIdGet(id);
-    // // console.log(formDetail);
+    // // 
     // formikProps.setFieldValue("formName", formDetail.data.formName);
     // formikProps.setFieldValue("formDescription", formDetail.data.formDescription);
     // formikProps.setFieldValue("formid", formDetail.data.id);
@@ -662,7 +662,7 @@ export class ${formName}Handler {
     e.preventDefault();
     try {
       // Form doğrulama
-      console.log("asdasdasd");
+      
       const validationResult = await this.validateForm();
       if (validationResult.isValid) {
         this.events.onSubmit?.(this.formData);
@@ -707,7 +707,7 @@ ${formSchema.components
 /*
 const ${formName}Instance = new ${formName}Handler({
   onSubmit: (data) => {
-    console.log('Form data:', data);
+    
   },
   onValidationError: (errors) => {
     console.error('Validation errors:', errors);
@@ -755,12 +755,12 @@ document.addEventListener('DOMContentLoaded', function() {
   Formio.createForm(document.getElementById('formio'), ${JSON.stringify(
     formSchema
   )}).then(function(form) {
-    console.log('Form yüklendi:', form);
+    
 
     // Form submit olayı
     form.on('submit', (submission) => {
       alert('Form başarıyla gönderildi!');
-      console.log('Form verileri:', submission.data);
+      
     });
 
     // Her component için event listener'ları ekle
@@ -774,7 +774,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const ${comp.key}Btn = form.getComponent('${comp.key}');
     if (${comp.key}Btn) {
       ${comp.key}Btn.on('click', () => {
-        console.log('${comp.key} butonuna tıklandı');
+        
       });
     }`;
             case "textfield":
@@ -783,7 +783,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const ${comp.key}Field = form.getComponent('${comp.key}');
     if (${comp.key}Field) {
       ${comp.key}Field.on('change', (e) => {
-        console.log('${comp.key} değeri değişti:', e.value);
+        
       });
     }`;
             case "number":
@@ -792,7 +792,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const ${comp.key}Field = form.getComponent('${comp.key}');
     if (${comp.key}Field) {
       ${comp.key}Field.on('change', (e) => {
-        console.log('${comp.key} sayısı değişti:', e.value);
+        
       });
     }`;
             case "select":
@@ -801,7 +801,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const ${comp.key}Select = form.getComponent('${comp.key}');
     if (${comp.key}Select) {
       ${comp.key}Select.on('change', (e) => {
-        console.log('${comp.key} seçimi değişti:', e.value);
+        
       });
     }`;
             default:
@@ -810,7 +810,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const ${comp.key}Comp = form.getComponent('${comp.key}');
     if (${comp.key}Comp) {
       ${comp.key}Comp.on('change', (e) => {
-        console.log('${comp.key} değeri değişti:', e.value);
+        
       });
     }`;
           }
@@ -821,7 +821,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Form hazır olduğunda
     form.on('ready', () => {
-      console.log('Form kullanıma hazır');
+      
     });
 
     // Form validation hatası olduğunda
@@ -1007,17 +1007,17 @@ document.addEventListener('DOMContentLoaded', function() {
                             <ComboBox
                               style={{ width: "100%" }}
                               onChange={(e) => {
-                                console.log(e.target.value);
+                                
                                 let formTypeId = myFormTypes.find(
                                   (x) => x.description == e.target.value
                                 ).id;
-                                console.log(formTypeId);
+                                
                                 if (e.target.value == "2") {
                                   formikProps.setFieldValue("formType", formTypeId);
                                 }
 
                                 if (e.target.value !== "2") {
-                                  console.log(formTypeId);
+                                  
                                   formikProps.setFieldValue("workflowId", "");
                                   formikProps.setFieldValue("formType", formTypeId);
                                 }
@@ -1054,7 +1054,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                 style={{ width: "100%" }}
                                 value={formikProps.values.workFlowName || null}
                                 onChange={(e) => {
-                                  console.log("Seçilen workflowId:", e.target.value);
+                                  
                                   formikProps.setFieldValue('workflowId', e.target.value || null);
                                 }}
                                 name="workflowId"
@@ -1074,7 +1074,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                     (workflow: any) => workflow.workflowName === e.target.value
                                   );
 
-                                  console.log("Seçilen ID:", selectedWorkflow?.id);
+                                  
                                   formikProps.setFieldValue(
                                     "workflowId",
                                     selectedWorkflow?.id || null
@@ -1126,7 +1126,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                 let categoryId = myFormCategories.find(
                                   (x) => x.description == e.target.value
                                 ).id;
-                                console.log(categoryId);
+                                
                                 formikProps.setFieldValue("formCategory", categoryId);
                               }}
                               name="formCategory"
@@ -1183,7 +1183,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                 let formPriorityId = myFormPriorities.find(
                                   (x) => x.description == e.target.value
                                 ).id;
-                                console.log(formPriorityId);
+                                
                                 formikProps.setFieldValue("formPriority", formPriorityId);
                               }}
                               style={{ width: "100%" }}
@@ -1265,7 +1265,7 @@ document.addEventListener('DOMContentLoaded', function() {
                           transition: "all 0.3s ease",
                         }}
                         onClick={() => {
-                          console.log("Kaydet butonuna tıklandı");
+                          
                           // formikProps.submitForm();
                           saveForm(formikProps.values);
                         }}

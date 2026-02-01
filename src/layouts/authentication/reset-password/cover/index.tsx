@@ -121,11 +121,11 @@ function Cover(): JSX.Element {
   const handleResetPassword = async () => {
     try {
       dispatchBusy({ isBusy: true });
-      console.log("email", email);
+      
       var conf = getConfiguration();
       var api = new ForgotPasswordApi(conf);
       var res = await api.apiForgotPasswordForgotPasswordPost(email);
-      console.log(res);
+      
       setShowPsw(false);
       setinfoMsg("Mail adresinize gelen kodu giriniz.")
 
@@ -142,12 +142,12 @@ function Cover(): JSX.Element {
   const verifyResetCode = async () => {
     try {
       dispatchBusy({ isBusy: true });
-      console.log("email", resetCode);
-      console.log("resetCode", resetCode);
+      
+      
       var conf = getConfiguration();
       var api = new ForgotPasswordApi(conf);
       var res = await api.apiForgotPasswordVerifyResetCodePost(email, resetCode);
-      console.log(res);
+      
       setshowNewPswVisible(true);
 
       setinfoMsg("Yeni şifrenizi tanımlayınız.")

@@ -106,6 +106,11 @@ export default function WorkflowRuntime(): JSX.Element {
         script
       );
 
+      console.log("🚀 applyScriptToSchema - Script çalıştırılıyor...", {
+        scriptPreview: script.substring(0, 150),
+        formValuesKeys: Object.keys(formValues),
+      });
+      
       scriptFunction(
         setFieldVisible,
         setFieldReadonly,
@@ -113,6 +118,13 @@ export default function WorkflowRuntime(): JSX.Element {
         getFieldValue,
         formValues
       );
+      
+      console.log("✅ applyScriptToSchema - Script çalıştırıldı, map'ler dolduruldu:", {
+        visibilityMapSize: Object.keys(visibilityMap).length,
+        readonlyMapSize: Object.keys(readonlyMap).length,
+        visibilityMap,
+        readonlyMap,
+      });
 
       // Schema'yı modifiye et
       const modifiedSchema = JSON.parse(JSON.stringify(schema)); // Deep copy
@@ -155,7 +167,11 @@ export default function WorkflowRuntime(): JSX.Element {
         applyToProperties(modifiedSchema.properties);
       }
 
-      console.log("✅ Schema fieldScript'e göre modifiye edildi");
+      console.log("✅ Schema fieldScript'e göre modifiye edildi (applyScriptToSchema)", {
+        visibilityMap,
+        readonlyMap,
+        modifiedSchemaKeys: Object.keys(modifiedSchema.properties || {}),
+      });
       return modifiedSchema;
     } catch (error) {
       console.error("❌ Schema modifikasyonu sırasında hata:", error);
@@ -169,8 +185,18 @@ export default function WorkflowRuntime(): JSX.Element {
    */
   const executeFieldScript = (script: string, formInstance: any) => {
     if (!script || !script.trim() || !formInstance) {
+      console.log("⚠️ FieldScript çalıştırılamıyor:", {
+        hasScript: !!script,
+        scriptTrimmed: script?.trim().length || 0,
+        hasFormInstance: !!formInstance,
+      });
       return;
     }
+
+    console.log("▶️ executeFieldScript başladı:", {
+      scriptPreview: script.substring(0, 100) + "...",
+      scriptLength: script.length,
+    });
 
     try {
       // Formily form instance'ından helper fonksiyonları oluştur
@@ -181,11 +207,13 @@ export default function WorkflowRuntime(): JSX.Element {
             // Formily'de display property'si ile görünürlük kontrol edilir
             if (visible) {
               field.setDisplay("visible");
+              console.log(`✅ setFieldVisible: ${fieldKey} = visible`, field);
             } else {
               field.setDisplay("hidden");
+              console.log(`✅ setFieldVisible: ${fieldKey} = hidden`, field);
             }
           } else {
-            console.warn(`⚠️ Field bulunamadı: ${fieldKey}`);
+            console.warn(`⚠️ setFieldVisible - Field bulunamadı: ${fieldKey}`);
           }
         } catch (error) {
           console.warn(`⚠️ setFieldVisible hatası (${fieldKey}):`, error);
@@ -198,11 +226,13 @@ export default function WorkflowRuntime(): JSX.Element {
           if (field) {
             if (readonly) {
               field.setPattern("readOnly");
+              console.log(`✅ setFieldReadonly: ${fieldKey} = readOnly`, field);
             } else {
               field.setPattern("editable");
+              console.log(`✅ setFieldReadonly: ${fieldKey} = editable`, field);
             }
           } else {
-            console.warn(`⚠️ Field bulunamadı: ${fieldKey}`);
+            console.warn(`⚠️ setFieldReadonly - Field bulunamadı: ${fieldKey}`);
           }
         } catch (error) {
           console.warn(`⚠️ setFieldReadonly hatası (${fieldKey}):`, error);
@@ -349,7 +379,14 @@ export default function WorkflowRuntime(): JSX.Element {
         // ✅ FieldScript varsa schema'yı modifiye et (flash önleme)
         // Script'i schema yüklenirken çalıştırıp schema'yı modifiye ediyoruz
         // Böylece alanlar render edilmeden önce gizli olur
-        const fieldScript = taskDetail?.fieldScript;
+        const fieldScript = taskDetail?.nodeScript;
+
+
+        console.log("🔍 FieldScript kontrolü:", {
+          hasFieldScript: !!fieldScript,
+          fieldScriptLength: fieldScript?.length || 0,
+        });
+        
         if (fieldScript && fieldScript.trim()) {
           // FormData henüz yüklenmemiş olabilir, ama varsa kullan
           // workflowInstance veya taskDetail'den formData'yı al
@@ -374,8 +411,16 @@ export default function WorkflowRuntime(): JSX.Element {
           }
           
           try {
+            console.log("🔧 FieldScript schema'ya uygulanıyor...", {
+              scriptLength: fieldScript.length,
+              scriptPreview: fieldScript.substring(0, 200),
+              hasInitialFormValues: Object.keys(initialFormValues).length > 0,
+              initialFormValues,
+            });
             finalSchema = applyScriptToSchema(fieldScript, finalSchema, initialFormValues);
-            console.log("✅ Schema fieldScript'e göre modifiye edildi (flash önlendi)");
+            console.log("✅ Schema fieldScript'e göre modifiye edildi (flash önlendi)", {
+              modifiedSchema: finalSchema,
+            });
           } catch (error) {
             console.warn("⚠️ Schema modifikasyonu sırasında hata, orijinal schema kullanılıyor:", error);
           }
@@ -484,8 +529,10 @@ export default function WorkflowRuntime(): JSX.Element {
   // Not: Visibility kontrolleri schema yüklenirken yapıldı (flash önleme)
   // Burada sadece değer atamaları ve dinamik kontroller yapılır
   useEffect(() => {
+    const fieldScript = taskDetail?.fieldScript;
+    
     // Yeni bir taskDetail geldiğinde ref'i sıfırla
-    if (taskDetail?.fieldScript) {
+    if (fieldScript) {
       scriptExecutedRef.current = false;
     }
 
@@ -493,9 +540,6 @@ export default function WorkflowRuntime(): JSX.Element {
     if (scriptExecutedRef.current) {
       return;
     }
-
-    // fieldScript'i taskDetail'den al
-    const fieldScript = taskDetail?.fieldScript;
     
     // Script yoksa veya form/schema hazır değilse çık
     if (!fieldScript || !fieldScript.trim() || !form || !schema || loading) {
@@ -509,12 +553,21 @@ export default function WorkflowRuntime(): JSX.Element {
       // FormData yüklenmişse script'i çalıştır (değer atamaları için)
       // Visibility zaten schema'da ayarlandı, burada sadece dinamik kontroller yapılır
       if (formValues && Object.keys(formValues).length > 0) {
-        console.log("📝 FieldScript çalıştırılıyor (değer atamaları için), form values:", formValues);
+        console.log("🔧 FieldScript çalıştırılıyor (runtime - değer atamaları)...", {
+          scriptLength: fieldScript.length,
+          scriptPreview: fieldScript.substring(0, 200),
+          formValuesKeys: Object.keys(formValues),
+          formValues: formValues,
+        });
         executeFieldScript(fieldScript, form);
         scriptExecutedRef.current = true; // Script çalıştırıldı olarak işaretle
+        console.log("✅ FieldScript başarıyla çalıştırıldı!");
       } else {
         // FormData henüz yüklenmemiş, tekrar dene
-        console.log("⏳ FormData henüz yüklenmedi, script çalıştırma erteleniyor...");
+        console.log("⏳ FormData henüz yüklenmedi, script çalıştırma erteleniyor...", {
+          formValuesLength: formValues ? Object.keys(formValues).length : 0,
+          hasFormValues: !!formValues,
+        });
       }
     }, 100); // FormData yüklendikten sonra kısa bir bekleme (visibility zaten schema'da)
 

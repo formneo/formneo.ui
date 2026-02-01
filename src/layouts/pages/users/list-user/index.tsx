@@ -169,7 +169,7 @@ function DataTables(): JSX.Element {
     var conf = getConfiguration();
     var api = new UserApi(conf);
     var data = await api.apiUserGetAllWithOuthPhotoForManagementGet();
-    console.log(data.data);
+    
 
     setDataTableData((prevState) => ({
       ...prevState,
@@ -203,7 +203,7 @@ function DataTables(): JSX.Element {
   const isDataReady = dataTableData.rows.length > 2 && dataTableData.columns.length > 0;
 
   async function DeleteByName(row: any) {
-    console.log(row.original.id);
+    
     var conf = getConfiguration();
     var api = new UserApi(conf);
     await api.apiUserRemoveUserGet(row.original.id);

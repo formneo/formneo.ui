@@ -32,7 +32,7 @@ const ParameterEdit = (): JSX.Element => {
 
     useEffect(() => {
         if (formData) {
-            console.log("use effect içindeki form data=>", formData);
+            
         }
     }, [formData]);
 
@@ -64,16 +64,16 @@ const ParameterEdit = (): JSX.Element => {
         var that = this;
         await formtuntimeApi.apiFormRuntimeGetDetailIdGet(id).then((res: AxiosResponse<FormRuntimeDto>) => {
 
-            console.log("res datası", res);
+            
             setisEdit(true);
             setFormData(res.data);
 
             formexisstData = res.data;
 
 
-            console.log("form data=>", res.data);
+            
         }).finally(() => {
-            console.log("formixstData=>", formexisstData);
+            
         });
 
     }
@@ -82,7 +82,7 @@ const ParameterEdit = (): JSX.Element => {
         var configuration = getConfiguration();
         let formapi = new FormDataApi(configuration);
         let formDetail = await formapi.apiFormDataIdGet(id);
-        console.log("form detail", formDetail);
+        
         setSchema(JSON.parse(formDetail.data.formDesign));
         setFormId(searchParams.get("formid").toString())
         if (searchParams.get("id") != null) {
@@ -118,7 +118,7 @@ const ParameterEdit = (): JSX.Element => {
         var configuration = getConfiguration();
         let formruntimeApi = new FormRuntimeApi(configuration);
         if (searchParams.get("id") == null) {
-            console.log("create");
+            
             let formRuntimeDto: FormRuntimeDto;
             formRuntimeDto2.formId = formId;
             formRuntimeDto2.valuesJson = JSON.stringify(event);
@@ -127,7 +127,7 @@ const ParameterEdit = (): JSX.Element => {
 
         }
         else {
-            console.log("update");
+            
             let formRuntimeDto2: FormRuntimeDto = {};
             formRuntimeDto2.formId = formexisstData.formId;
             formRuntimeDto2.id = formexisstData.id;
@@ -139,7 +139,7 @@ const ParameterEdit = (): JSX.Element => {
     };
     const handleChange = (submission: any) => {
 
-        console.log("submission", submission);
+        
 
         if (submission.isValid) {
             setFormData(submission.data);

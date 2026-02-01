@@ -22,6 +22,18 @@ import { DSApprovalComponent } from "./DSApproval";
 import { DSUserSelectComponent } from "./DSUserSelect";
 import { DSCustomerSelectComponent } from "./DSCustomerSelect";
 import { DSParameterSelectComponent } from "./DSParameterSelect";
+import { DSDepartmentSelectComponent } from "./DSDepartmentSelect";
+import { DSPositionSelectComponent } from "./DSPositionSelect";
+import { DSCompanySelectComponent } from "./DSCompanySelect";
+import { DSLocationSelectComponent } from "./DSLocationSelect";
+import { DSProjectSelectComponent } from "./DSProjectSelect";
+import { DSSupplierSelectComponent } from "./DSSupplierSelect";
+import { DSProductSelectComponent } from "./DSProductSelect";
+import { DSCategorySelectComponent } from "./DSCategorySelect";
+import { DSCurrencySelectComponent } from "./DSCurrencySelect";
+import { DSCountrySelectComponent } from "./DSCountrySelect";
+import { DSCitySelectComponent } from "./DSCitySelect";
+import { DSApproverSelectComponent } from "./DSApproverSelect";
 export default {
   HeaderComponent,
   DSInputComponent,
@@ -46,5 +58,17 @@ export default {
   DSApprovalComponent,
   DSUserSelectComponent,
   DSCustomerSelectComponent,
-  DSParameterSelectComponent
+  DSParameterSelectComponent,
+  DSDepartmentSelectComponent,
+  DSPositionSelectComponent,
+  DSCompanySelectComponent,
+  DSLocationSelectComponent,
+  DSProjectSelectComponent,
+  DSSupplierSelectComponent,
+  DSProductSelectComponent,
+  DSCategorySelectComponent,
+  DSCurrencySelectComponent,
+  DSCountrySelectComponent,
+  DSCitySelectComponent,
+  DSApproverSelectComponent
 };

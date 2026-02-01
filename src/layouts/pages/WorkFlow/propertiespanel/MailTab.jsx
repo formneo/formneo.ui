@@ -36,7 +36,7 @@ const MailTab = ({ initialValues, node, onButtonClick }) => {
     }
     const safevalues = { ...values };
 
-    console.log("📩 MailTab Save → Backend'e gidecek data:", safevalues);
+    
 
     if (onButtonClick) {
       onButtonClick({

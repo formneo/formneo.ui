@@ -64,7 +64,7 @@ export class DSCustomerSelectComponent extends SelectComponent {
       const getConfiguration = (await import('../../../../../confiuration')).default;
       const { CustomersApi } = await import('../../../../../api/generated');
       
-      console.log('🔍 Müşteri listesi yükleniyor...');
+      
       
       const conf = getConfiguration();
       const api = new CustomersApi(conf);
@@ -74,7 +74,7 @@ export class DSCustomerSelectComponent extends SelectComponent {
       
       if (response.data && Array.isArray(response.data)) {
         const customers = response.data;
-        console.log('✅ Müşteriler yüklendi:', customers.length, 'müşteri');
+        
         
         // Form.io select component'ine data set et
         this.component.dataSrc = 'values';
@@ -103,7 +103,7 @@ export class DSCustomerSelectComponent extends SelectComponent {
           this.redraw();
         }
         
-        console.log('✅ Müşteri dropdown güncellendi');
+        
       } else {
         console.error('❌ API yanıtı beklendiği gibi değil:', response);
         this.loadFallbackCustomers();
@@ -138,7 +138,7 @@ export class DSCustomerSelectComponent extends SelectComponent {
    * Fallback - Test müşterileri yükle
    */
   loadFallbackCustomers() {
-    console.log('⚠️ API çalışmadı, test verisi yükleniyor...');
+    
     
     this.component.dataSrc = 'values';
     this.component.data = {
@@ -192,7 +192,7 @@ export class DSCustomerSelectComponent extends SelectComponent {
       this.redraw();
     }
     
-    console.log('✅ Test müşteri verileri yüklendi');
+    
   }
 
   /**

@@ -93,7 +93,7 @@ export default function SqlConditionTab({ initialValues, node, onButtonClick }) 
           }
         }
         onSubmit={(values, { setSubmitting }) => {
-          console.log(JSON.stringify(node));
+          
           node.data = values;
           setSubmitting(false);
           onButtonClick(node);

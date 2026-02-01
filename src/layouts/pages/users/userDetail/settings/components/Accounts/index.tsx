@@ -62,7 +62,7 @@ function Accounts({ formData }: any): JSX.Element {
     setFieldValue('isMailSender', !values.isMailSender);
   }
   useEffect(() => {
-    console.log("isMailSender:", values.isMailSender);
+    
   }, [values.isMailSender]);
 
   return (

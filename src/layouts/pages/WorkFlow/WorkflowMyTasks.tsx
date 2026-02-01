@@ -339,7 +339,7 @@ function WorkflowMyTasks() {
       // ✅ Veri response.data.data içinde
       const data: any[] = response?.data?.data || [];
       
-      console.log("✅ Başlattığım formlar yüklendi:", data.length, "adet");
+      
       
       setMyStartedForms(Array.isArray(data) ? data : []);
     } catch (error) {
@@ -366,7 +366,7 @@ function WorkflowMyTasks() {
       const workflowsResponse = await workflowApi.apiWorkFlowDefinationGet();
       const workflows = workflowsResponse.data || [];
 
-      console.log("📋 Toplam workflow sayısı:", workflows.length);
+      
 
       // Sadece temel bilgileri döndür (formId ve formName tıklayınca çekilecek)
       const workflowsList = workflows.map((workflow: any) => ({
@@ -377,7 +377,7 @@ function WorkflowMyTasks() {
         hasForm: null as boolean | null, // Tıklayınca belirlenecek
       }));
 
-      console.log(`📊 Toplam ${workflowsList.length} workflow listelendi`);
+      
       setAvailableWorkflows(workflowsList);
     } catch (error) {
       console.error("Workflow'lar çekilirken hata:", error);
@@ -407,7 +407,6 @@ function WorkflowMyTasks() {
       const response = await workflowApi.apiWorkFlowGetTaskDetailByWorkflowItemIdWorkflowitemWorkflowItemIdTaskDetailGet(workflowItemId);
       const taskDetail: TaskFormDto = response.data;
 
-      console.log("✅ Görev detayı alındı:", taskDetail);
 
       // ✅ taskType veya nodeType'a göre formTask mı userTask mı belirle
       const isFormTask = taskDetail.formItemId !== null && taskDetail.formItemId !== undefined;
@@ -425,8 +424,11 @@ function WorkflowMyTasks() {
       // ✅ workflowItemId kullanılmalı (workflowHeadId değil)
       const workflowInstanceId = taskDetail.workflowItemId || task.workflowItemId || workflowItemId || task.id;
 
+
       // ✅ FormTask ise runtime sayfasına yönlendir
       if (finalIsFormTask) {
+
+        
         navigate(`/workflows/runtime/${workflowInstanceId}`, {
           state: {
             workflowInstance: {
@@ -442,12 +444,17 @@ function WorkflowMyTasks() {
               workflowItemId: taskDetail.workflowItemId || workflowItemId,
             },
             task: task,
-            taskDetail: taskDetail,
+            taskDetail: taskDetail, // ✅ fieldScript taskDetail içinde
           },
         });
       } 
       // ✅ UserTask ise userTask sayfasına yönlendir (veya runtime'da userTask göster)
       else if (finalIsUserTask) {
+        console.log("🚀 UserTask'a yönlendiriliyor:", {
+          hasFieldScript: !!taskDetail?.fieldScript,
+          fieldScriptLength: taskDetail?.fieldScript?.length || 0,
+        });
+        
         navigate(`/workflows/runtime/${workflowInstanceId}`, {
           state: {
             workflowInstance: {
@@ -464,7 +471,7 @@ function WorkflowMyTasks() {
               approverStatus: taskDetail.approverStatus,
             },
             task: task,
-            taskDetail: taskDetail,
+            taskDetail: taskDetail, // ✅ fieldScript taskDetail içinde
           },
         });
       } 

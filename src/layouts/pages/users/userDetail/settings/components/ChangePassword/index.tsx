@@ -102,7 +102,7 @@ function ChangePassword({ formData, readOnlyUserName }: any): JSX.Element {
     );
   });
   useEffect(() => {
-    console.log(values.isMailSender);
+    
     setIsMailSender(values.isMailSender);
   }, [values.isMailSender])
   const handleUpdatePassword = async () => {
@@ -116,7 +116,7 @@ function ChangePassword({ formData, readOnlyUserName }: any): JSX.Element {
         dispatchAlert({ message: "Password is not valid : ", type: MessageBoxType.Error });
         return;
       }
-      console.log("Mail Gönderme Durumu", isMailSender);
+      
       var conf = getConfiguration();
       var api = new UserApi(conf);
       var result = await api.apiUserResetPassWordGet(email, newPassword, isMailSender);

@@ -58,7 +58,7 @@ function FormRoleDetail() {
     if (hasError) {
       return;
     }
-    console.log("target", target);
+    
   };
 
   const onChange = (event: any) => {

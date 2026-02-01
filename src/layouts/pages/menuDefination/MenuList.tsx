@@ -129,7 +129,7 @@ function MenuList(): JSX.Element {
       var conf = getConfiguration();
       var api = new MenuApi(conf);
       var data = await api.apiMenuAllPlainGet();
-      console.log(data.data);
+      
       setDataTableData(data.data as any);
       
       // Tree yapısını oluştur

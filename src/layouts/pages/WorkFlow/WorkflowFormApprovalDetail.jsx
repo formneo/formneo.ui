@@ -46,19 +46,19 @@ const WorkflowFormApprovalDetail = () => {
       const response = await api.apiWorkFlowGetWorkflowDetailWorkflowHeadIdGet(workflowHeadId);
       const res = response.data; // Axios response'dan data'yı al
 
-      console.log("✅ API Response alındı:");
-      console.log("📦 Full Response:", response);
-      console.log("📦 Response Status:", response.status);
-      console.log("📦 Response Headers:", response.headers);
-      console.log("📦 Response Data:", response.data);
+      
+      
+      
+      
+      
 
       if (res?.formDesign) {
-        console.log("🎨 FormDesign parse ediliyor...");
+        
         setFormDesign(JSON.parse(res.formDesign));
       }
 
       if (res?.payloadJson) {
-        console.log("📊 PayloadJson parse ediliyor...");
+        
         setFormData(JSON.parse(res.payloadJson));
       }
     } catch (error) {
@@ -77,10 +77,10 @@ const WorkflowFormApprovalDetail = () => {
 
   const handleGoBack = () => navigate(-1);
 
-  console.log("🎭 Render durumu:");
-  console.log("📋 Loading:", loading);
-  console.log("🎨 FormDesign:", formDesign);
-  console.log("📊 FormData:", formData);
+  
+  
+  
+  
 
   if (loading) {
     return (

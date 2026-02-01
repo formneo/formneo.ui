@@ -28,7 +28,7 @@ export default function ContactPage(): JSX.Element {
   const onSubmit = async (data: ContactFormData) => {
     setIsSubmitting(true);
     try {
-      console.log("Gönderilen Veri:", data);
+      
       // Simüle edilmiş API isteği
       await new Promise(resolve => setTimeout(resolve, 1500));
       

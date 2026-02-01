@@ -64,7 +64,7 @@ function FormAuthDetail() {
             var conf = getConfiguration();
             var api = new UserApi(conf);
             var data = await api.apiUserGetAllWithOuthPhotoGet();
-            console.log("userData",data.data);
+            
             setSource(data.data);
 
             var formApi = new FormDataApi(conf);
@@ -126,7 +126,7 @@ function FormAuthDetail() {
             };
 
             await api.apiFormAuthPost(dto);
-            console.log(dto);
+            
             navigate("/formAuth");
             dispatchAlert({
                 message: "Form yetkisi tanımlandı.",
@@ -161,7 +161,7 @@ function FormAuthDetail() {
             };
 
             await api.apiFormAuthPut(dto);
-            console.log(dto);
+            
             navigate("/formAuth");
 
             dispatchAlert({
@@ -169,7 +169,7 @@ function FormAuthDetail() {
                 type: MessageBoxType.Success,
             });
         } catch (error) {
-            console.log(error);
+            
             dispatchAlert({
                 message: "Hata Oluştu",
                 type: MessageBoxType.Error,

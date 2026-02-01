@@ -65,7 +65,7 @@ export default function FormStopTab({ initialValues, node, onButtonClick, select
         <Formik
           initialValues={initialValues}
           onSubmit={(values, { setSubmitting }) => {
-            console.log("FormStopNode kaydet:", JSON.stringify(node));
+            
             node.data = values;
             setSubmitting(false);
             onButtonClick(node);

@@ -91,11 +91,11 @@ export default function CustomerFormPage(): JSX.Element {
     const isEdit = Boolean(customerIdFromState) || Boolean(customerId) || location.pathname === '/customers/edit';
     
     // Debug - sayfa yüklendiğinde
-    console.log("=== CUSTOMER FORM PAGE LOADED ===");
-    console.log("Current pathname:", location.pathname);
-    console.log("customerIdFromState:", customerIdFromState);
-    console.log("customerId:", customerId);
-    console.log("isEdit:", isEdit);
+    
+    
+    
+    
+    
     
     
     const { register, handleSubmit, formState: { errors, isSubmitting }, setValue, watch, trigger, getValues } = useForm<FormValues>({
@@ -160,15 +160,15 @@ export default function CustomerFormPage(): JSX.Element {
 
     // Edit modunda müşteri verilerini yükle
     useEffect(() => {
-        console.log("useEffect triggered:", { isEdit, customerIdFromState, id });
+        
         if (isEdit && customerIdFromState) {
             // State'den gelen ID ile API'den veri çek
-            console.log("Loading from state ID:", customerIdFromState);
+            
             loadCustomerData(customerIdFromState);
             setCustomerId(customerIdFromState);
         } else if (isEdit && id) {
             // Fallback: URL'den ID ile API'den yükle
-            console.log("Loading from URL ID:", id);
+            
             loadCustomerData(id);
             setCustomerId(id);
         }
@@ -191,13 +191,13 @@ export default function CustomerFormPage(): JSX.Element {
 
     const loadCustomerData = async (customerId: string) => {
         setLoading(true);
-        console.log("Loading customer data for ID:", customerId);
+        
         try {
             const api = new CustomersApi(getConfiguration());
             const response: any = await api.apiCustomersIdGet(customerId);
             const customer = response.data;
-            console.log("API Response:", response);
-            console.log("Customer Data:", customer);
+            
+            
 
             // RowVersion backend'den geliyor ✅
 

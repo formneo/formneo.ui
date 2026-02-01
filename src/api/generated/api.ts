@@ -1303,6 +1303,17 @@ export interface EmployeeAssignmentUpdateDto {
 }
 
 
+
+export const EntityRelationType = {
+    NUMBER_0: 0,
+    NUMBER_1: 1,
+    NUMBER_2: 2,
+    NUMBER_3: 3
+} as const;
+
+export type EntityRelationType = typeof EntityRelationType[keyof typeof EntityRelationType];
+
+
 export interface EnumDto {
     'name'?: string | null;
     'description'?: string | null;
@@ -1317,6 +1328,18 @@ export interface FieldInfoDto {
     'id'?: string | null;
     'type'?: string | null;
 }
+
+export const FieldTypeCategory = {
+    NUMBER_0: 0,
+    NUMBER_1: 1,
+    NUMBER_2: 2,
+    NUMBER_3: 3,
+    NUMBER_4: 4
+} as const;
+
+export type FieldTypeCategory = typeof FieldTypeCategory[keyof typeof FieldTypeCategory];
+
+
 export interface Form {
     'id'?: string;
     'mainClientId'?: string | null;
@@ -1343,6 +1366,8 @@ export interface Form {
     'canEdit'?: boolean;
     'showInMenu'?: boolean;
     'publicationStatus': FormPublicationStatus;
+    'entityRelations'?: Array<FormEntityRelation> | null;
+    'fieldMappings'?: Array<FormFieldMapping> | null;
 }
 
 
@@ -1456,6 +1481,319 @@ export interface FormDataUpdateDto {
 }
 
 
+export interface FormEntity {
+    'id'?: string;
+    'mainClientId'?: string | null;
+    'mainClient'?: MainClient;
+    'createdBy'?: string | null;
+    'updatedBy'?: string | null;
+    'createdDate'?: string;
+    'updatedDate'?: string | null;
+    'isDelete'?: boolean;
+    'uniqNumber'?: number;
+    'concurrencyToken'?: number;
+    'entityName': string;
+    'entityDescription'?: string | null;
+    'tableName'?: string | null;
+    'schemaName'?: string | null;
+    'namespacePath'?: string | null;
+    'className'?: string | null;
+    'isActive'?: boolean;
+    'allowCreate'?: boolean;
+    'allowRead'?: boolean;
+    'allowUpdate'?: boolean;
+    'allowDelete'?: boolean;
+    'apiEndpoint'?: string | null;
+    'displayField'?: string | null;
+    'orderByField'?: string | null;
+    'fields'?: Array<FormEntityField> | null;
+    'formEntityRelations'?: Array<FormEntityRelation> | null;
+    'parentEntityId'?: string | null;
+    'parentEntity'?: FormEntity;
+    'childEntities'?: Array<FormEntity> | null;
+}
+export interface FormEntityCreateDto {
+    'entityName'?: string | null;
+    'entityDescription'?: string | null;
+    'tableName'?: string | null;
+    'schemaName'?: string | null;
+    'namespacePath'?: string | null;
+    'className'?: string | null;
+    'isActive'?: boolean;
+    'allowCreate'?: boolean;
+    'allowRead'?: boolean;
+    'allowUpdate'?: boolean;
+    'allowDelete'?: boolean;
+    'apiEndpoint'?: string | null;
+    'displayField'?: string | null;
+    'orderByField'?: string | null;
+    'parentEntityId'?: string | null;
+}
+export interface FormEntityDto {
+    'id'?: string;
+    'entityName'?: string | null;
+    'entityDescription'?: string | null;
+    'tableName'?: string | null;
+    'schemaName'?: string | null;
+    'namespacePath'?: string | null;
+    'className'?: string | null;
+    'isActive'?: boolean;
+    'allowCreate'?: boolean;
+    'allowRead'?: boolean;
+    'allowUpdate'?: boolean;
+    'allowDelete'?: boolean;
+    'apiEndpoint'?: string | null;
+    'displayField'?: string | null;
+    'orderByField'?: string | null;
+    'parentEntityId'?: string | null;
+    'parentEntityName'?: string | null;
+    'fields'?: Array<FormEntityFieldDto> | null;
+    'createdAt'?: string;
+    'updatedAt'?: string | null;
+}
+export interface FormEntityField {
+    'id'?: string;
+    'mainClientId'?: string | null;
+    'mainClient'?: MainClient;
+    'createdBy'?: string | null;
+    'updatedBy'?: string | null;
+    'createdDate'?: string;
+    'updatedDate'?: string | null;
+    'isDelete'?: boolean;
+    'uniqNumber'?: number;
+    'concurrencyToken'?: number;
+    'formEntityId': string;
+    'formEntity'?: FormEntity;
+    'fieldName': string;
+    'fieldDescription'?: string | null;
+    'fieldTypeId': string;
+    'fieldType'?: FormEntityFieldType;
+    'columnName'?: string | null;
+    'propertyName'?: string | null;
+    'isRequired'?: boolean;
+    'isUnique'?: boolean;
+    'isIndexed'?: boolean;
+    'isNullable'?: boolean;
+    'isActive'?: boolean;
+    'maxLength'?: number | null;
+    'minLength'?: number | null;
+    'minValue'?: number | null;
+    'maxValue'?: number | null;
+    'defaultValue'?: string | null;
+    'regexPattern'?: string | null;
+    'regexErrorMessage'?: string | null;
+    'displayOrder'?: number;
+    'displayLabel'?: string | null;
+    'placeholder'?: string | null;
+    'helpText'?: string | null;
+    'relatedEntityId'?: string | null;
+    'relatedEntity'?: FormEntity;
+    'lookupDisplayField'?: string | null;
+    'lookupValueField'?: string | null;
+    'customValidationRules'?: string | null;
+    'formFieldMappings'?: Array<FormFieldMapping> | null;
+}
+export interface FormEntityFieldDto {
+    'id'?: string;
+    'formEntityId'?: string;
+    'formEntityName'?: string | null;
+    'fieldName'?: string | null;
+    'fieldDescription'?: string | null;
+    'fieldTypeId'?: string;
+    'fieldTypeName'?: string | null;
+    'columnName'?: string | null;
+    'propertyName'?: string | null;
+    'isRequired'?: boolean;
+    'isUnique'?: boolean;
+    'isIndexed'?: boolean;
+    'isNullable'?: boolean;
+    'isActive'?: boolean;
+    'maxLength'?: number | null;
+    'minLength'?: number | null;
+    'minValue'?: number | null;
+    'maxValue'?: number | null;
+    'defaultValue'?: string | null;
+    'regexPattern'?: string | null;
+    'regexErrorMessage'?: string | null;
+    'displayOrder'?: number;
+    'displayLabel'?: string | null;
+    'placeholder'?: string | null;
+    'helpText'?: string | null;
+    'relatedEntityId'?: string | null;
+    'relatedEntityName'?: string | null;
+    'lookupDisplayField'?: string | null;
+    'lookupValueField'?: string | null;
+    'customValidationRules'?: string | null;
+    'createdAt'?: string;
+    'updatedAt'?: string | null;
+}
+export interface FormEntityFieldType {
+    'id'?: string;
+    'mainClientId'?: string | null;
+    'mainClient'?: MainClient;
+    'createdBy'?: string | null;
+    'updatedBy'?: string | null;
+    'createdDate'?: string;
+    'updatedDate'?: string | null;
+    'isDelete'?: boolean;
+    'uniqNumber'?: number;
+    'concurrencyToken'?: number;
+    'typeName': string;
+    'typeDescription'?: string | null;
+    'cSharpType': string;
+    'typeScriptType'?: string | null;
+    'sqlServerType'?: string | null;
+    'defaultComponentType'?: string | null;
+    'category': FieldTypeCategory;
+    'isActive'?: boolean;
+    'isSystemType'?: boolean;
+    'validationOptions'?: string | null;
+    'componentOptions'?: string | null;
+    'fields'?: Array<FormEntityField> | null;
+}
+
+
+export interface FormEntityFieldTypeCreateDto {
+    'typeName'?: string | null;
+    'typeDescription'?: string | null;
+    'cSharpType'?: string | null;
+    'typeScriptType'?: string | null;
+    'sqlServerType'?: string | null;
+    'defaultComponentType'?: string | null;
+    'category'?: FieldTypeCategory;
+    'isActive'?: boolean;
+    'isSystemType'?: boolean;
+    'validationOptions'?: string | null;
+    'componentOptions'?: string | null;
+}
+
+
+export interface FormEntityFieldTypeDto {
+    'id'?: string;
+    'typeName'?: string | null;
+    'typeDescription'?: string | null;
+    'cSharpType'?: string | null;
+    'typeScriptType'?: string | null;
+    'sqlServerType'?: string | null;
+    'defaultComponentType'?: string | null;
+    'category'?: FieldTypeCategory;
+    'categoryName'?: string | null;
+    'isActive'?: boolean;
+    'isSystemType'?: boolean;
+    'validationOptions'?: string | null;
+    'componentOptions'?: string | null;
+    'createdAt'?: string;
+}
+
+
+export interface FormEntityFieldTypeListDto {
+    'id'?: string;
+    'typeName'?: string | null;
+    'cSharpType'?: string | null;
+    'defaultComponentType'?: string | null;
+    'categoryName'?: string | null;
+    'isSystemType'?: boolean;
+}
+export interface FormEntityFieldTypeUpdateDto {
+    'id'?: string;
+    'typeName'?: string | null;
+    'typeDescription'?: string | null;
+    'cSharpType'?: string | null;
+    'typeScriptType'?: string | null;
+    'sqlServerType'?: string | null;
+    'defaultComponentType'?: string | null;
+    'category'?: FieldTypeCategory;
+    'isActive'?: boolean;
+    'validationOptions'?: string | null;
+    'componentOptions'?: string | null;
+}
+
+
+export interface FormEntityListDto {
+    'id'?: string;
+    'entityName'?: string | null;
+    'entityDescription'?: string | null;
+    'tableName'?: string | null;
+    'isActive'?: boolean;
+    'fieldCount'?: number;
+    'formCount'?: number;
+    'createdAt'?: string;
+}
+export interface FormEntityRelation {
+    'id'?: string;
+    'mainClientId'?: string | null;
+    'mainClient'?: MainClient;
+    'createdBy'?: string | null;
+    'updatedBy'?: string | null;
+    'createdDate'?: string;
+    'updatedDate'?: string | null;
+    'isDelete'?: boolean;
+    'uniqNumber'?: number;
+    'concurrencyToken'?: number;
+    'formId': string;
+    'form'?: Form;
+    'formEntityId': string;
+    'formEntity'?: FormEntity;
+    'relationName': string;
+    'relationDescription'?: string | null;
+    'relationType': EntityRelationType;
+    'isPrimary'?: boolean;
+    'isRequired'?: boolean;
+    'isActive'?: boolean;
+    'cascadeDelete'?: boolean;
+    'displayOrder'?: number;
+    'parentRelationId'?: string | null;
+    'parentRelation'?: FormEntityRelation;
+    'formDataPath'?: string | null;
+}
+
+
+export interface FormEntityUpdateDto {
+    'id'?: string;
+    'entityName'?: string | null;
+    'entityDescription'?: string | null;
+    'tableName'?: string | null;
+    'schemaName'?: string | null;
+    'namespacePath'?: string | null;
+    'className'?: string | null;
+    'isActive'?: boolean;
+    'allowCreate'?: boolean;
+    'allowRead'?: boolean;
+    'allowUpdate'?: boolean;
+    'allowDelete'?: boolean;
+    'apiEndpoint'?: string | null;
+    'displayField'?: string | null;
+    'orderByField'?: string | null;
+    'parentEntityId'?: string | null;
+}
+export interface FormFieldMapping {
+    'id'?: string;
+    'mainClientId'?: string | null;
+    'mainClient'?: MainClient;
+    'createdBy'?: string | null;
+    'updatedBy'?: string | null;
+    'createdDate'?: string;
+    'updatedDate'?: string | null;
+    'isDelete'?: boolean;
+    'uniqNumber'?: number;
+    'concurrencyToken'?: number;
+    'formId': string;
+    'form'?: Form;
+    'formEntityFieldId': string;
+    'formEntityField'?: FormEntityField;
+    'formEntityRelationId'?: string | null;
+    'formEntityRelation'?: FormEntityRelation;
+    'formElementId': string;
+    'formFieldName': string;
+    'formComponentType'?: string | null;
+    'isActive'?: boolean;
+    'isReadOnly'?: boolean;
+    'isAutoMapped'?: boolean;
+    'transformRules'?: string | null;
+    'validationOverride'?: string | null;
+    'displayOrder'?: number;
+    'mappingNotes'?: string | null;
+}
 export interface FormInstance {
     'id'?: string;
     'mainClientId'?: string | null;
@@ -2742,6 +3080,7 @@ export interface TaskFormDto {
     'formUser'?: string | null;
     'formItemStatus'?: FormItemStatus;
     'fieldScript'?: string | null;
+    'nodeScript'?: string | null;
     'approveItemId'?: string | null;
     'approveUser'?: string | null;
     'approveUserNameSurname'?: string | null;
@@ -17149,6 +17488,1465 @@ export class FormDataApi extends BaseAPI {
      */
     public apiFormDataVersionsParentIdGet(parentId: string, options?: RawAxiosRequestConfig) {
         return FormDataApiFp(this.configuration).apiFormDataVersionsParentIdGet(parentId, options).then((request) => request(this.axios, this.basePath));
+    }
+}
+
+
+
+/**
+ * FormEntityApi - axios parameter creator
+ */
+export const FormEntityApiAxiosParamCreator = function (configuration?: Configuration) {
+    return {
+        /**
+         * 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        apiFormEntityDatabaseTablesGet: async (options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            const localVarPath = `/api/FormEntity/database-tables`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication Bearer required
+            // http bearer authentication required
+            await setBearerAuthToObject(localVarHeaderParameter, configuration)
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        apiFormEntityForFormGet: async (options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            const localVarPath = `/api/FormEntity/for-form`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication Bearer required
+            // http bearer authentication required
+            await setBearerAuthToObject(localVarHeaderParameter, configuration)
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        apiFormEntityGet: async (options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            const localVarPath = `/api/FormEntity`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication Bearer required
+            // http bearer authentication required
+            await setBearerAuthToObject(localVarHeaderParameter, configuration)
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @param {string} id 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        apiFormEntityIdDelete: async (id: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'id' is not null or undefined
+            assertParamExists('apiFormEntityIdDelete', 'id', id)
+            const localVarPath = `/api/FormEntity/{id}`
+                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'DELETE', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication Bearer required
+            // http bearer authentication required
+            await setBearerAuthToObject(localVarHeaderParameter, configuration)
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @param {string} id 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        apiFormEntityIdFormsGet: async (id: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'id' is not null or undefined
+            assertParamExists('apiFormEntityIdFormsGet', 'id', id)
+            const localVarPath = `/api/FormEntity/{id}/forms`
+                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication Bearer required
+            // http bearer authentication required
+            await setBearerAuthToObject(localVarHeaderParameter, configuration)
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @param {string} id 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        apiFormEntityIdGet: async (id: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'id' is not null or undefined
+            assertParamExists('apiFormEntityIdGet', 'id', id)
+            const localVarPath = `/api/FormEntity/{id}`
+                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication Bearer required
+            // http bearer authentication required
+            await setBearerAuthToObject(localVarHeaderParameter, configuration)
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @param {string} id 
+         * @param {FormEntityUpdateDto} [formEntityUpdateDto] 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        apiFormEntityIdPut: async (id: string, formEntityUpdateDto?: FormEntityUpdateDto, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'id' is not null or undefined
+            assertParamExists('apiFormEntityIdPut', 'id', id)
+            const localVarPath = `/api/FormEntity/{id}`
+                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'PUT', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication Bearer required
+            // http bearer authentication required
+            await setBearerAuthToObject(localVarHeaderParameter, configuration)
+
+
+    
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(formEntityUpdateDto, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @param {Array<string>} [requestBody] 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        apiFormEntityImportFromDatabasePost: async (requestBody?: Array<string>, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            const localVarPath = `/api/FormEntity/import-from-database`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication Bearer required
+            // http bearer authentication required
+            await setBearerAuthToObject(localVarHeaderParameter, configuration)
+
+
+    
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(requestBody, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @param {FormEntityCreateDto} [formEntityCreateDto] 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        apiFormEntityPost: async (formEntityCreateDto?: FormEntityCreateDto, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            const localVarPath = `/api/FormEntity`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication Bearer required
+            // http bearer authentication required
+            await setBearerAuthToObject(localVarHeaderParameter, configuration)
+
+
+    
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(formEntityCreateDto, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+    }
+};
+
+/**
+ * FormEntityApi - functional programming interface
+ */
+export const FormEntityApiFp = function(configuration?: Configuration) {
+    const localVarAxiosParamCreator = FormEntityApiAxiosParamCreator(configuration)
+    return {
+        /**
+         * 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async apiFormEntityDatabaseTablesGet(options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Array<any>>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.apiFormEntityDatabaseTablesGet(options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['FormEntityApi.apiFormEntityDatabaseTablesGet']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async apiFormEntityForFormGet(options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Array<FormEntityListDto>>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.apiFormEntityForFormGet(options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['FormEntityApi.apiFormEntityForFormGet']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async apiFormEntityGet(options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Array<FormEntityListDto>>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.apiFormEntityGet(options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['FormEntityApi.apiFormEntityGet']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * 
+         * @param {string} id 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async apiFormEntityIdDelete(id: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.apiFormEntityIdDelete(id, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['FormEntityApi.apiFormEntityIdDelete']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * 
+         * @param {string} id 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async apiFormEntityIdFormsGet(id: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Array<any>>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.apiFormEntityIdFormsGet(id, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['FormEntityApi.apiFormEntityIdFormsGet']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * 
+         * @param {string} id 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async apiFormEntityIdGet(id: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<FormEntityDto>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.apiFormEntityIdGet(id, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['FormEntityApi.apiFormEntityIdGet']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * 
+         * @param {string} id 
+         * @param {FormEntityUpdateDto} [formEntityUpdateDto] 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async apiFormEntityIdPut(id: string, formEntityUpdateDto?: FormEntityUpdateDto, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<FormEntityDto>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.apiFormEntityIdPut(id, formEntityUpdateDto, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['FormEntityApi.apiFormEntityIdPut']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * 
+         * @param {Array<string>} [requestBody] 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async apiFormEntityImportFromDatabasePost(requestBody?: Array<string>, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.apiFormEntityImportFromDatabasePost(requestBody, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['FormEntityApi.apiFormEntityImportFromDatabasePost']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * 
+         * @param {FormEntityCreateDto} [formEntityCreateDto] 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async apiFormEntityPost(formEntityCreateDto?: FormEntityCreateDto, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<FormEntityDto>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.apiFormEntityPost(formEntityCreateDto, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['FormEntityApi.apiFormEntityPost']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+    }
+};
+
+/**
+ * FormEntityApi - factory interface
+ */
+export const FormEntityApiFactory = function (configuration?: Configuration, basePath?: string, axios?: AxiosInstance) {
+    const localVarFp = FormEntityApiFp(configuration)
+    return {
+        /**
+         * 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        apiFormEntityDatabaseTablesGet(options?: RawAxiosRequestConfig): AxiosPromise<Array<any>> {
+            return localVarFp.apiFormEntityDatabaseTablesGet(options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        apiFormEntityForFormGet(options?: RawAxiosRequestConfig): AxiosPromise<Array<FormEntityListDto>> {
+            return localVarFp.apiFormEntityForFormGet(options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        apiFormEntityGet(options?: RawAxiosRequestConfig): AxiosPromise<Array<FormEntityListDto>> {
+            return localVarFp.apiFormEntityGet(options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
+         * @param {string} id 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        apiFormEntityIdDelete(id: string, options?: RawAxiosRequestConfig): AxiosPromise<void> {
+            return localVarFp.apiFormEntityIdDelete(id, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
+         * @param {string} id 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        apiFormEntityIdFormsGet(id: string, options?: RawAxiosRequestConfig): AxiosPromise<Array<any>> {
+            return localVarFp.apiFormEntityIdFormsGet(id, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
+         * @param {string} id 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        apiFormEntityIdGet(id: string, options?: RawAxiosRequestConfig): AxiosPromise<FormEntityDto> {
+            return localVarFp.apiFormEntityIdGet(id, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
+         * @param {string} id 
+         * @param {FormEntityUpdateDto} [formEntityUpdateDto] 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        apiFormEntityIdPut(id: string, formEntityUpdateDto?: FormEntityUpdateDto, options?: RawAxiosRequestConfig): AxiosPromise<FormEntityDto> {
+            return localVarFp.apiFormEntityIdPut(id, formEntityUpdateDto, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
+         * @param {Array<string>} [requestBody] 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        apiFormEntityImportFromDatabasePost(requestBody?: Array<string>, options?: RawAxiosRequestConfig): AxiosPromise<void> {
+            return localVarFp.apiFormEntityImportFromDatabasePost(requestBody, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
+         * @param {FormEntityCreateDto} [formEntityCreateDto] 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        apiFormEntityPost(formEntityCreateDto?: FormEntityCreateDto, options?: RawAxiosRequestConfig): AxiosPromise<FormEntityDto> {
+            return localVarFp.apiFormEntityPost(formEntityCreateDto, options).then((request) => request(axios, basePath));
+        },
+    };
+};
+
+/**
+ * FormEntityApi - object-oriented interface
+ */
+export class FormEntityApi extends BaseAPI {
+    /**
+     * 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    public apiFormEntityDatabaseTablesGet(options?: RawAxiosRequestConfig) {
+        return FormEntityApiFp(this.configuration).apiFormEntityDatabaseTablesGet(options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    public apiFormEntityForFormGet(options?: RawAxiosRequestConfig) {
+        return FormEntityApiFp(this.configuration).apiFormEntityForFormGet(options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    public apiFormEntityGet(options?: RawAxiosRequestConfig) {
+        return FormEntityApiFp(this.configuration).apiFormEntityGet(options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @param {string} id 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    public apiFormEntityIdDelete(id: string, options?: RawAxiosRequestConfig) {
+        return FormEntityApiFp(this.configuration).apiFormEntityIdDelete(id, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @param {string} id 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    public apiFormEntityIdFormsGet(id: string, options?: RawAxiosRequestConfig) {
+        return FormEntityApiFp(this.configuration).apiFormEntityIdFormsGet(id, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @param {string} id 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    public apiFormEntityIdGet(id: string, options?: RawAxiosRequestConfig) {
+        return FormEntityApiFp(this.configuration).apiFormEntityIdGet(id, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @param {string} id 
+     * @param {FormEntityUpdateDto} [formEntityUpdateDto] 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    public apiFormEntityIdPut(id: string, formEntityUpdateDto?: FormEntityUpdateDto, options?: RawAxiosRequestConfig) {
+        return FormEntityApiFp(this.configuration).apiFormEntityIdPut(id, formEntityUpdateDto, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @param {Array<string>} [requestBody] 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    public apiFormEntityImportFromDatabasePost(requestBody?: Array<string>, options?: RawAxiosRequestConfig) {
+        return FormEntityApiFp(this.configuration).apiFormEntityImportFromDatabasePost(requestBody, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @param {FormEntityCreateDto} [formEntityCreateDto] 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    public apiFormEntityPost(formEntityCreateDto?: FormEntityCreateDto, options?: RawAxiosRequestConfig) {
+        return FormEntityApiFp(this.configuration).apiFormEntityPost(formEntityCreateDto, options).then((request) => request(this.axios, this.basePath));
+    }
+}
+
+
+
+/**
+ * FormEntityFieldTypeApi - axios parameter creator
+ */
+export const FormEntityFieldTypeApiAxiosParamCreator = function (configuration?: Configuration) {
+    return {
+        /**
+         * 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        apiFormEntityFieldTypeActiveGet: async (options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            const localVarPath = `/api/FormEntityFieldType/active`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication Bearer required
+            // http bearer authentication required
+            await setBearerAuthToObject(localVarHeaderParameter, configuration)
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @param {string} typeName 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        apiFormEntityFieldTypeByNameTypeNameGet: async (typeName: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'typeName' is not null or undefined
+            assertParamExists('apiFormEntityFieldTypeByNameTypeNameGet', 'typeName', typeName)
+            const localVarPath = `/api/FormEntityFieldType/by-name/{typeName}`
+                .replace(`{${"typeName"}}`, encodeURIComponent(String(typeName)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication Bearer required
+            // http bearer authentication required
+            await setBearerAuthToObject(localVarHeaderParameter, configuration)
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @param {FieldTypeCategory} category 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        apiFormEntityFieldTypeCategoryCategoryGet: async (category: FieldTypeCategory, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'category' is not null or undefined
+            assertParamExists('apiFormEntityFieldTypeCategoryCategoryGet', 'category', category)
+            const localVarPath = `/api/FormEntityFieldType/category/{category}`
+                .replace(`{${"category"}}`, encodeURIComponent(String(category)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication Bearer required
+            // http bearer authentication required
+            await setBearerAuthToObject(localVarHeaderParameter, configuration)
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        apiFormEntityFieldTypeGet: async (options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            const localVarPath = `/api/FormEntityFieldType`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication Bearer required
+            // http bearer authentication required
+            await setBearerAuthToObject(localVarHeaderParameter, configuration)
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        apiFormEntityFieldTypeGroupedGet: async (options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            const localVarPath = `/api/FormEntityFieldType/grouped`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication Bearer required
+            // http bearer authentication required
+            await setBearerAuthToObject(localVarHeaderParameter, configuration)
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @param {string} id 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        apiFormEntityFieldTypeIdDelete: async (id: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'id' is not null or undefined
+            assertParamExists('apiFormEntityFieldTypeIdDelete', 'id', id)
+            const localVarPath = `/api/FormEntityFieldType/{id}`
+                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'DELETE', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication Bearer required
+            // http bearer authentication required
+            await setBearerAuthToObject(localVarHeaderParameter, configuration)
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @param {string} id 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        apiFormEntityFieldTypeIdGet: async (id: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'id' is not null or undefined
+            assertParamExists('apiFormEntityFieldTypeIdGet', 'id', id)
+            const localVarPath = `/api/FormEntityFieldType/{id}`
+                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication Bearer required
+            // http bearer authentication required
+            await setBearerAuthToObject(localVarHeaderParameter, configuration)
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @param {string} id 
+         * @param {FormEntityFieldTypeUpdateDto} [formEntityFieldTypeUpdateDto] 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        apiFormEntityFieldTypeIdPut: async (id: string, formEntityFieldTypeUpdateDto?: FormEntityFieldTypeUpdateDto, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'id' is not null or undefined
+            assertParamExists('apiFormEntityFieldTypeIdPut', 'id', id)
+            const localVarPath = `/api/FormEntityFieldType/{id}`
+                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'PUT', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication Bearer required
+            // http bearer authentication required
+            await setBearerAuthToObject(localVarHeaderParameter, configuration)
+
+
+    
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(formEntityFieldTypeUpdateDto, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @param {string} id 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        apiFormEntityFieldTypeIdUsageStatsGet: async (id: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'id' is not null or undefined
+            assertParamExists('apiFormEntityFieldTypeIdUsageStatsGet', 'id', id)
+            const localVarPath = `/api/FormEntityFieldType/{id}/usage-stats`
+                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication Bearer required
+            // http bearer authentication required
+            await setBearerAuthToObject(localVarHeaderParameter, configuration)
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @param {string} id 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        apiFormEntityFieldTypeIdValidationOptionsGet: async (id: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'id' is not null or undefined
+            assertParamExists('apiFormEntityFieldTypeIdValidationOptionsGet', 'id', id)
+            const localVarPath = `/api/FormEntityFieldType/{id}/validation-options`
+                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication Bearer required
+            // http bearer authentication required
+            await setBearerAuthToObject(localVarHeaderParameter, configuration)
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @param {FormEntityFieldTypeCreateDto} [formEntityFieldTypeCreateDto] 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        apiFormEntityFieldTypePost: async (formEntityFieldTypeCreateDto?: FormEntityFieldTypeCreateDto, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            const localVarPath = `/api/FormEntityFieldType`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication Bearer required
+            // http bearer authentication required
+            await setBearerAuthToObject(localVarHeaderParameter, configuration)
+
+
+    
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(formEntityFieldTypeCreateDto, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        apiFormEntityFieldTypeReferenceTypesGet: async (options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            const localVarPath = `/api/FormEntityFieldType/reference-types`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication Bearer required
+            // http bearer authentication required
+            await setBearerAuthToObject(localVarHeaderParameter, configuration)
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+    }
+};
+
+/**
+ * FormEntityFieldTypeApi - functional programming interface
+ */
+export const FormEntityFieldTypeApiFp = function(configuration?: Configuration) {
+    const localVarAxiosParamCreator = FormEntityFieldTypeApiAxiosParamCreator(configuration)
+    return {
+        /**
+         * 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async apiFormEntityFieldTypeActiveGet(options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Array<FormEntityFieldTypeListDto>>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.apiFormEntityFieldTypeActiveGet(options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['FormEntityFieldTypeApi.apiFormEntityFieldTypeActiveGet']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * 
+         * @param {string} typeName 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async apiFormEntityFieldTypeByNameTypeNameGet(typeName: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<FormEntityFieldTypeDto>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.apiFormEntityFieldTypeByNameTypeNameGet(typeName, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['FormEntityFieldTypeApi.apiFormEntityFieldTypeByNameTypeNameGet']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * 
+         * @param {FieldTypeCategory} category 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async apiFormEntityFieldTypeCategoryCategoryGet(category: FieldTypeCategory, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Array<FormEntityFieldTypeDto>>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.apiFormEntityFieldTypeCategoryCategoryGet(category, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['FormEntityFieldTypeApi.apiFormEntityFieldTypeCategoryCategoryGet']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async apiFormEntityFieldTypeGet(options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Array<FormEntityFieldTypeDto>>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.apiFormEntityFieldTypeGet(options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['FormEntityFieldTypeApi.apiFormEntityFieldTypeGet']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async apiFormEntityFieldTypeGroupedGet(options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<{ [key: string]: Array<FormEntityFieldTypeListDto>; }>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.apiFormEntityFieldTypeGroupedGet(options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['FormEntityFieldTypeApi.apiFormEntityFieldTypeGroupedGet']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * 
+         * @param {string} id 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async apiFormEntityFieldTypeIdDelete(id: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.apiFormEntityFieldTypeIdDelete(id, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['FormEntityFieldTypeApi.apiFormEntityFieldTypeIdDelete']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * 
+         * @param {string} id 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async apiFormEntityFieldTypeIdGet(id: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<FormEntityFieldTypeDto>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.apiFormEntityFieldTypeIdGet(id, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['FormEntityFieldTypeApi.apiFormEntityFieldTypeIdGet']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * 
+         * @param {string} id 
+         * @param {FormEntityFieldTypeUpdateDto} [formEntityFieldTypeUpdateDto] 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async apiFormEntityFieldTypeIdPut(id: string, formEntityFieldTypeUpdateDto?: FormEntityFieldTypeUpdateDto, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<FormEntityFieldTypeDto>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.apiFormEntityFieldTypeIdPut(id, formEntityFieldTypeUpdateDto, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['FormEntityFieldTypeApi.apiFormEntityFieldTypeIdPut']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * 
+         * @param {string} id 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async apiFormEntityFieldTypeIdUsageStatsGet(id: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.apiFormEntityFieldTypeIdUsageStatsGet(id, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['FormEntityFieldTypeApi.apiFormEntityFieldTypeIdUsageStatsGet']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * 
+         * @param {string} id 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async apiFormEntityFieldTypeIdValidationOptionsGet(id: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.apiFormEntityFieldTypeIdValidationOptionsGet(id, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['FormEntityFieldTypeApi.apiFormEntityFieldTypeIdValidationOptionsGet']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * 
+         * @param {FormEntityFieldTypeCreateDto} [formEntityFieldTypeCreateDto] 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async apiFormEntityFieldTypePost(formEntityFieldTypeCreateDto?: FormEntityFieldTypeCreateDto, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<FormEntityFieldTypeDto>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.apiFormEntityFieldTypePost(formEntityFieldTypeCreateDto, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['FormEntityFieldTypeApi.apiFormEntityFieldTypePost']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async apiFormEntityFieldTypeReferenceTypesGet(options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Array<FormEntityFieldTypeListDto>>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.apiFormEntityFieldTypeReferenceTypesGet(options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['FormEntityFieldTypeApi.apiFormEntityFieldTypeReferenceTypesGet']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+    }
+};
+
+/**
+ * FormEntityFieldTypeApi - factory interface
+ */
+export const FormEntityFieldTypeApiFactory = function (configuration?: Configuration, basePath?: string, axios?: AxiosInstance) {
+    const localVarFp = FormEntityFieldTypeApiFp(configuration)
+    return {
+        /**
+         * 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        apiFormEntityFieldTypeActiveGet(options?: RawAxiosRequestConfig): AxiosPromise<Array<FormEntityFieldTypeListDto>> {
+            return localVarFp.apiFormEntityFieldTypeActiveGet(options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
+         * @param {string} typeName 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        apiFormEntityFieldTypeByNameTypeNameGet(typeName: string, options?: RawAxiosRequestConfig): AxiosPromise<FormEntityFieldTypeDto> {
+            return localVarFp.apiFormEntityFieldTypeByNameTypeNameGet(typeName, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
+         * @param {FieldTypeCategory} category 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        apiFormEntityFieldTypeCategoryCategoryGet(category: FieldTypeCategory, options?: RawAxiosRequestConfig): AxiosPromise<Array<FormEntityFieldTypeDto>> {
+            return localVarFp.apiFormEntityFieldTypeCategoryCategoryGet(category, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        apiFormEntityFieldTypeGet(options?: RawAxiosRequestConfig): AxiosPromise<Array<FormEntityFieldTypeDto>> {
+            return localVarFp.apiFormEntityFieldTypeGet(options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        apiFormEntityFieldTypeGroupedGet(options?: RawAxiosRequestConfig): AxiosPromise<{ [key: string]: Array<FormEntityFieldTypeListDto>; }> {
+            return localVarFp.apiFormEntityFieldTypeGroupedGet(options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
+         * @param {string} id 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        apiFormEntityFieldTypeIdDelete(id: string, options?: RawAxiosRequestConfig): AxiosPromise<void> {
+            return localVarFp.apiFormEntityFieldTypeIdDelete(id, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
+         * @param {string} id 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        apiFormEntityFieldTypeIdGet(id: string, options?: RawAxiosRequestConfig): AxiosPromise<FormEntityFieldTypeDto> {
+            return localVarFp.apiFormEntityFieldTypeIdGet(id, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
+         * @param {string} id 
+         * @param {FormEntityFieldTypeUpdateDto} [formEntityFieldTypeUpdateDto] 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        apiFormEntityFieldTypeIdPut(id: string, formEntityFieldTypeUpdateDto?: FormEntityFieldTypeUpdateDto, options?: RawAxiosRequestConfig): AxiosPromise<FormEntityFieldTypeDto> {
+            return localVarFp.apiFormEntityFieldTypeIdPut(id, formEntityFieldTypeUpdateDto, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
+         * @param {string} id 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        apiFormEntityFieldTypeIdUsageStatsGet(id: string, options?: RawAxiosRequestConfig): AxiosPromise<void> {
+            return localVarFp.apiFormEntityFieldTypeIdUsageStatsGet(id, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
+         * @param {string} id 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        apiFormEntityFieldTypeIdValidationOptionsGet(id: string, options?: RawAxiosRequestConfig): AxiosPromise<void> {
+            return localVarFp.apiFormEntityFieldTypeIdValidationOptionsGet(id, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
+         * @param {FormEntityFieldTypeCreateDto} [formEntityFieldTypeCreateDto] 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        apiFormEntityFieldTypePost(formEntityFieldTypeCreateDto?: FormEntityFieldTypeCreateDto, options?: RawAxiosRequestConfig): AxiosPromise<FormEntityFieldTypeDto> {
+            return localVarFp.apiFormEntityFieldTypePost(formEntityFieldTypeCreateDto, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        apiFormEntityFieldTypeReferenceTypesGet(options?: RawAxiosRequestConfig): AxiosPromise<Array<FormEntityFieldTypeListDto>> {
+            return localVarFp.apiFormEntityFieldTypeReferenceTypesGet(options).then((request) => request(axios, basePath));
+        },
+    };
+};
+
+/**
+ * FormEntityFieldTypeApi - object-oriented interface
+ */
+export class FormEntityFieldTypeApi extends BaseAPI {
+    /**
+     * 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    public apiFormEntityFieldTypeActiveGet(options?: RawAxiosRequestConfig) {
+        return FormEntityFieldTypeApiFp(this.configuration).apiFormEntityFieldTypeActiveGet(options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @param {string} typeName 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    public apiFormEntityFieldTypeByNameTypeNameGet(typeName: string, options?: RawAxiosRequestConfig) {
+        return FormEntityFieldTypeApiFp(this.configuration).apiFormEntityFieldTypeByNameTypeNameGet(typeName, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @param {FieldTypeCategory} category 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    public apiFormEntityFieldTypeCategoryCategoryGet(category: FieldTypeCategory, options?: RawAxiosRequestConfig) {
+        return FormEntityFieldTypeApiFp(this.configuration).apiFormEntityFieldTypeCategoryCategoryGet(category, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    public apiFormEntityFieldTypeGet(options?: RawAxiosRequestConfig) {
+        return FormEntityFieldTypeApiFp(this.configuration).apiFormEntityFieldTypeGet(options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    public apiFormEntityFieldTypeGroupedGet(options?: RawAxiosRequestConfig) {
+        return FormEntityFieldTypeApiFp(this.configuration).apiFormEntityFieldTypeGroupedGet(options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @param {string} id 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    public apiFormEntityFieldTypeIdDelete(id: string, options?: RawAxiosRequestConfig) {
+        return FormEntityFieldTypeApiFp(this.configuration).apiFormEntityFieldTypeIdDelete(id, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @param {string} id 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    public apiFormEntityFieldTypeIdGet(id: string, options?: RawAxiosRequestConfig) {
+        return FormEntityFieldTypeApiFp(this.configuration).apiFormEntityFieldTypeIdGet(id, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @param {string} id 
+     * @param {FormEntityFieldTypeUpdateDto} [formEntityFieldTypeUpdateDto] 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    public apiFormEntityFieldTypeIdPut(id: string, formEntityFieldTypeUpdateDto?: FormEntityFieldTypeUpdateDto, options?: RawAxiosRequestConfig) {
+        return FormEntityFieldTypeApiFp(this.configuration).apiFormEntityFieldTypeIdPut(id, formEntityFieldTypeUpdateDto, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @param {string} id 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    public apiFormEntityFieldTypeIdUsageStatsGet(id: string, options?: RawAxiosRequestConfig) {
+        return FormEntityFieldTypeApiFp(this.configuration).apiFormEntityFieldTypeIdUsageStatsGet(id, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @param {string} id 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    public apiFormEntityFieldTypeIdValidationOptionsGet(id: string, options?: RawAxiosRequestConfig) {
+        return FormEntityFieldTypeApiFp(this.configuration).apiFormEntityFieldTypeIdValidationOptionsGet(id, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @param {FormEntityFieldTypeCreateDto} [formEntityFieldTypeCreateDto] 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    public apiFormEntityFieldTypePost(formEntityFieldTypeCreateDto?: FormEntityFieldTypeCreateDto, options?: RawAxiosRequestConfig) {
+        return FormEntityFieldTypeApiFp(this.configuration).apiFormEntityFieldTypePost(formEntityFieldTypeCreateDto, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    public apiFormEntityFieldTypeReferenceTypesGet(options?: RawAxiosRequestConfig) {
+        return FormEntityFieldTypeApiFp(this.configuration).apiFormEntityFieldTypeReferenceTypesGet(options).then((request) => request(this.axios, this.basePath));
     }
 }
 
@@ -37351,10 +39149,14 @@ export const WorkFlowApiAxiosParamCreator = function (configuration?: Configurat
         },
         /**
          * 
+         * @param {string} [workFlowDefinationId] 
+         * @param {number} [durum] 
+         * @param {string} [baslangicTarihiMin] 
+         * @param {string} [baslangicTarihiMax] 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        apiWorkFlowGetMyStartedFormsGet: async (options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        apiWorkFlowGetMyStartedFormsGet: async (workFlowDefinationId?: string, durum?: number, baslangicTarihiMin?: string, baslangicTarihiMax?: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             const localVarPath = `/api/WorkFlow/GetMyStartedForms`;
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
             const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -37371,6 +39173,26 @@ export const WorkFlowApiAxiosParamCreator = function (configuration?: Configurat
             // http bearer authentication required
             await setBearerAuthToObject(localVarHeaderParameter, configuration)
 
+            if (workFlowDefinationId !== undefined) {
+                localVarQueryParameter['WorkFlowDefinationId'] = workFlowDefinationId;
+            }
+
+            if (durum !== undefined) {
+                localVarQueryParameter['Durum'] = durum;
+            }
+
+            if (baslangicTarihiMin !== undefined) {
+                localVarQueryParameter['BaslangicTarihiMin'] = (baslangicTarihiMin as any instanceof Date) ?
+                    (baslangicTarihiMin as any).toISOString() :
+                    baslangicTarihiMin;
+            }
+
+            if (baslangicTarihiMax !== undefined) {
+                localVarQueryParameter['BaslangicTarihiMax'] = (baslangicTarihiMax as any instanceof Date) ?
+                    (baslangicTarihiMax as any).toISOString() :
+                    baslangicTarihiMax;
+            }
+
 
     
             setSearchParams(localVarUrlObj, localVarQueryParameter);
@@ -37384,10 +39206,14 @@ export const WorkFlowApiAxiosParamCreator = function (configuration?: Configurat
         },
         /**
          * 
+         * @param {string} [workFlowDefinationId] 
+         * @param {number} [durum] 
+         * @param {string} [baslangicTarihiMin] 
+         * @param {string} [baslangicTarihiMax] 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        apiWorkFlowGetMyTasksMyTasksGet: async (options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        apiWorkFlowGetMyTasksMyTasksGet: async (workFlowDefinationId?: string, durum?: number, baslangicTarihiMin?: string, baslangicTarihiMax?: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             const localVarPath = `/api/WorkFlow/GetMyTasks/my-tasks`;
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
             const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -37403,6 +39229,26 @@ export const WorkFlowApiAxiosParamCreator = function (configuration?: Configurat
             // authentication Bearer required
             // http bearer authentication required
             await setBearerAuthToObject(localVarHeaderParameter, configuration)
+
+            if (workFlowDefinationId !== undefined) {
+                localVarQueryParameter['WorkFlowDefinationId'] = workFlowDefinationId;
+            }
+
+            if (durum !== undefined) {
+                localVarQueryParameter['Durum'] = durum;
+            }
+
+            if (baslangicTarihiMin !== undefined) {
+                localVarQueryParameter['BaslangicTarihiMin'] = (baslangicTarihiMin as any instanceof Date) ?
+                    (baslangicTarihiMin as any).toISOString() :
+                    baslangicTarihiMin;
+            }
+
+            if (baslangicTarihiMax !== undefined) {
+                localVarQueryParameter['BaslangicTarihiMax'] = (baslangicTarihiMax as any instanceof Date) ?
+                    (baslangicTarihiMax as any).toISOString() :
+                    baslangicTarihiMax;
+            }
 
 
     
@@ -37561,22 +39407,30 @@ export const WorkFlowApiFp = function(configuration?: Configuration) {
         },
         /**
          * 
+         * @param {string} [workFlowDefinationId] 
+         * @param {number} [durum] 
+         * @param {string} [baslangicTarihiMin] 
+         * @param {string} [baslangicTarihiMax] 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async apiWorkFlowGetMyStartedFormsGet(options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<MyStartedFormsResultDto>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.apiWorkFlowGetMyStartedFormsGet(options);
+        async apiWorkFlowGetMyStartedFormsGet(workFlowDefinationId?: string, durum?: number, baslangicTarihiMin?: string, baslangicTarihiMax?: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<MyStartedFormsResultDto>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.apiWorkFlowGetMyStartedFormsGet(workFlowDefinationId, durum, baslangicTarihiMin, baslangicTarihiMax, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['WorkFlowApi.apiWorkFlowGetMyStartedFormsGet']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
          * 
+         * @param {string} [workFlowDefinationId] 
+         * @param {number} [durum] 
+         * @param {string} [baslangicTarihiMin] 
+         * @param {string} [baslangicTarihiMax] 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async apiWorkFlowGetMyTasksMyTasksGet(options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<MyTasksDto>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.apiWorkFlowGetMyTasksMyTasksGet(options);
+        async apiWorkFlowGetMyTasksMyTasksGet(workFlowDefinationId?: string, durum?: number, baslangicTarihiMin?: string, baslangicTarihiMax?: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<MyTasksDto>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.apiWorkFlowGetMyTasksMyTasksGet(workFlowDefinationId, durum, baslangicTarihiMin, baslangicTarihiMax, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['WorkFlowApi.apiWorkFlowGetMyTasksMyTasksGet']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
@@ -37646,19 +39500,27 @@ export const WorkFlowApiFactory = function (configuration?: Configuration, baseP
         },
         /**
          * 
+         * @param {string} [workFlowDefinationId] 
+         * @param {number} [durum] 
+         * @param {string} [baslangicTarihiMin] 
+         * @param {string} [baslangicTarihiMax] 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        apiWorkFlowGetMyStartedFormsGet(options?: RawAxiosRequestConfig): AxiosPromise<MyStartedFormsResultDto> {
-            return localVarFp.apiWorkFlowGetMyStartedFormsGet(options).then((request) => request(axios, basePath));
+        apiWorkFlowGetMyStartedFormsGet(workFlowDefinationId?: string, durum?: number, baslangicTarihiMin?: string, baslangicTarihiMax?: string, options?: RawAxiosRequestConfig): AxiosPromise<MyStartedFormsResultDto> {
+            return localVarFp.apiWorkFlowGetMyStartedFormsGet(workFlowDefinationId, durum, baslangicTarihiMin, baslangicTarihiMax, options).then((request) => request(axios, basePath));
         },
         /**
          * 
+         * @param {string} [workFlowDefinationId] 
+         * @param {number} [durum] 
+         * @param {string} [baslangicTarihiMin] 
+         * @param {string} [baslangicTarihiMax] 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        apiWorkFlowGetMyTasksMyTasksGet(options?: RawAxiosRequestConfig): AxiosPromise<MyTasksDto> {
-            return localVarFp.apiWorkFlowGetMyTasksMyTasksGet(options).then((request) => request(axios, basePath));
+        apiWorkFlowGetMyTasksMyTasksGet(workFlowDefinationId?: string, durum?: number, baslangicTarihiMin?: string, baslangicTarihiMax?: string, options?: RawAxiosRequestConfig): AxiosPromise<MyTasksDto> {
+            return localVarFp.apiWorkFlowGetMyTasksMyTasksGet(workFlowDefinationId, durum, baslangicTarihiMin, baslangicTarihiMax, options).then((request) => request(axios, basePath));
         },
         /**
          * 
@@ -37716,20 +39578,28 @@ export class WorkFlowApi extends BaseAPI {
 
     /**
      * 
+     * @param {string} [workFlowDefinationId] 
+     * @param {number} [durum] 
+     * @param {string} [baslangicTarihiMin] 
+     * @param {string} [baslangicTarihiMax] 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      */
-    public apiWorkFlowGetMyStartedFormsGet(options?: RawAxiosRequestConfig) {
-        return WorkFlowApiFp(this.configuration).apiWorkFlowGetMyStartedFormsGet(options).then((request) => request(this.axios, this.basePath));
+    public apiWorkFlowGetMyStartedFormsGet(workFlowDefinationId?: string, durum?: number, baslangicTarihiMin?: string, baslangicTarihiMax?: string, options?: RawAxiosRequestConfig) {
+        return WorkFlowApiFp(this.configuration).apiWorkFlowGetMyStartedFormsGet(workFlowDefinationId, durum, baslangicTarihiMin, baslangicTarihiMax, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**
      * 
+     * @param {string} [workFlowDefinationId] 
+     * @param {number} [durum] 
+     * @param {string} [baslangicTarihiMin] 
+     * @param {string} [baslangicTarihiMax] 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      */
-    public apiWorkFlowGetMyTasksMyTasksGet(options?: RawAxiosRequestConfig) {
-        return WorkFlowApiFp(this.configuration).apiWorkFlowGetMyTasksMyTasksGet(options).then((request) => request(this.axios, this.basePath));
+    public apiWorkFlowGetMyTasksMyTasksGet(workFlowDefinationId?: string, durum?: number, baslangicTarihiMin?: string, baslangicTarihiMax?: string, options?: RawAxiosRequestConfig) {
+        return WorkFlowApiFp(this.configuration).apiWorkFlowGetMyTasksMyTasksGet(workFlowDefinationId, durum, baslangicTarihiMin, baslangicTarihiMax, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**

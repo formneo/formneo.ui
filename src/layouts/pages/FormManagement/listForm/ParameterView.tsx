@@ -45,7 +45,7 @@ const ParameterView = (): JSX.Element => {
 
     useEffect(() => {
         if (formData) {
-            console.log("use effect içindeki form data=>", formData);
+            
         }
     }, [formData]);
 
@@ -80,15 +80,15 @@ const ParameterView = (): JSX.Element => {
             var that = this;
             await formtuntimeApi.apiFormRuntimeGetDetailIdGet(id).then((res: AxiosResponse<FormRuntimeDto>) => {
 
-                console.log("res datası", res);
+                
                 setisEdit(true);
                 setFormData(res.data);
 
                 formexisstData = res.data;
 
-                console.log("form data=>", res.data);
+                
             }).finally(() => {
-                console.log("formixstData=>", formexisstData);
+                
             });
         } catch (error) {
             console.error("Error:", error);
@@ -106,7 +106,7 @@ const ParameterView = (): JSX.Element => {
             var configuration = getConfiguration();
             let formapi = new FormDataApi(configuration);
             let formDetail = await formapi.apiFormDataIdGet(id);
-            console.log("form detail", formDetail);
+            
             setformWorkflowId(formDetail.data.workFlowDefinationId);
             setJavaScriptCode(formDetail.data.javaScriptCode);
             setSchema(JSON.parse(formDetail.data.formDesign));
@@ -150,12 +150,12 @@ const ParameterView = (): JSX.Element => {
 
             var configuration = getConfiguration();
             let formruntimeApi = new FormRuntimeApi(configuration);
-            console.log("formId", formId);
-            console.log("formsId", formsId);
-            console.log("form run id", formRunId);
-            console.log("formexssData", formexisstData);
+            
+            
+            
+            
             if (formexisstData == null) {
-                console.log("murat");
+                
                 formRuntimeDto2.id = uuidv4();
                 formRuntimeDto2.formId = formsId;
                 formRuntimeDto2.valuesJson = JSON.stringify(event);
@@ -164,14 +164,14 @@ const ParameterView = (): JSX.Element => {
                 await formruntimeApi.apiFormRuntimePost(formAssignId,formRuntimeDto2);
             }
             else {
-                console.log("update");
+                
                 let formRuntimeDto2: FormRuntimeDto = {};
                 formRuntimeDto2.formId = formexisstData.formId;
                 formRuntimeDto2.id = formRunId;
                 formRuntimeDto2.valuesJson = JSON.stringify(event);
                 formRuntimeDto2.valuesJsonData = JSON.stringify(event.data);
                 formRuntimeDto2.isActive = true;
-                console.log("form runtime 2", formRuntimeDto2);
+                
                 await formruntimeApi.apiFormRuntimePut(formRuntimeDto2);
             }
         }
@@ -186,7 +186,7 @@ const ParameterView = (): JSX.Element => {
     };
     const handleChange = (submission: any) => {
 
-        console.log("submission", submission);
+        
 
         if (submission.isValid) {
             setFormData(submission.data);
@@ -215,7 +215,7 @@ const ParameterView = (): JSX.Element => {
                 if (formData && formData.valuesJson) {
                     form.submission = JSON.parse(formData.valuesJson);
                     const submitBtn = form.getComponent('submit');
-                    console.log(submitBtn);
+                    
                     if (isVisibility == "true") {
 
 
@@ -242,12 +242,12 @@ const ParameterView = (): JSX.Element => {
                     // Kullanıcıdan gelen kayıtlı kod
                     form.on('submit', (submission) => {
                       alert('Form gönderildi!');
-                      console.log('Veri:', submission.data);
+                      
                     });
 
                     const tf = form.getComponent('textField');
                     if (tf) {
-                      tf.on('change', (e) => console.log('textField değişti:', e.value));
+                      tf.on('change', (e) => 
                     }
                     `;
 

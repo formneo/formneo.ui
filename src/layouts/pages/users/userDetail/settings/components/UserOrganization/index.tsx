@@ -48,7 +48,7 @@ function UserOrganization({ userId }: Props): JSX.Element {
 
   useEffect(() => {
     if (!userId) {
-      console.log("UserOrganization: userId yok", { userId });
+      
       return;
     }
     
@@ -57,14 +57,14 @@ function UserOrganization({ userId }: Props): JSX.Element {
         setLoading(true);
         setError(null);
         dispatchBusy({ isBusy: true });
-        console.log("UserOrganization: Veri çekiliyor...", { userId });
+        
         const conf = getConfiguration();
         
         // 1. Kullanıcı bilgilerini çek - GetById endpoint'ini kullan
         const userApi = new UserApi(conf);
-        console.log("UserOrganization: apiUserGetByIdGet çağrılıyor...", { userId });
+        
         const userResponse = await userApi.apiUserGetByIdUserIdGet(userId);
-        console.log("UserOrganization: apiUserGetByIdGet yanıtı", { userResponse });
+        
         const userData = userResponse.data;
         
         if (!userData) {
@@ -76,7 +76,7 @@ function UserOrganization({ userId }: Props): JSX.Element {
           return;
         }
         
-        console.log("UserOrganization: Kullanıcı verisi alındı", { userData });
+        
         setUser(userData);
         
         // Gerçek kullanıcı ID'sini al (userData.id kullanıyoruz çünkü bu GUID formatında)
@@ -84,7 +84,7 @@ function UserOrganization({ userId }: Props): JSX.Element {
         setActualUserId(realUserId);
         
         // 2. Departmanlar, pozisyonlar ve yöneticileri paralel çek
-        console.log("UserOrganization: Departman, pozisyon ve yöneticiler çekiliyor...");
+        
         const [orgUnitsResponse, positionsResponse, managersResponse] = await Promise.all([
           new OrgUnitsApi(conf).apiOrgUnitsGet(),
           new PositionsApi(conf).apiPositionsGet(),
@@ -97,7 +97,7 @@ function UserOrganization({ userId }: Props): JSX.Element {
 
         // 3. Tenant modundaysa aktif organizasyonu ve tarihçeyi çek
         if (isTenantMode && userData && realUserId) {
-          console.log("UserOrganization: Tenant modu aktif, organizasyon bilgileri çekiliyor...", { realUserId });
+          
           await Promise.all([
             fetchActiveOrganization(realUserId),
             fetchOrganizationHistory(realUserId)

@@ -112,7 +112,7 @@ function UserStartForm({ title = "" }: Props): JSX.Element {
 
     const headtableInstanceRef = useRef(null);
     const showForm = (row: any) => {
-        console.log(row);
+        
         if (row.original != undefined) {
             navigate("/FormList/PreviewForm?id=" + page);
         }
@@ -121,10 +121,10 @@ function UserStartForm({ title = "" }: Props): JSX.Element {
 
         var configuration = getConfiguration();
         const formApi = new FormDataApi(configuration); // Örnek oluştu
-        // console.log("Page Değişkeni", page);
+        // 
 
         var result = await formApi.apiFormDataIdGet(id);
-        // console.log("Result değişkeni", result);
+        // 
 
         setFormData(result.data);
         getData(result.data.id);
@@ -165,8 +165,8 @@ function UserStartForm({ title = "" }: Props): JSX.Element {
             var configuration = getConfiguration();
 
             let formRuntimeApi = new FormRuntimeApi(configuration);
-            // console.log(id);
-            // console.log(formData.id);
+            // 
+            // 
             await formRuntimeApi.apiFormRuntimeIdDelete(id);
             getData(formData.id);
 

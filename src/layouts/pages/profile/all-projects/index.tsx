@@ -138,7 +138,7 @@ function AllProjects(): JSX.Element {
         try {
           const response = await api.apiProjectsGetByUserIdProjectListGet(selectedUser.id);
           const dataAPI = response.data;
-          console.log("Fetched data:", data);
+          
           setData(dataAPI as any);
         } catch (error) {
           console.error("Error fetching data:", error);
@@ -291,7 +291,7 @@ function AllProjects(): JSX.Element {
     userId: string,
     categoryId: number
   ) => {
-    console.log(id);
+    
     setCurrentId(id);
 
     setisDeleteModalOpen(true);
@@ -308,7 +308,7 @@ function AllProjects(): JSX.Element {
       const data = await api.apiProjectsGetUserProjectGet(); // Verileri al
       setResultData(data.data); // Durum değişkenini güncelle
 
-      console.log("myID's Data :", data.data);
+      
     } catch (error) {
       console.error("Hata :", error);
     }

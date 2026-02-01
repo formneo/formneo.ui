@@ -5,7 +5,7 @@
     //   localStorage.removeItem("accessToken");
     //   localStorage.setItem("accessToken", response.accessToken);
     //   navigate("/SystemUserDefination")
-    //   console.log("Access Token:", response.accessToken);
+    //   
     //   // Access token'ı saklama
 
     // }).catch(error => {
@@ -24,7 +24,7 @@
       localStorage.removeItem("accessToken");
       localStorage.setItem("accessToken", response.accessToken);
       navigate("/SystemUserDefination")
-      console.log("Access Token:", response.accessToken);
+      
       // Access token'ı saklama
 
     }).catch((error: any) => {

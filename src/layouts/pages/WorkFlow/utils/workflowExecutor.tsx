@@ -120,7 +120,7 @@ export const executeWorkflow = async (
     }
 
     // Node'u execute et
-    console.log(`Executing node: ${currentNode.type} (${currentNodeId})`);
+    
     const result = await executeWorkflowNode(currentNode, context);
 
     // StopNode veya FormStopNode ise workflow'u bitir
@@ -128,7 +128,7 @@ export const executeWorkflow = async (
       currentNode.type === "stopNode" ||
       currentNode.type === "formStopNode"
     ) {
-      console.log("Workflow tamamlandı!");
+      
       break;
     }
 
@@ -137,7 +137,7 @@ export const executeWorkflow = async (
 
     if (outgoingEdges.length === 0) {
       // Çıkış edge'i yok, workflow sona erdi
-      console.log("Workflow sona erdi (çıkış edge'i yok)");
+      
       break;
     }
 

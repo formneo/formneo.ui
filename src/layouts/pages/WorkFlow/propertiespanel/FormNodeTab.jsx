@@ -9,6 +9,7 @@ import {
   Title,
   MessageStrip,
 } from "@ui5/webcomponents-react";
+import { Box } from "@mui/material";
 
 interface FormNodeTabProps {
   initialValues?: any;
@@ -90,13 +91,12 @@ const FormNodeTab: React.FC<FormNodeTabProps> = ({
             </MessageStrip>
           )}
         </FormItem>
-
-        <div style={{ marginTop: "16px", display: "flex", gap: "8px" }}>
-          <Button design="Emphasized" onClick={handleSave}>
-            Kaydet
-          </Button>
-        </div>
       </Form>
+
+      <MessageStrip design="Information" sx={{ mt: 3 }}>
+        <strong>💡 İpucu:</strong> Form başlangıç ayarlarını düzenlemek için Form Node&apos;a <strong>çift tıklayın</strong>.
+        Otomatik değer atama, tarih, kullanıcı bilgisi gibi ayarları yapabilirsiniz.
+      </MessageStrip>
     </div>
   );
 };

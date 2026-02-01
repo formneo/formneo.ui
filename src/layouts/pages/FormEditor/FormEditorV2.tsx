@@ -66,8 +66,8 @@ function generateJavaScriptTemplate(schema: any): string {
       template += `// 2. Action → Custom\n`;
       template += `// 3. Custom Action → "onClick_${btn.key}()"\n`;
       template += `function onClick_${btn.key}() {\n`;
-      template += `  console.log('${btn.label} clicked!');\n`;
-      template += `  console.log('Form Data:', data);\n`;
+      template += `  \n`;
+      template += `  \n`;
       template += `  \n`;
       template += `  // Örnek: Form submit\n`;
       template += `  // instance.submit();\n`;
@@ -364,6 +364,126 @@ export default function FormEditorV2(): JSX.Element {
               key: "parameterSelect",
               parameterModule: "",
               parameterCategory: "",
+            },
+          },
+          dsdepartmentselect: {
+            title: "Departman Seçici",
+            key: "dsdepartmentselect",
+            icon: "domain",
+            schema: {
+              label: "Departman Seçimi",
+              type: "dsdepartmentselect",
+              key: "departmentSelect",
+            },
+          },
+          dspositionselect: {
+            title: "Pozisyon Seçici",
+            key: "dspositionselect",
+            icon: "badge",
+            schema: {
+              label: "Pozisyon Seçimi",
+              type: "dspositionselect",
+              key: "positionSelect",
+            },
+          },
+          dscompanyselect: {
+            title: "Şirket Seçici",
+            key: "dscompanyselect",
+            icon: "business",
+            schema: {
+              label: "Şirket Seçimi",
+              type: "dscompanyselect",
+              key: "companySelect",
+            },
+          },
+          dslocationselect: {
+            title: "Lokasyon Seçici",
+            key: "dslocationselect",
+            icon: "location_on",
+            schema: {
+              label: "Lokasyon Seçimi",
+              type: "dslocationselect",
+              key: "locationSelect",
+            },
+          },
+          dsprojectselect: {
+            title: "Proje Seçici",
+            key: "dsprojectselect",
+            icon: "folder_special",
+            schema: {
+              label: "Proje Seçimi",
+              type: "dsprojectselect",
+              key: "projectSelect",
+            },
+          },
+          dssupplierselect: {
+            title: "Tedarikçi Seçici",
+            key: "dssupplierselect",
+            icon: "local_shipping",
+            schema: {
+              label: "Tedarikçi Seçimi",
+              type: "dssupplierselect",
+              key: "supplierSelect",
+            },
+          },
+          dsproductselect: {
+            title: "Ürün Seçici",
+            key: "dsproductselect",
+            icon: "inventory_2",
+            schema: {
+              label: "Ürün Seçimi",
+              type: "dsproductselect",
+              key: "productSelect",
+            },
+          },
+          dscategoryselect: {
+            title: "Kategori Seçici",
+            key: "dscategoryselect",
+            icon: "category",
+            schema: {
+              label: "Kategori Seçimi",
+              type: "dscategoryselect",
+              key: "categorySelect",
+            },
+          },
+          dscurrencyselect: {
+            title: "Para Birimi",
+            key: "dscurrencyselect",
+            icon: "attach_money",
+            schema: {
+              label: "Para Birimi Seçimi",
+              type: "dscurrencyselect",
+              key: "currencySelect",
+            },
+          },
+          dscountryselect: {
+            title: "Ülke Seçici",
+            key: "dscountryselect",
+            icon: "flag",
+            schema: {
+              label: "Ülke Seçimi",
+              type: "dscountryselect",
+              key: "countrySelect",
+            },
+          },
+          dscityselect: {
+            title: "Şehir Seçici",
+            key: "dscityselect",
+            icon: "location_city",
+            schema: {
+              label: "Şehir Seçimi",
+              type: "dscityselect",
+              key: "citySelect",
+            },
+          },
+          dsapproverselect: {
+            title: "Onaylayıcı Seçici",
+            key: "dsapproverselect",
+            icon: "verified_user",
+            schema: {
+              label: "Onaylayıcı Seçimi",
+              type: "dsapproverselect",
+              key: "approverSelect",
             },
           }
         }
@@ -716,7 +836,7 @@ export default function FormEditorV2(): JSX.Element {
 
     // Editor shortcuts
     editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, () => {
-      console.log('JavaScript kaydedildi');
+      
     });
   };
 
@@ -1226,7 +1346,7 @@ export default function FormEditorV2(): JSX.Element {
                       // Fonksiyonları window'a ekle (Form.io için)
                       ${extractFunctionNames(jsCode).map(name => `window.${name} = ${name};`).join('\n')}
                       
-                      console.log('✅ JavaScript kodları yüklendi:', ${JSON.stringify(extractFunctionNames(jsCode))});
+                      
                     `;
                     
                     const script = document.createElement('script');
@@ -1241,7 +1361,7 @@ export default function FormEditorV2(): JSX.Element {
                   if ((window as any).Formio) {
                     (window as any).Formio.createForm(el, schema).then((form: any) => {
                       form.on("submit", (submission: any) => {
-                        console.log("Form submission:", submission);
+                        
                         alert("✅ Form başarıyla gönderildi! Konsolu kontrol edin.");
                       });
                     });

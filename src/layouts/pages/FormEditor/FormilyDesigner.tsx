@@ -90,6 +90,22 @@ import getConfiguration from "confiuration";
 import FormNeoButton from "./custom/FormNeoButton";
 import ApproveButtons from "./custom/ApproveButtons";
 import CurrencyInput, { CurrencyInputSource } from "./custom/CurrencyInput";
+import EntityManager, { Entity } from "./EntityManager";
+import AIAssistant from "./AIAssistant";
+import {
+  DepartmentSelect,
+  PositionSelect,
+  CompanySelect,
+  LocationSelect,
+  ProjectSelect,
+  SupplierSelect,
+  ProductSelect,
+  CategorySelect,
+  CurrencySelect,
+  CountrySelect,
+  CitySelect,
+  ApproverSelect,
+} from "./custom/StandardComboboxes";
 import { createResource } from "@designable/core";
 import { Editor } from "@monaco-editor/react";
 
@@ -113,6 +129,7 @@ export default function FormilyDesigner(): JSX.Element {
   const [versions, setVersions] = useState<any[]>([]);
   const [formButtons, setFormButtons] = useState<FormButton[]>([]);
   const [editingButton, setEditingButton] = useState<FormButton | null>(null);
+  const [entities, setEntities] = useState<Entity[]>([]);
   // Dil ve locale kayıtlarını motor yaratılmadan ÖNCE yap
   GlobalRegistry.setDesignerLanguage("en-US");
   try {
@@ -120,13 +137,43 @@ export default function FormilyDesigner(): JSX.Element {
   } catch {}
   // Custom bileşen davranışlarını kaydet
   try {
-    GlobalRegistry.registerDesignerBehaviors(FormNeoButton as any, ApproveButtons as any, CurrencyInput as any);
+    GlobalRegistry.registerDesignerBehaviors(
+      FormNeoButton as any, 
+      ApproveButtons as any, 
+      CurrencyInput as any,
+      DepartmentSelect as any,
+      PositionSelect as any,
+      CompanySelect as any,
+      LocationSelect as any,
+      ProjectSelect as any,
+      SupplierSelect as any,
+      ProductSelect as any,
+      CategorySelect as any,
+      CurrencySelect as any,
+      CountrySelect as any,
+      CitySelect as any,
+      ApproverSelect as any
+    );
   } catch {}
   
   // Custom icon'ları kaydet - NumberPickerSource pattern'ini kullan
   try {
     GlobalRegistry.registerDesignerIcons({
       CurrencyInputSource: CurrencyInputSource,
+      EntityDatabase: () => (
+        <svg viewBox="0 0 1024 1024" width="1em" height="1em" fill="currentColor">
+          <path d="M512 128c-141.385 0-256 51.197-256 114.286v73.143C256 378.617 370.615 429.714 512 429.714s256-51.097 256-114.285v-73.143C768 179.197 653.385 128 512 128z m0 73.143c94.257 0 170.667 34.132 170.667 41.143 0 7.011-76.41 41.143-170.667 41.143S341.333 249.297 341.333 242.286c0-7.011 76.41-41.143 170.667-41.143zM256 475.429v73.142C256 611.76 370.615 662.857 512 662.857s256-51.097 256-114.286v-73.142c-55.406 44.397-138.423 70.857-256 70.857s-200.594-26.46-256-70.857z m0 219.428v73.143C256 831.189 370.615 882.286 512 882.286s256-51.097 256-114.286v-73.143c-55.406 44.398-138.423 70.857-256 70.857s-200.594-26.459-256-70.857z"/>
+        </svg>
+      ),
+      AIAssistant: () => (
+        <svg viewBox="0 0 1024 1024" width="1em" height="1em" fill="currentColor">
+          <path d="M512 64C264.6 64 64 264.6 64 512s200.6 448 448 448 448-200.6 448-448S759.4 64 512 64zm0 820c-205.4 0-372-166.6-372-372s166.6-372 372-372 372 166.6 372 372-166.6 372-372 372z"/>
+          <path d="M464 336a48 48 0 1 0 96 0 48 48 0 1 0-96 0zm72 112h-48c-4.4 0-8 3.6-8 8v272c0 4.4 3.6 8 8 8h48c4.4 0 8-3.6 8-8V456c0-4.4-3.6-8-8-8z"/>
+          <circle cx="512" cy="512" r="40" opacity="0.3"/>
+          <path d="M512 420c-50.8 0-92 41.2-92 92s41.2 92 92 92 92-41.2 92-92-41.2-92-92-92zm0 144c-28.7 0-52-23.3-52-52s23.3-52 52-52 52 23.3 52 52-23.3 52-52 52z"/>
+          <path d="M300 512c0-22.1 3.5-43.4 10-63.6l-50.8-29.3C245.9 449.8 240 480.3 240 512s5.9 62.2 19.2 92.9l50.8-29.3c-6.5-20.2-10-41.5-10-63.6zm424 0c0 22.1-3.5 43.4-10 63.6l50.8 29.3C778.1 574.2 784 543.7 784 512s-5.9-62.2-19.2-92.9l-50.8 29.3c6.5 20.2 10 41.5 10 63.6z"/>
+        </svg>
+      ),
     } as any);
   } catch {}
 
@@ -161,7 +208,30 @@ export default function FormilyDesigner(): JSX.Element {
 
   const previewForm = useMemo(() => createForm(), []);
   const SchemaField = useMemo(
-    () => createSchemaField({ components: { ...(AntdFormily as any), FormItem: (AntdFormily as any).FormItem, FormNeoButton, ApproveButtons, CurrencyInput, Card: AntdCard, Slider: AntdSlider, Rate: AntdRate } }),
+    () => createSchemaField({ 
+      components: { 
+        ...(AntdFormily as any), 
+        FormItem: (AntdFormily as any).FormItem, 
+        FormNeoButton, 
+        ApproveButtons, 
+        CurrencyInput, 
+        Card: AntdCard, 
+        Slider: AntdSlider, 
+        Rate: AntdRate,
+        DepartmentSelect,
+        PositionSelect,
+        CompanySelect,
+        LocationSelect,
+        ProjectSelect,
+        SupplierSelect,
+        ProductSelect,
+        CategorySelect,
+        CurrencySelect,
+        CountrySelect,
+        CitySelect,
+        ApproverSelect,
+      } 
+    }),
     []
   );
 
@@ -187,6 +257,13 @@ export default function FormilyDesigner(): JSX.Element {
           setFormButtons(design.buttonPanel.buttons);
         } else {
           setFormButtons([]);
+        }
+        
+        // Entity bilgilerini yükle
+        if (design && design.entities) {
+          setEntities(design.entities);
+        } else {
+          setEntities([]);
         }
         
         // Schema'yı yükle (engine hazır olmalı)
@@ -225,12 +302,13 @@ export default function FormilyDesigner(): JSX.Element {
       const tree = workspace?.operation?.tree;
       const result = tree ? transformToSchema(tree) : { schema: {} };
       
-      // Button paneli bilgilerini her zaman ekle (state'teki formButtons'ı kullan)
+      // Button paneli ve entities bilgilerini her zaman ekle
       const designWithButtons = {
         ...result,
         buttonPanel: {
           buttons: formButtons || [],
         },
+        entities: entities || [], // Entity tanımları
       };
       
       setIsBusy(true);
@@ -913,6 +991,18 @@ export default function FormilyDesigner(): JSX.Element {
                   TimePicker,
                   Upload,
                   Switch,
+                  DepartmentSelect,
+                  PositionSelect,
+                  CompanySelect,
+                  LocationSelect,
+                  ProjectSelect,
+                  SupplierSelect,
+                  ProductSelect,
+                  CategorySelect,
+                  CurrencySelect,
+                  CountrySelect,
+                  CitySelect,
+                  ApproverSelect,
                 ]}
               />
               <ResourceWidgetAny
@@ -928,6 +1018,42 @@ export default function FormilyDesigner(): JSX.Element {
               />
               <ResourceWidgetAny title="Diziler" sources={[ArrayCards, ArrayTable]} />
               <ResourceWidgetAny title="Görüntüleme" sources={[Text]} />
+            </CompositePanelAny.Item>
+            <CompositePanelAny.Item title="Entities" icon="EntityDatabase">
+              <div style={{ padding: 0, height: "100%" }}>
+                <EntityManager
+                  entities={entities}
+                  onEntitiesChange={setEntities}
+                />
+              </div>
+            </CompositePanelAny.Item>
+            <CompositePanelAny.Item title="AI Assistant" icon="AIAssistant">
+              <div style={{ padding: 0, height: "100%" }}>
+                <AIAssistant
+                  onFormGenerated={(formSchema, generatedEntities) => {
+                    // Entity'leri ekle
+                    if (generatedEntities && generatedEntities.length > 0) {
+                      setEntities([...entities, ...generatedEntities]);
+                    }
+                    
+                    // Form schema'yı canvas'a yükle
+                    if (formSchema) {
+                      try {
+                        const tree = transformToTreeNode({ schema: formSchema });
+                        const workspace = engine.workbench?.activeWorkspace;
+                        const operation = workspace?.operation;
+                        if (operation && tree) {
+                          operation.tree.append(tree as any);
+                        }
+                        message.success("Form başarıyla oluşturuldu!");
+                      } catch (error) {
+                        console.error("Form yüklenirken hata:", error);
+                        message.error("Form yüklenemedi");
+                      }
+                    }
+                  }}
+                />
+              </div>
             </CompositePanelAny.Item>
           </CompositePanelAny>
 
@@ -971,6 +1097,18 @@ export default function FormilyDesigner(): JSX.Element {
                         FormNeoButton,
                         ApproveButtons,
                         CurrencyInput,
+                        DepartmentSelect,
+                        PositionSelect,
+                        CompanySelect,
+                        LocationSelect,
+                        ProjectSelect,
+                        SupplierSelect,
+                        ProductSelect,
+                        CategorySelect,
+                        CurrencySelect,
+                        CountrySelect,
+                        CitySelect,
+                        ApproverSelect,
                       }}
                     />
                   )}
@@ -1057,6 +1195,7 @@ export default function FormilyDesigner(): JSX.Element {
             <ButtonPanelSettings />
             <SettingsForm uploadAction="https://www.mocky.io/v2/5cc8019d300000980a055e76" />
           </SettingsPanelAny>
+
           {/* Button Paneli - En Alta Sabitlenmiş */}
           <div
             style={{

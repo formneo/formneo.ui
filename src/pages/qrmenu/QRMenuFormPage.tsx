@@ -156,7 +156,7 @@ export default function QRMenuFormPage(): JSX.Element {
             icon: <PreviewIcon fontSize="small" />,
             onClick: () => {
                 // Önizleme fonksiyonu
-                console.log("Önizleme açılacak");
+                
             }
         },
         {
@@ -177,7 +177,7 @@ export default function QRMenuFormPage(): JSX.Element {
 
     const onSubmit = async (data: FormValues) => {
         try {
-            console.log("Menü kaydediliyor:", data);
+            
             // Gerçek uygulamada API çağrısı yapılacak
             await new Promise(resolve => setTimeout(resolve, 1000)); // Simülasyon
             navigate("/qrmenu");

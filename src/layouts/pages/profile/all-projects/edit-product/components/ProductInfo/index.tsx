@@ -163,8 +163,8 @@ function ProductInfo({ params }: ProjectInfoProps): JSX.Element {
     const api = new ProjectsApi(configuration);
     try {
       await api.apiProjectsPut(formData);
-      console.log("Güncellenen Veriler : ", formData);
-      console.log("Proje Başarıyla Güncellendi");
+      
+      
       navigate("/profile/all-projects");
     } catch (error) {
       console.error(error);
@@ -179,7 +179,7 @@ function ProductInfo({ params }: ProjectInfoProps): JSX.Element {
       const configuration = getConfiguration();
       const api = new ProjectsApi(configuration);
       await api.apiProjectsPost(dataWithoutId);
-      console.log("Proje Başarıyla Olusturuldu");
+      
       navigate("/profile/all-projects");
     } else {
       dispatchAlert({

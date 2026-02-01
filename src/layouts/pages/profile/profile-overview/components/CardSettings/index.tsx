@@ -30,13 +30,13 @@ function CardSettings({ name, description, id, userId, categoryName }: Category)
 
   useEffect(() => {
     getnameofCategories();
-    console.log("kullanıcı projeleri alındı");
+    
   }, []);
 
   let indexOfCategory = nameofCategories.findIndex(
     (category: any) => category.description === categoryName
   );
-  console.log("indexOfCategory", indexOfCategory);
+  
   let image: string;
   if (indexOfCategory === 0) image = index0png;
   else if (indexOfCategory === 1) image = index2png;

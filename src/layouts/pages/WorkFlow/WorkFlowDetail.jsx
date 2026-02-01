@@ -53,6 +53,7 @@ import FormConditionNode from "./components/FormConditionNode.jsx";
 import FormConditionTab from "./propertiespanel/FormConditionTab.jsx";
 import ScriptNode from "./components/ScriptNode.jsx";
 import ScriptTab from "./propertiespanel/ScriptTab.jsx";
+import FormNodeInitModal from "./propertiespanel/FormNodeInitModal.jsx";
 
 import {
   AnalyticalTable,
@@ -217,6 +218,8 @@ function Flow(props) {
   const [userTaskModalNode, setUserTaskModalNode] = useState(null);
   const [formTaskModalOpen, setFormTaskModalOpen] = useState(false);
   const [formTaskModalNode, setFormTaskModalNode] = useState(null);
+  const [formNodeModalOpen, setFormNodeModalOpen] = useState(false);
+  const [formNodeModalNode, setFormNodeModalNode] = useState(null);
 
   const [workflowData, setWorkflowData] = useState({
     metadata: {
@@ -293,6 +296,7 @@ function Flow(props) {
                   const parsedForm = JSON.parse(form.formDesign || "{}");
                   const buttons = parsedForm?.buttonPanel?.buttons || [];
                   const fields = extractFieldsFromComponents(parsedForm.components || []);
+                  
                   setParsedFormDesign({
                     fields: fields,
                     raw: parsedForm,
@@ -321,7 +325,17 @@ function Flow(props) {
                 formDesign: JSON.stringify(firstQueryNode.data.parsedFormDesign?.raw || {}),
                 formType: firstQueryNode.data.workflowFormInfo?.formType || "workflow",
               });
-              setParsedFormDesign(firstQueryNode.data.parsedFormDesign);
+              
+              // ✅ Butonları kontrol et ve eksikse raw'dan yükle
+              let parsedDesign = firstQueryNode.data.parsedFormDesign;
+              if ((!parsedDesign.buttons || parsedDesign.buttons.length === 0) && parsedDesign.raw?.buttonPanel?.buttons) {
+                parsedDesign = {
+                  ...parsedDesign,
+                  buttons: parsedDesign.raw.buttonPanel.buttons,
+                };
+              }
+              
+              setParsedFormDesign(parsedDesign);
               console.log(
                 "✅ Form restored from queryConditionNode:",
                 firstQueryNode.data.selectedFormName
@@ -339,7 +353,7 @@ function Flow(props) {
           );
 
           if (nodeWithForm) {
-            console.log("✅ Form restored from other node:", nodeWithForm.data.selectedFormName);
+            
 
             setSelectedForm({
               id: nodeWithForm.data.selectedFormId,
@@ -347,9 +361,19 @@ function Flow(props) {
               formDesign: JSON.stringify(nodeWithForm.data.parsedFormDesign?.raw || {}),
               formType: nodeWithForm.data.workflowFormInfo?.formType || "workflow",
             });
-            setParsedFormDesign(nodeWithForm.data.parsedFormDesign);
+            
+            // ✅ Butonları kontrol et ve eksikse raw'dan yükle
+            let parsedDesign = nodeWithForm.data.parsedFormDesign;
+            if ((!parsedDesign.buttons || parsedDesign.buttons.length === 0) && parsedDesign.raw?.buttonPanel?.buttons) {
+              parsedDesign = {
+                ...parsedDesign,
+                buttons: parsedDesign.raw.buttonPanel.buttons,
+              };
+            }
+            
+            setParsedFormDesign(parsedDesign);
           } else {
-            console.log("⚠️ Hiçbir node'da form bilgisi bulunamadı");
+            
             setSelectedForm(null);
             setParsedFormDesign(null);
             dispatchAlert({ 
@@ -555,8 +579,24 @@ function Flow(props) {
           break;
 
         case "formTaskNode":
-          // Form butonlarını otomatik yükle
-          const formTaskButtons = parsedFormDesign?.buttons || [];
+          // Form butonlarını otomatik yükle - birden fazla kaynaktan dene
+          let formTaskButtons = parsedFormDesign?.buttons || [];
+          
+          // Eğer parsedFormDesign.buttons boşsa, raw'dan almayı dene
+          if (formTaskButtons.length === 0 && parsedFormDesign?.raw?.buttonPanel?.buttons) {
+            formTaskButtons = parsedFormDesign.raw.buttonPanel.buttons;
+          }
+          
+          // Hala boşsa, selectedForm'dan parse etmeyi dene
+          if (formTaskButtons.length === 0 && selectedForm?.formDesign) {
+            try {
+              const parsedFormData = JSON.parse(selectedForm.formDesign);
+              formTaskButtons = parsedFormData?.buttonPanel?.buttons || [];
+            } catch (err) {
+              console.error("❌ selectedForm.formDesign parse hatası:", err);
+            }
+          }
+          
           const allFormTaskButtons = formTaskButtons.map(btn => ({
             id: btn.id,
             label: btn.label || btn.name || "Buton",
@@ -577,11 +617,11 @@ function Flow(props) {
             message: "",
             fieldSettings: {},
             buttonSettings: {},
-            buttons: [], // Görünür butonlar (başlangıçta boş, modal'dan ayarlanacak)
+            buttons: allFormTaskButtons, // ✅ Başlangıçta tüm butonlar görünür
             allButtons: allFormTaskButtons, // TÜM butonlar (handle'lar için)
             visibleFieldsCount: 0,
             totalFieldsCount: 0,
-            visibleButtonsCount: 0,
+            visibleButtonsCount: allFormTaskButtons.length,
             totalButtonsCount: allFormTaskButtons.length,
             ...baseFormInfo,
           };
@@ -685,7 +725,7 @@ function Flow(props) {
         ],
       };
 
-      // console.log("Workflow Data Updated:", newData); // Debug için kapatıldı
+      //  // Debug için kapatıldı
       return newData;
     });
   }, []);
@@ -885,9 +925,9 @@ function Flow(props) {
   };
 
   const onSave = useCallback(() => {
-    console.log("🔵 onSave çağrıldı");
-    console.log("reactFlowInstance:", reactFlowInstance);
-    console.log("txtname.current:", txtname.current);
+    
+    
+    
     
     if (!reactFlowInstance) {
       console.error("❌ reactFlowInstance null!");
@@ -935,7 +975,7 @@ function Flow(props) {
       return;
     }
 
-    console.log("✅ Validasyonlar geçti, API çağrısı yapılıyor...");
+    
     const flow = { ...reactFlowInstance.toObject(), firstNode };
     const conf = getConfiguration();
     const api = new WorkFlowDefinationApi(conf);
@@ -1001,7 +1041,7 @@ function Flow(props) {
     globalArray.pop();
     const restoreFlow = async () => {
       const flow = JSON.parse(localStorage.getItem(flowKey));
-      console.log(JSON.parse(localStorage.getItem(flowKey)));
+      
       if (flow) {
         const { x = 0, y = 0, zoom = 1 } = flow.viewport;
 
@@ -1033,7 +1073,7 @@ function Flow(props) {
   const onRefresh = useCallback(
     (nodes) => {
       const restoreFlow = async () => {
-        console.log(JSON.stringify(nodes));
+        
 
         let flow = JSON.parse(JSON.stringify(nodes));
 
@@ -1058,7 +1098,7 @@ function Flow(props) {
   );
 
   const onEdgeClick = (event, edge) => {
-    console.log("Tıklanan bağlantı:", edge);
+    
     // alert(`Bağlantı Bilgileri: ID=${edge.id}`);
   };
   const onNodeClick = (event, node) => {
@@ -1080,6 +1120,13 @@ function Flow(props) {
     if (node.type === "formTaskNode") {
       setFormTaskModalNode(node);
       setFormTaskModalOpen(true);
+      return;
+    }
+
+    // ✅ FormNode ise modal aç (init script için)
+    if (node.type === "formNode") {
+      setFormNodeModalNode(node);
+      setFormNodeModalOpen(true);
       return;
     }
 
@@ -1353,6 +1400,26 @@ function Flow(props) {
               }}
             />
           )}
+
+          {/* FormNode Init Modal */}
+          {formNodeModalOpen && formNodeModalNode && (
+            <FormNodeInitModal
+              open={formNodeModalOpen}
+              onClose={() => {
+                setFormNodeModalOpen(false);
+                setFormNodeModalNode(null);
+              }}
+              initialValues={formNodeModalNode.data || {}}
+              node={formNodeModalNode}
+              workflowFormId={selectedForm?.id}
+              workflowFormName={selectedForm?.formName}
+              onSave={(updatedNode) => {
+                handlePropertiesChange(updatedNode);
+                setFormNodeModalOpen(false);
+                setFormNodeModalNode(null);
+              }}
+            />
+          )}
         </div>
       </SplitterPanel>
 
@@ -1400,7 +1467,7 @@ const renderComponent = (
   isActiveWorkflow = false // ← 11. parametre eklendi
 ) => {
   if (type === "queryConditionNode") {
-    console.log("parsedFormDesign gönderildi:", parsedFormDesign);
+    
   }
 
   switch (type) {
@@ -1472,7 +1539,7 @@ const renderComponent = (
       ) : null;
 
     case "queryConditionNode":
-      console.log("🧩 parsedFormDesign fields:", parsedFormDesign?.fields);
+      
       const nodeFormDesign = node?.data?.parsedFormDesign || parsedFormDesign;
 
       return data ? (
@@ -1514,8 +1581,8 @@ const renderComponent = (
       ) : null;
 
     case "httpPostNode":
-      console.log("HttpPostNode case - data:", data, "node:", node);
-      console.log("HttpPostNode Workflow Data:", fullWorkflowData);
+      
+      
       return data ? (
         <HttpPostTab
           key={node.id}
@@ -1783,10 +1850,10 @@ function WorkFlowDetail(props) {
           let valueEditorType = "text";
           let operators = ["=", "!=", "contains"];
 
-          console.log(`🔍 DEBUG Field: ${item.label}`);
-          console.log(`   - rawType: ${rawType}`);
-          console.log(`   - mappedType: ${mappedType}`);
-          console.log(`   - typeMap[${rawType}]: ${typeMap[rawType]}`);
+          
+          
+          
+          
 
           switch (mappedType) {
             case "number":
@@ -1938,7 +2005,7 @@ function WorkFlowDetail(props) {
             values: fieldValues,
           });
 
-          console.log(`🔧 Field: ${item.label} (${rawType}) → ${valueEditorType}`);
+          
         }
 
         if (item.columns) {
@@ -2055,8 +2122,8 @@ function WorkFlowDetail(props) {
           <MDButton 
             color="info" 
             onClick={() => {
-              console.log("🔵 Kaydet butonu tıklandı");
-              console.log("saveFlow:", saveFlow);
+              
+              
               if (saveFlow) {
                 saveFlow();
               } else {

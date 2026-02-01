@@ -8,8 +8,8 @@ interface KanbanDialogProps {
 }
 
 const KanbanDialog: React.FC<KanbanDialogProps> = ({ props, assigneeData = [] }) => {
-    console.log('Dialog assigneeData:', assigneeData);
-    console.log('Dialog props:', props);
+    
+    
 
     const dialogStyles = {
         container: {

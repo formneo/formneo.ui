@@ -46,9 +46,9 @@ export default function WorkflowFormSelector({ open, onClose, onConfirm }) {
           const groups = groupByParent(publishedForms);
           const latestForms = Object.values(groups).map((group) => pickLatestRevision(group));
           
-          console.log("API'den gelen form verileri:", res.data);
-          console.log("Yayınlanmış formlar:", publishedForms);
-          console.log("Son revizyonlar filtrelendi:", latestForms);
+          
+          
+          
           setFormOptions(latestForms);
         } catch (error) {
           console.error("Formlar çekilemedi", error);

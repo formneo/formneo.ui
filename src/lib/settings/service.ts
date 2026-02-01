@@ -40,7 +40,7 @@ export async function getCategoryBundle(categoryId: string, scope: SettingsScope
 
 export async function saveValues(categoryId: string, scope: SettingsScope, data: Record<string, unknown>): Promise<void> {
     await delay(300);
-    console.log("[mock save]", categoryId, scope, data);
+    
 }
 
 

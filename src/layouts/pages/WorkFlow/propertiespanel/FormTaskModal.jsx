@@ -234,13 +234,13 @@ if (baslangic && bitis) {
     },
     "debug-template": () => {
       const script = `// Debug Template - Tüm alanları console'a yazdır
-console.log("=== Form Değerleri ===");
+
 ${formFields.map(field => {
   const key = field.normalizedKey || field.key;
-  return `console.log("${key}:", getFieldValue("${key}"));`;
+  return ``;
 }).join("\n")}
-console.log("=== Tüm Form Values ===");
-console.log(formValues);`;
+
+`;
       setFieldScript(script);
     },
   };
@@ -390,21 +390,21 @@ declare var formValues: Record<string, any>;
         "file:///formFields.d.ts"
       );
 
-      console.log("✅ Tip tanımları eklendi:", formFields.length > 0 ? `${formFields.length} alan` : "temel fonksiyonlar");
+      
 
       // IntelliSense'i tetikle
       if (monacoEditor) {
         const model = monacoEditor.getModel();
         if (model) {
           // Model URI'sini kontrol et
-          console.log("Model URI:", model.uri.toString());
+          
           
           // Model'i yeniden yükle (IntelliSense'i güncellemek için)
           setTimeout(() => {
             // IntelliSense'i manuel olarak tetikle
             try {
               monacoEditor.getAction("editor.action.triggerSuggest")?.run();
-              console.log("✅ IntelliSense tetiklendi");
+              
             } catch (e) {
               console.warn("IntelliSense tetiklenemedi:", e);
             }
@@ -1535,14 +1535,14 @@ declare var formValues: Record<string, any>;
                   // Model URI'sini kontrol et ve ayarla
                   const model = editor.getModel();
                   if (model) {
-                    console.log("Monaco Editor model URI:", model.uri.toString());
+                    
                     
                     // Model'in URI'sini JavaScript dosyası olarak ayarla (IntelliSense için)
                     // Bu, tip tanımlarının çalışması için önemli
                     const uri = model.uri;
                     if (!uri.path.endsWith('.js') && !uri.path.endsWith('.ts')) {
                       // Model URI'sini JavaScript olarak işaretle
-                      console.log("Model URI ayarlandı:", uri.toString());
+                      
                     }
                   }
                 }}
@@ -1719,7 +1719,7 @@ if (getFieldValue("tip") === "Acil") {
                 <pre style={{ margin: 0, whiteSpace: "pre-wrap" }}>
 {`// Örnek: Tek bir alan değerini oku
 const musteriAdi = getFieldValue("musteriAdi");
-console.log("Müşteri Adı:", musteriAdi);
+
 
 // Örnek: formValues ile tüm form değerlerine erişim (IntelliSense destekler)
 const toplam = formValues.tutar1 + formValues.tutar2;

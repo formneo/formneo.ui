@@ -308,11 +308,11 @@ function Sidenav({ color, brand, brandName, routes, ...rest }: Props): JSX.Eleme
       var conf = getConfigurationAccessTokenLogin();
       var api = new MenuApi(conf);
       var data = await api.apiMenuGet();
-      console.log("Tüm menüler (apiMenuGet):", data.data);
+      
       
       // Yetkili menüleri filtrele (cache'den gelen veriyi kullan)
       if (authData && authData.length > 0) {
-        console.log("Yetkili menüler (cache'den):", authData);
+        
         
         // Yetkili menüleri filtrele
         const authorizedMenus = data.data.filter((menu: any) => {
@@ -335,10 +335,10 @@ function Sidenav({ color, brand, brandName, routes, ...rest }: Props): JSX.Eleme
           index === self.findIndex(m => m.id === menu.id)
         );
         
-        console.log("Yetkili menüler:", authorizedMenus);
-        console.log("Parent ID'ler:", Array.from(parentIds));
-        console.log("Parent menüler:", parentMenus);
-        console.log("Birleşik menüler:", uniqueMenus);
+        
+        
+        
+        
         
         setMenuItems(uniqueMenus);
       } else if (!authLoading) {

@@ -75,7 +75,7 @@ function Education({ cvDataEducation, setCvDataEducation }: EducationProps) {
     };
  
 
-    console.log("newEducationTemp", newEducationTemp);
+    
     setCvDataEducation([...cvDataEducation, newEducationTemp]);
     setOpenDialog(false);
     setNewEducation({

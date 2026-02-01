@@ -49,7 +49,7 @@ function RoleScreenDefination() {
         dispatchBusy({ isBusy: true });
         var apiRole = new RoleMenuApi(conf);
         var dataRole = await apiRole.apiRoleMenuGetByIdRoleIdGet(id);
-        console.log("dataRole", dataRole.data);
+        
 
         // Get the selected menus for target (yalnızca isTenantOnly olanlar dahil edilir)
         const selectedMenus = filteredData.filter((item: any) =>

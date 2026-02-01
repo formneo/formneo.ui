@@ -5933,6 +5933,819 @@
         }
       }
     },
+    "/api/FormEntity": {
+      "get": {
+        "tags": [
+          "FormEntity"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FormEntityListDto"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FormEntityListDto"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FormEntityListDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "FormEntity"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FormEntityCreateDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FormEntityCreateDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/FormEntityCreateDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/FormEntityDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FormEntityDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FormEntityDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/FormEntity/{id}": {
+      "get": {
+        "tags": [
+          "FormEntity"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/FormEntityDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FormEntityDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FormEntityDto"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "FormEntity"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FormEntityUpdateDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FormEntityUpdateDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/FormEntityUpdateDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/FormEntityDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FormEntityDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FormEntityDto"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "FormEntity"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/FormEntity/{id}/forms": {
+      "get": {
+        "tags": [
+          "FormEntity"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": { }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/FormEntity/for-form": {
+      "get": {
+        "tags": [
+          "FormEntity"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FormEntityListDto"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FormEntityListDto"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FormEntityListDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/FormEntity/database-tables": {
+      "get": {
+        "tags": [
+          "FormEntity"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": { }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/FormEntity/import-from-database": {
+      "post": {
+        "tags": [
+          "FormEntity"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            "text/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/FormEntityFieldType": {
+      "get": {
+        "tags": [
+          "FormEntityFieldType"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FormEntityFieldTypeDto"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FormEntityFieldTypeDto"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FormEntityFieldTypeDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "FormEntityFieldType"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FormEntityFieldTypeCreateDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FormEntityFieldTypeCreateDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/FormEntityFieldTypeCreateDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/FormEntityFieldTypeDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FormEntityFieldTypeDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FormEntityFieldTypeDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/FormEntityFieldType/active": {
+      "get": {
+        "tags": [
+          "FormEntityFieldType"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FormEntityFieldTypeListDto"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FormEntityFieldTypeListDto"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FormEntityFieldTypeListDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/FormEntityFieldType/category/{category}": {
+      "get": {
+        "tags": [
+          "FormEntityFieldType"
+        ],
+        "parameters": [
+          {
+            "name": "category",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/FieldTypeCategory"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FormEntityFieldTypeDto"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FormEntityFieldTypeDto"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FormEntityFieldTypeDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/FormEntityFieldType/grouped": {
+      "get": {
+        "tags": [
+          "FormEntityFieldType"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/FormEntityFieldTypeListDto"
+                    }
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/FormEntityFieldTypeListDto"
+                    }
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/FormEntityFieldTypeListDto"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/FormEntityFieldType/{id}": {
+      "get": {
+        "tags": [
+          "FormEntityFieldType"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/FormEntityFieldTypeDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FormEntityFieldTypeDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FormEntityFieldTypeDto"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "FormEntityFieldType"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FormEntityFieldTypeUpdateDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FormEntityFieldTypeUpdateDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/FormEntityFieldTypeUpdateDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/FormEntityFieldTypeDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FormEntityFieldTypeDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FormEntityFieldTypeDto"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "FormEntityFieldType"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/FormEntityFieldType/by-name/{typeName}": {
+      "get": {
+        "tags": [
+          "FormEntityFieldType"
+        ],
+        "parameters": [
+          {
+            "name": "typeName",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/FormEntityFieldTypeDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FormEntityFieldTypeDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FormEntityFieldTypeDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/FormEntityFieldType/reference-types": {
+      "get": {
+        "tags": [
+          "FormEntityFieldType"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FormEntityFieldTypeListDto"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FormEntityFieldTypeListDto"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FormEntityFieldTypeListDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/FormEntityFieldType/{id}/validation-options": {
+      "get": {
+        "tags": [
+          "FormEntityFieldType"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/FormEntityFieldType/{id}/usage-stats": {
+      "get": {
+        "tags": [
+          "FormEntityFieldType"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
     "/api/FormRuleEngine": {
       "get": {
         "tags": [
@@ -15031,6 +15844,40 @@
         "tags": [
           "WorkFlow"
         ],
+        "parameters": [
+          {
+            "name": "WorkFlowDefinationId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "Durum",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "BaslangicTarihiMin",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "BaslangicTarihiMax",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "Success",
@@ -15139,6 +15986,40 @@
       "get": {
         "tags": [
           "WorkFlow"
+        ],
+        "parameters": [
+          {
+            "name": "WorkFlowDefinationId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "Durum",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "BaslangicTarihiMin",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "BaslangicTarihiMax",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          }
         ],
         "responses": {
           "200": {
@@ -20074,6 +20955,16 @@
         },
         "additionalProperties": false
       },
+      "EntityRelationType": {
+        "enum": [
+          0,
+          1,
+          2,
+          3
+        ],
+        "type": "integer",
+        "format": "int32"
+      },
       "EnumDto": {
         "type": "object",
         "properties": {
@@ -20127,6 +21018,17 @@
           }
         },
         "additionalProperties": false
+      },
+      "FieldTypeCategory": {
+        "enum": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ],
+        "type": "integer",
+        "format": "int32"
       },
       "Form": {
         "required": [
@@ -20231,6 +21133,20 @@
           },
           "publicationStatus": {
             "$ref": "#/components/schemas/FormPublicationStatus"
+          },
+          "entityRelations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FormEntityRelation"
+            },
+            "nullable": true
+          },
+          "fieldMappings": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FormFieldMapping"
+            },
+            "nullable": true
           }
         },
         "additionalProperties": false
@@ -20597,6 +21513,1223 @@
           },
           "publicationStatus": {
             "$ref": "#/components/schemas/FormPublicationStatus"
+          }
+        },
+        "additionalProperties": false
+      },
+      "FormEntity": {
+        "required": [
+          "entityName"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "mainClientId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "mainClient": {
+            "$ref": "#/components/schemas/MainClient"
+          },
+          "createdBy": {
+            "type": "string",
+            "nullable": true
+          },
+          "updatedBy": {
+            "type": "string",
+            "nullable": true
+          },
+          "createdDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedDate": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "isDelete": {
+            "type": "boolean"
+          },
+          "uniqNumber": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "concurrencyToken": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "entityName": {
+            "maxLength": 200,
+            "minLength": 1,
+            "type": "string"
+          },
+          "entityDescription": {
+            "maxLength": 500,
+            "type": "string",
+            "nullable": true
+          },
+          "tableName": {
+            "maxLength": 200,
+            "type": "string",
+            "nullable": true
+          },
+          "schemaName": {
+            "maxLength": 100,
+            "type": "string",
+            "nullable": true
+          },
+          "namespacePath": {
+            "maxLength": 500,
+            "type": "string",
+            "nullable": true
+          },
+          "className": {
+            "maxLength": 200,
+            "type": "string",
+            "nullable": true
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "allowCreate": {
+            "type": "boolean"
+          },
+          "allowRead": {
+            "type": "boolean"
+          },
+          "allowUpdate": {
+            "type": "boolean"
+          },
+          "allowDelete": {
+            "type": "boolean"
+          },
+          "apiEndpoint": {
+            "maxLength": 500,
+            "type": "string",
+            "nullable": true
+          },
+          "displayField": {
+            "maxLength": 100,
+            "type": "string",
+            "nullable": true
+          },
+          "orderByField": {
+            "maxLength": 100,
+            "type": "string",
+            "nullable": true
+          },
+          "fields": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FormEntityField"
+            },
+            "nullable": true
+          },
+          "formEntityRelations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FormEntityRelation"
+            },
+            "nullable": true
+          },
+          "parentEntityId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "parentEntity": {
+            "$ref": "#/components/schemas/FormEntity"
+          },
+          "childEntities": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FormEntity"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "FormEntityCreateDto": {
+        "type": "object",
+        "properties": {
+          "entityName": {
+            "type": "string",
+            "nullable": true
+          },
+          "entityDescription": {
+            "type": "string",
+            "nullable": true
+          },
+          "tableName": {
+            "type": "string",
+            "nullable": true
+          },
+          "schemaName": {
+            "type": "string",
+            "nullable": true
+          },
+          "namespacePath": {
+            "type": "string",
+            "nullable": true
+          },
+          "className": {
+            "type": "string",
+            "nullable": true
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "allowCreate": {
+            "type": "boolean"
+          },
+          "allowRead": {
+            "type": "boolean"
+          },
+          "allowUpdate": {
+            "type": "boolean"
+          },
+          "allowDelete": {
+            "type": "boolean"
+          },
+          "apiEndpoint": {
+            "type": "string",
+            "nullable": true
+          },
+          "displayField": {
+            "type": "string",
+            "nullable": true
+          },
+          "orderByField": {
+            "type": "string",
+            "nullable": true
+          },
+          "parentEntityId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "FormEntityDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "entityName": {
+            "type": "string",
+            "nullable": true
+          },
+          "entityDescription": {
+            "type": "string",
+            "nullable": true
+          },
+          "tableName": {
+            "type": "string",
+            "nullable": true
+          },
+          "schemaName": {
+            "type": "string",
+            "nullable": true
+          },
+          "namespacePath": {
+            "type": "string",
+            "nullable": true
+          },
+          "className": {
+            "type": "string",
+            "nullable": true
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "allowCreate": {
+            "type": "boolean"
+          },
+          "allowRead": {
+            "type": "boolean"
+          },
+          "allowUpdate": {
+            "type": "boolean"
+          },
+          "allowDelete": {
+            "type": "boolean"
+          },
+          "apiEndpoint": {
+            "type": "string",
+            "nullable": true
+          },
+          "displayField": {
+            "type": "string",
+            "nullable": true
+          },
+          "orderByField": {
+            "type": "string",
+            "nullable": true
+          },
+          "parentEntityId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "parentEntityName": {
+            "type": "string",
+            "nullable": true
+          },
+          "fields": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FormEntityFieldDto"
+            },
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "FormEntityField": {
+        "required": [
+          "fieldName",
+          "fieldTypeId",
+          "formEntityId"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "mainClientId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "mainClient": {
+            "$ref": "#/components/schemas/MainClient"
+          },
+          "createdBy": {
+            "type": "string",
+            "nullable": true
+          },
+          "updatedBy": {
+            "type": "string",
+            "nullable": true
+          },
+          "createdDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedDate": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "isDelete": {
+            "type": "boolean"
+          },
+          "uniqNumber": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "concurrencyToken": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "formEntityId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "formEntity": {
+            "$ref": "#/components/schemas/FormEntity"
+          },
+          "fieldName": {
+            "maxLength": 200,
+            "minLength": 1,
+            "type": "string"
+          },
+          "fieldDescription": {
+            "maxLength": 500,
+            "type": "string",
+            "nullable": true
+          },
+          "fieldTypeId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "fieldType": {
+            "$ref": "#/components/schemas/FormEntityFieldType"
+          },
+          "columnName": {
+            "maxLength": 200,
+            "type": "string",
+            "nullable": true
+          },
+          "propertyName": {
+            "maxLength": 200,
+            "type": "string",
+            "nullable": true
+          },
+          "isRequired": {
+            "type": "boolean"
+          },
+          "isUnique": {
+            "type": "boolean"
+          },
+          "isIndexed": {
+            "type": "boolean"
+          },
+          "isNullable": {
+            "type": "boolean"
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "maxLength": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "minLength": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "minValue": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "maxValue": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "defaultValue": {
+            "type": "string",
+            "nullable": true
+          },
+          "regexPattern": {
+            "maxLength": 500,
+            "type": "string",
+            "nullable": true
+          },
+          "regexErrorMessage": {
+            "maxLength": 500,
+            "type": "string",
+            "nullable": true
+          },
+          "displayOrder": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "displayLabel": {
+            "maxLength": 200,
+            "type": "string",
+            "nullable": true
+          },
+          "placeholder": {
+            "maxLength": 200,
+            "type": "string",
+            "nullable": true
+          },
+          "helpText": {
+            "maxLength": 500,
+            "type": "string",
+            "nullable": true
+          },
+          "relatedEntityId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "relatedEntity": {
+            "$ref": "#/components/schemas/FormEntity"
+          },
+          "lookupDisplayField": {
+            "maxLength": 100,
+            "type": "string",
+            "nullable": true
+          },
+          "lookupValueField": {
+            "maxLength": 100,
+            "type": "string",
+            "nullable": true
+          },
+          "customValidationRules": {
+            "type": "string",
+            "nullable": true
+          },
+          "formFieldMappings": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FormFieldMapping"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "FormEntityFieldDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "formEntityId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "formEntityName": {
+            "type": "string",
+            "nullable": true
+          },
+          "fieldName": {
+            "type": "string",
+            "nullable": true
+          },
+          "fieldDescription": {
+            "type": "string",
+            "nullable": true
+          },
+          "fieldTypeId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "fieldTypeName": {
+            "type": "string",
+            "nullable": true
+          },
+          "columnName": {
+            "type": "string",
+            "nullable": true
+          },
+          "propertyName": {
+            "type": "string",
+            "nullable": true
+          },
+          "isRequired": {
+            "type": "boolean"
+          },
+          "isUnique": {
+            "type": "boolean"
+          },
+          "isIndexed": {
+            "type": "boolean"
+          },
+          "isNullable": {
+            "type": "boolean"
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "maxLength": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "minLength": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "minValue": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "maxValue": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "defaultValue": {
+            "type": "string",
+            "nullable": true
+          },
+          "regexPattern": {
+            "type": "string",
+            "nullable": true
+          },
+          "regexErrorMessage": {
+            "type": "string",
+            "nullable": true
+          },
+          "displayOrder": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "displayLabel": {
+            "type": "string",
+            "nullable": true
+          },
+          "placeholder": {
+            "type": "string",
+            "nullable": true
+          },
+          "helpText": {
+            "type": "string",
+            "nullable": true
+          },
+          "relatedEntityId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "relatedEntityName": {
+            "type": "string",
+            "nullable": true
+          },
+          "lookupDisplayField": {
+            "type": "string",
+            "nullable": true
+          },
+          "lookupValueField": {
+            "type": "string",
+            "nullable": true
+          },
+          "customValidationRules": {
+            "type": "string",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "FormEntityFieldType": {
+        "required": [
+          "category",
+          "cSharpType",
+          "typeName"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "mainClientId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "mainClient": {
+            "$ref": "#/components/schemas/MainClient"
+          },
+          "createdBy": {
+            "type": "string",
+            "nullable": true
+          },
+          "updatedBy": {
+            "type": "string",
+            "nullable": true
+          },
+          "createdDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedDate": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "isDelete": {
+            "type": "boolean"
+          },
+          "uniqNumber": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "concurrencyToken": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "typeName": {
+            "maxLength": 100,
+            "minLength": 1,
+            "type": "string"
+          },
+          "typeDescription": {
+            "maxLength": 500,
+            "type": "string",
+            "nullable": true
+          },
+          "cSharpType": {
+            "maxLength": 200,
+            "minLength": 1,
+            "type": "string"
+          },
+          "typeScriptType": {
+            "maxLength": 200,
+            "type": "string",
+            "nullable": true
+          },
+          "sqlServerType": {
+            "maxLength": 200,
+            "type": "string",
+            "nullable": true
+          },
+          "defaultComponentType": {
+            "maxLength": 200,
+            "type": "string",
+            "nullable": true
+          },
+          "category": {
+            "$ref": "#/components/schemas/FieldTypeCategory"
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "isSystemType": {
+            "type": "boolean"
+          },
+          "validationOptions": {
+            "type": "string",
+            "nullable": true
+          },
+          "componentOptions": {
+            "type": "string",
+            "nullable": true
+          },
+          "fields": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FormEntityField"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "FormEntityFieldTypeCreateDto": {
+        "type": "object",
+        "properties": {
+          "typeName": {
+            "type": "string",
+            "nullable": true
+          },
+          "typeDescription": {
+            "type": "string",
+            "nullable": true
+          },
+          "cSharpType": {
+            "type": "string",
+            "nullable": true
+          },
+          "typeScriptType": {
+            "type": "string",
+            "nullable": true
+          },
+          "sqlServerType": {
+            "type": "string",
+            "nullable": true
+          },
+          "defaultComponentType": {
+            "type": "string",
+            "nullable": true
+          },
+          "category": {
+            "$ref": "#/components/schemas/FieldTypeCategory"
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "isSystemType": {
+            "type": "boolean"
+          },
+          "validationOptions": {
+            "type": "string",
+            "nullable": true
+          },
+          "componentOptions": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "FormEntityFieldTypeDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "typeName": {
+            "type": "string",
+            "nullable": true
+          },
+          "typeDescription": {
+            "type": "string",
+            "nullable": true
+          },
+          "cSharpType": {
+            "type": "string",
+            "nullable": true
+          },
+          "typeScriptType": {
+            "type": "string",
+            "nullable": true
+          },
+          "sqlServerType": {
+            "type": "string",
+            "nullable": true
+          },
+          "defaultComponentType": {
+            "type": "string",
+            "nullable": true
+          },
+          "category": {
+            "$ref": "#/components/schemas/FieldTypeCategory"
+          },
+          "categoryName": {
+            "type": "string",
+            "nullable": true
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "isSystemType": {
+            "type": "boolean"
+          },
+          "validationOptions": {
+            "type": "string",
+            "nullable": true
+          },
+          "componentOptions": {
+            "type": "string",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "additionalProperties": false
+      },
+      "FormEntityFieldTypeListDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "typeName": {
+            "type": "string",
+            "nullable": true
+          },
+          "cSharpType": {
+            "type": "string",
+            "nullable": true
+          },
+          "defaultComponentType": {
+            "type": "string",
+            "nullable": true
+          },
+          "categoryName": {
+            "type": "string",
+            "nullable": true
+          },
+          "isSystemType": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "FormEntityFieldTypeUpdateDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "typeName": {
+            "type": "string",
+            "nullable": true
+          },
+          "typeDescription": {
+            "type": "string",
+            "nullable": true
+          },
+          "cSharpType": {
+            "type": "string",
+            "nullable": true
+          },
+          "typeScriptType": {
+            "type": "string",
+            "nullable": true
+          },
+          "sqlServerType": {
+            "type": "string",
+            "nullable": true
+          },
+          "defaultComponentType": {
+            "type": "string",
+            "nullable": true
+          },
+          "category": {
+            "$ref": "#/components/schemas/FieldTypeCategory"
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "validationOptions": {
+            "type": "string",
+            "nullable": true
+          },
+          "componentOptions": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "FormEntityListDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "entityName": {
+            "type": "string",
+            "nullable": true
+          },
+          "entityDescription": {
+            "type": "string",
+            "nullable": true
+          },
+          "tableName": {
+            "type": "string",
+            "nullable": true
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "fieldCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "formCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "additionalProperties": false
+      },
+      "FormEntityRelation": {
+        "required": [
+          "formEntityId",
+          "formId",
+          "relationName",
+          "relationType"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "mainClientId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "mainClient": {
+            "$ref": "#/components/schemas/MainClient"
+          },
+          "createdBy": {
+            "type": "string",
+            "nullable": true
+          },
+          "updatedBy": {
+            "type": "string",
+            "nullable": true
+          },
+          "createdDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedDate": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "isDelete": {
+            "type": "boolean"
+          },
+          "uniqNumber": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "concurrencyToken": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "formId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "form": {
+            "$ref": "#/components/schemas/Form"
+          },
+          "formEntityId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "formEntity": {
+            "$ref": "#/components/schemas/FormEntity"
+          },
+          "relationName": {
+            "maxLength": 200,
+            "minLength": 1,
+            "type": "string"
+          },
+          "relationDescription": {
+            "maxLength": 500,
+            "type": "string",
+            "nullable": true
+          },
+          "relationType": {
+            "$ref": "#/components/schemas/EntityRelationType"
+          },
+          "isPrimary": {
+            "type": "boolean"
+          },
+          "isRequired": {
+            "type": "boolean"
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "cascadeDelete": {
+            "type": "boolean"
+          },
+          "displayOrder": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "parentRelationId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "parentRelation": {
+            "$ref": "#/components/schemas/FormEntityRelation"
+          },
+          "formDataPath": {
+            "maxLength": 500,
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "FormEntityUpdateDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "entityName": {
+            "type": "string",
+            "nullable": true
+          },
+          "entityDescription": {
+            "type": "string",
+            "nullable": true
+          },
+          "tableName": {
+            "type": "string",
+            "nullable": true
+          },
+          "schemaName": {
+            "type": "string",
+            "nullable": true
+          },
+          "namespacePath": {
+            "type": "string",
+            "nullable": true
+          },
+          "className": {
+            "type": "string",
+            "nullable": true
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "allowCreate": {
+            "type": "boolean"
+          },
+          "allowRead": {
+            "type": "boolean"
+          },
+          "allowUpdate": {
+            "type": "boolean"
+          },
+          "allowDelete": {
+            "type": "boolean"
+          },
+          "apiEndpoint": {
+            "type": "string",
+            "nullable": true
+          },
+          "displayField": {
+            "type": "string",
+            "nullable": true
+          },
+          "orderByField": {
+            "type": "string",
+            "nullable": true
+          },
+          "parentEntityId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "FormFieldMapping": {
+        "required": [
+          "formElementId",
+          "formEntityFieldId",
+          "formFieldName",
+          "formId"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "mainClientId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "mainClient": {
+            "$ref": "#/components/schemas/MainClient"
+          },
+          "createdBy": {
+            "type": "string",
+            "nullable": true
+          },
+          "updatedBy": {
+            "type": "string",
+            "nullable": true
+          },
+          "createdDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedDate": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "isDelete": {
+            "type": "boolean"
+          },
+          "uniqNumber": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "concurrencyToken": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "formId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "form": {
+            "$ref": "#/components/schemas/Form"
+          },
+          "formEntityFieldId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "formEntityField": {
+            "$ref": "#/components/schemas/FormEntityField"
+          },
+          "formEntityRelationId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "formEntityRelation": {
+            "$ref": "#/components/schemas/FormEntityRelation"
+          },
+          "formElementId": {
+            "maxLength": 200,
+            "minLength": 1,
+            "type": "string"
+          },
+          "formFieldName": {
+            "maxLength": 200,
+            "minLength": 1,
+            "type": "string"
+          },
+          "formComponentType": {
+            "maxLength": 200,
+            "type": "string",
+            "nullable": true
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "isReadOnly": {
+            "type": "boolean"
+          },
+          "isAutoMapped": {
+            "type": "boolean"
+          },
+          "transformRules": {
+            "type": "string",
+            "nullable": true
+          },
+          "validationOverride": {
+            "type": "string",
+            "nullable": true
+          },
+          "displayOrder": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "mappingNotes": {
+            "maxLength": 500,
+            "type": "string",
+            "nullable": true
           }
         },
         "additionalProperties": false
@@ -24915,6 +27048,10 @@
             "$ref": "#/components/schemas/FormItemStatus"
           },
           "fieldScript": {
+            "type": "string",
+            "nullable": true
+          },
+          "nodeScript": {
             "type": "string",
             "nullable": true
           },

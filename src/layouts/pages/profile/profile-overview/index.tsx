@@ -89,7 +89,7 @@ function Overview(): JSX.Element {
         try {
           const response = await api.apiProjectsGetByUserIdProjectListGet(selectedUser.id);
           const dataAPI = response.data;
-          console.log("Fetched data:", data);
+          
           setData(dataAPI as any);
         } catch (error) {
           console.error("Error fetching data:", error);
@@ -117,7 +117,7 @@ function Overview(): JSX.Element {
     var data = await api.apiProjectsGetUserProjectGet();
 
     setresultData(data.data);
-    console.log("veri başarıyla çekildi :", data.data);
+    
     dispatchBusy({ isBusy: false });
   };
 
@@ -133,13 +133,13 @@ function Overview(): JSX.Element {
     var conf = getConfiguration();
     var api = new UserApi(conf);
     var data = await api.apiUserGetLoginUserDetailGet();
-    console.log("veri :", data.data);
+    
     setProfileData(data.data);
     dispatchBusy({ isBusy: false });
   };
 
   useEffect(() => {
-    console.log("my user asdadad ", selectedUser);
+    
   }, [selectedUser]);
 
   return (

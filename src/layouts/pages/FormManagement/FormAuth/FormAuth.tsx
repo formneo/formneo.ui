@@ -158,7 +158,7 @@ function FormAuth() {
             fetchTableData();
             dispatchBusy({ isBusy: false });
         } catch (error) {
-            console.log(error);
+            
         } finally {
             dispatchBusy({ isBusy: false });
         }

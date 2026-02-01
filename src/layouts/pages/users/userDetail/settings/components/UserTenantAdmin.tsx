@@ -40,7 +40,7 @@ export default function UserTenantAdmin({ userId }: Props): JSX.Element {
             if (!userId || userId === "") {
                 return;
             }
-            console.log("UserTenantAdmin useEffect çalışıyor - userId:", userId);
+            
             try {
                 dispatchBusy({ isBusy: true });
                 const conf = getConfiguration();

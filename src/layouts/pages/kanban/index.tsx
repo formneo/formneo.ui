@@ -42,7 +42,7 @@ function KanbanPage() {
     try{
       dispatchBusy({isBusy: true});
       const kanbanData = await fetchKanbanData();
-      console.log("this is the kanban data", kanbanData);
+      
       let fixedData : KanbanTasksListDtoFixed[] = kanbanData.map((item: KanbanTasksListDtoFixed) => {
         return {
           Id: item.Id,
@@ -111,7 +111,7 @@ function KanbanPage() {
       dispatchBusy({isBusy: true});
       let config = getConfiguration();
       let api = new KanbanApi(config);
-      console.log("this is the card", card);
+      
       let fixedCard : KanbanTasksInsertDto = {
         assigneId: card.AssigneeId,
         rankId: card.RankId,
@@ -138,7 +138,7 @@ function KanbanPage() {
   };
 
   const actionBegin = (args: any) => {
-    console.log('Action Begin:', args);
+    
 
     if (args.requestType === 'cardCreate' && args.addedRecords && args.addedRecords.length > 0) {
       const newCard = args.addedRecords[0];

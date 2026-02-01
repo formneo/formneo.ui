@@ -294,7 +294,7 @@ function Languages({ cvDataLanguages, setCvDataLanguages }: LanguagesProps) {
                 showTooltip={true}
                 step={1}
                 onChange={(e: any) => {
-                  console.log(e);
+                  
                   setNewLanguage({ ...newLanguage, level: e.target.value.toString() });
                 }}
               />
@@ -314,7 +314,7 @@ function Languages({ cvDataLanguages, setCvDataLanguages }: LanguagesProps) {
                 description: "",
               });
               setIsEdit(false);
-              console.log("sildir");
+              
             }}
             sx={{ borderRadius: "8px", px: 4, py: 1 }}
           >

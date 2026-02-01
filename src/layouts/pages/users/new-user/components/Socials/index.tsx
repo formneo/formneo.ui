@@ -19,7 +19,7 @@ function Socials({ formData }: any): JSX.Element {
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files[0]) {
       const uploadedFile = event.target.files[0];
-      console.log("Uploaded File:", uploadedFile); // Dosya bilgilerini kontrol edebilirsiniz.
+       // Dosya bilgilerini kontrol edebilirsiniz.
       formData.setFieldValue("cv", uploadedFile); // Form verisini güncelle
     }
   };

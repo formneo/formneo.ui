@@ -65,9 +65,9 @@ export default function StartTab({ initialValues, node, onButtonClick }) {
             // alert(JSON.stringify(values, null, 2));
             // alert(node.id);
 
-            // console.log(JSON.stringify(node));
+            // 
 
-            console.log(JSON.stringify(node));
+            
 
             node.data = values;
             setSubmitting(false);

@@ -9,8 +9,8 @@ function InputDataNode() {
     const nodeId = useNodeId();
     const reactFlowInstance = useReactFlow();
 
-    console.log(reactFlowInstance.getNodes());
-    console.log(reactFlowInstance.getEdges());
+    
+    
 
     const store = useStoreApi();
 

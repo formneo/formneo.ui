@@ -100,7 +100,7 @@ export default function AprroveTab({ initialValues, node, onButtonClick }) {
       <Formik
         initialValues={initialValues}
         onSubmit={(values, { setSubmitting }) => {
-          console.log(JSON.stringify(node));
+          
           node.data = values;
           setSubmitting(false);
           onButtonClick(node);

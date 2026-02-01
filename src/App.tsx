@@ -93,7 +93,6 @@ const FormList = lazy(() => import("layouts/pages/FormManagement/UsersForm/FormL
 const TenantFormRole = lazy(() => import("layouts/pages/FormManagement/tenant-form-role"));
 const TenantFormRoleList = lazy(() => import("layouts/pages/FormManagement/tenant-form-role/list"));
 const ResumeBuild = lazy(() => import("layouts/pages/resumeBuilder"));
-const VpnDashboard = lazy(() => import("layouts/pages/vpnPage"));
 const KanbanPage = lazy(() => import("layouts/pages/kanban"));
 const CustomerList = lazy(() => import("layouts/pages/customer"));
 const CustomerDetail = lazy(() => import("layouts/pages/customer/detail"));
@@ -323,7 +322,6 @@ export default function App() {
               <Route path="/form-role/detail" element={<FormRoleDetail />} />
               <Route path="/form-role/detail/:id" element={<FormRoleDetail />} />
               <Route path="/resumeBuild" element={<ResumeBuild />} />
-              <Route path="/vpn" element={<VpnDashboard />} />
               <Route path="/kanban" element={<KanbanPage />} />
  
               <Route path="/customer" element={<CustomerList />} />

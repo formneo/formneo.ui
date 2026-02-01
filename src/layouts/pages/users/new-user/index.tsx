@@ -217,7 +217,7 @@ function NewUser(): JSX.Element {
 
       try {
         var data = await api.apiUserPut(update);
-        console.log("Başarılı:", data);
+        
       } catch (error: any) {
         dispatchAlert({ message: error.response.data.errors[0], type: MessageBoxType.Error })
         actions.setSubmitting(false);
@@ -239,7 +239,7 @@ function NewUser(): JSX.Element {
 
       try {
         var data = await api.apiUserPost(false, create);
-        console.log("Başarılı:", data);
+        
       } catch (error: any) {
         dispatchAlert({ message: error.response.data.errors[0], type: MessageBoxType.Error })
         actions.setSubmitting(false);

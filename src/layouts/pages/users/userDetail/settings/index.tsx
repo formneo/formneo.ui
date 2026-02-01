@@ -69,7 +69,7 @@ function Settings(): JSX.Element {
   const { formId, formField } = form;
 
   const handleSubmit = async (values: any, actions: any) => {
-    console.log("isMailSender Geliyor mu", values.isMailSender);
+    
     
     // Edit modunda userId kontrolü (create modunda engelleme yapma)
     if (formGudid && !userId) {
@@ -97,10 +97,10 @@ function Settings(): JSX.Element {
 
 
       try {
-        console.log(update);
+        
 
         var data = await api.apiUserPut(update);
-        console.log("Başarılı:", data);
+        
       } catch (error: any) {
         dispatchBusy({ isBusy: false });
         dispatchAlert({ message: error.response.data.errors[0], type: MessageBoxType.Error });
@@ -118,7 +118,7 @@ function Settings(): JSX.Element {
 
       try {
         var data = await api.apiUserPost(values.isMailSender, create);
-        console.log("Başarılı:", data);
+        
       } catch (error: any) {
         dispatchBusy({ isBusy: false });
         dispatchAlert({ message: error.response.data.errors[0], type: MessageBoxType.Error });

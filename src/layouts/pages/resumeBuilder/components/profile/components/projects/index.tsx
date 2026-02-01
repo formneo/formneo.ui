@@ -46,7 +46,7 @@ function Projects({ cvDataProjects, setCvDataProjects }: ProjectsProps) {
     } else {
       setMaxHeight("0px");
     }
-    console.log("cvDataProjects", cvDataProjects);
+    
   }, [isOpen, cvDataProjects]);
 
   useEffect(() => {
@@ -57,7 +57,7 @@ function Projects({ cvDataProjects, setCvDataProjects }: ProjectsProps) {
         let response = await api.apiTicketProjectsGetActiveProjectsGet();
         setProjects(response.data);
       } catch (error) {
-        console.log(error);
+        
       }
     };
     fetchProjects();
@@ -93,8 +93,8 @@ const handleUpdateProject = () => {
 }
 
 const handleEditProject = (id: number) => {
-    console.log("id", id);
-    console.log("cvDataProjects", cvDataProjects);
+    
+    
     setOpenDialog(true);
     setIsEdit(true);
     setNewProject(cvDataProjects.find((project) => project.id === id));
@@ -304,7 +304,7 @@ const handleDeleteProject = (id: number) => {
                 isOptionEqualToValue={(option, value) => option.id === value.id}
                 onChange={(event, newValue) => {
                     setNewProject({ ...newProject, project: newValue });
-                    console.log(newValue);
+                    
                 }}
               />
             </Grid>
@@ -341,7 +341,7 @@ const handleDeleteProject = (id: number) => {
                 description: "",
               });
               setIsEdit(false);
-              console.log("sildir");
+              
             }}
             sx={{ borderRadius: "8px", px: 4, py: 1 }}
           >

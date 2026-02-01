@@ -377,7 +377,7 @@ function ApproveList() {
       selectedProcessTypeId,
       selectedRequestUserId
     );
-    console.log(`User requested page number ${event.selected}, which is offset ${newOffset}`);
+    
     setItemOffset(newOffset);
   };
 
@@ -428,9 +428,9 @@ function ApproveList() {
 
     let api = new ApproveItemsApi(configuration);
 
-    console.log("status", status);
-    console.log("offset:", skip, top);
-    console.log("processtype:", processType);
+    
+    
+    
     var result = await api.apiApproveItemsGetApprovesGet(status, skip, top, processType, reqUserId);
 
     // var result = listData!.items?.filter(e => e.approverStatus == type);
@@ -444,11 +444,11 @@ function ApproveList() {
       return dateB - dateA;
     });
     setGridData(result.data.approveItemsDtoList!);
-    console.log(">>>>", result.data);
+    
     dispatchBusy({ isBusy: false });
 
     const endOffset = itemOffset + itemsPerPage;
-    console.log(`Loading items from ${itemOffset} to ${endOffset}`);
+    
     const currentItems = result.data.approveItemsDtoList!.slice(itemOffset, endOffset);
     setapproveDataCount(result.data.count!);
     setpageCount(Math.ceil(result.data.count! / itemsPerPage));
@@ -464,7 +464,7 @@ function ApproveList() {
   };
 
   function multipleApprove() {
-    console.log("Selected Rows:", selectedRows);
+    
     selectedRows.forEach((row) => {
       if (row) {
         dispatchBusy({ isBusy: true });
@@ -500,7 +500,7 @@ function ApproveList() {
   }
 
   function multipleReject() {
-    console.log("Selected Rows:", selectedRows);
+    
     selectedRows.forEach((row) => {
       if (row) {
         dispatchBusy({ isBusy: true });
@@ -638,7 +638,7 @@ function ApproveList() {
   }
 
   async function onProcessComboChange(event: any) {
-    console.log(event);
+    
     const selectedItem = event.detail.item;
     var selectedItemId = selectedItem.getAttribute("data-id");
     setselectedProcessType(selectedItem.text);
@@ -652,7 +652,7 @@ function ApproveList() {
 
   async function onApproveDatePickerChange(event: any) {
     dispatchBusy({ isBusy: true });
-    console.log(event);
+    
     const selectedDate = event.detail.value;
     const selectedDateObj = parse(selectedDate, "d MMM yyyy", new Date(), { locale: tr });
 
@@ -677,7 +677,7 @@ function ApproveList() {
   }
   async function onProcessDatePickerChange(event: any) {
     dispatchBusy({ isBusy: true });
-    console.log(event);
+    
     const selectedDate = event.detail.value;
     const selectedDateObj = parse(selectedDate, "d MMM yyyy", new Date(), { locale: tr });
 
@@ -709,7 +709,7 @@ function ApproveList() {
     var result = api
       .apiWorkFlowDefinationGet()
       .then((response: AxiosResponse<WorkFlowDefinationListDto[]>) => {
-        console.log("WorkFlowDefinationApi", response.data);
+        
         setProcessTypes(response.data);
       })
       .catch((error) => { })
@@ -717,7 +717,7 @@ function ApproveList() {
   }
 
   const onRequestingUserChange = async (e: any) => {
-    console.log("onRequestingUserChange", e);
+    
     setselectedRequestUser(e.defaultFullName);
     setselectedRequestUserId(e.userId);
     setUserDialogVisible(false);
@@ -727,7 +727,7 @@ function ApproveList() {
 
   const handleOpenQuestionBox = (obj: any, type: string) => {
     setSelectedRow(obj);
-    console.log("satır>>", obj);
+    
     setObjectType(type);
     setIsQuestionMessageBoxOpen(true);
     setDescription("");
@@ -747,7 +747,7 @@ function ApproveList() {
     var api = new WorkFlowItemApi(configuration);
     console.log("workflowid", workflowid)
     var data = await api.apiWorkFlowItemGetApproveItemsWorkFlowHeadIdGet(workflowid);
-    console.log("getLastManDay", data.data);
+    
     var haveManDay: any[] = [];
 
     data.data.forEach(item => {
@@ -759,7 +759,7 @@ function ApproveList() {
 
     if (haveManDay.length > 0) {
       haveManDay.sort((a: any, b: any) => b.createdDate - a.createdDate);
-      console.log("haveManDay", haveManDay);
+      
       lastsetNumberManDay(haveManDay[0].approvedUser_RuntimeNumberManDay);
       setNumberManDay(haveManDay[0].approvedUser_RuntimeNumberManDay)
     }
@@ -768,7 +768,7 @@ function ApproveList() {
   }
 
   useEffect(() => {
-    console.log("description", description);
+    
   }, [description]);
 
   const handleCloseQuestionBox = (action: string) => {

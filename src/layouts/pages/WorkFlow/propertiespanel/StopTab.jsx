@@ -67,7 +67,7 @@ export default function StopTab({ initialValues, node, onButtonClick }) {
           initialValues={initialValues}
           onSubmit={(values, { setSubmitting }) => {
 
-            console.log(JSON.stringify(node));
+            
 
             node.data = values;
             setSubmitting(false);
