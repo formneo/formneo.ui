@@ -32,6 +32,7 @@ import {
   CitySelect,
   ApproverSelect,
 } from "layouts/pages/FormEditor/custom/StandardComboboxes";
+import CurrencyInput from "layouts/pages/FormEditor/custom/CurrencyInput";
 
 interface FormButton {
   id: string;
@@ -60,6 +61,7 @@ export default function FormilyPreviewPage(): JSX.Element {
         Card: AntdCard, 
         Slider: AntdSlider, 
         Rate: AntdRate,
+        CurrencyInput,
         DepartmentSelect,
         PositionSelect,
         CompanySelect,

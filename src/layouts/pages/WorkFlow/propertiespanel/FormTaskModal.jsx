@@ -143,7 +143,8 @@ const FormTaskModal = ({ open, onClose, initialValues, node, onSave, workflowFor
   const [visibilitySettings, setVisibilitySettings] = useState({});
   const [formSchema, setFormSchema] = useState(null);
   const [testPreviewOpen, setTestPreviewOpen] = useState(false);
-  const [initSettingsTab, setInitSettingsTab] = useState(0); // 0: Değer Atama, 1: Koşullar, 2: Görünürlük
+  const [initSettingsTab, setInitSettingsTab] = useState(0); // 0: Değer Atama, 1: Koşullar, 2: Görünürlük, 3: Butonlar
+  const [buttonVisibilitySettings, setButtonVisibilitySettings] = useState({}); // { buttonId: true/false }
   
   // Test form instance
   const testForm = React.useMemo(() => createForm(), []);
@@ -837,10 +838,12 @@ declare var formValues: Record<string, any>;
       setInitRules(parsed.initRules);
       setConditionalRules(parsed.conditionalRules);
       setVisibilitySettings(parsed.visibilitySettings);
+      setButtonVisibilitySettings(parsed.buttonVisibilitySettings || {});
     } else if (open) {
       setInitRules([]);
       setConditionalRules([]);
       setVisibilitySettings({});
+      setButtonVisibilitySettings({});
     }
   }, [open, initialValues?.initScript]);
 
@@ -873,6 +876,16 @@ declare var formValues: Record<string, any>;
             });
             setVisibilitySettings(defaultVisibility);
           }
+          
+          // Form butonlarını yükle (init settings için)
+          // Not: formButtons zaten başka bir yerde yükleniyor, ama init settings için buttonVisibilitySettings'i set ediyoruz
+          if (formButtons.length > 0) {
+            const defaultButtonVisibility = {};
+            formButtons.forEach(button => {
+              defaultButtonVisibility[button.id] = initialValues?.buttonVisibilitySettings?.[button.id] ?? true;
+            });
+            setButtonVisibilitySettings(defaultButtonVisibility);
+          }
         }
       } catch (error) {
         console.error("❌ Form schema yüklenirken hata:", error);
@@ -890,11 +903,19 @@ declare var formValues: Record<string, any>;
       initRules: [],
       conditionalRules: [],
       visibilitySettings: {},
+      buttonVisibilitySettings: {},
     };
     
     const lines = script.split("\n").filter(line => line.trim() && !line.trim().startsWith("//"));
     
     lines.forEach(line => {
+      // setButtonVisible parse
+      const btnVisMatch = line.match(/setButtonVisible\("([^"]+)",\s*(true|false)\)/);
+      if (btnVisMatch) {
+        result.buttonVisibilitySettings[btnVisMatch[1]] = btnVisMatch[2] === "true";
+        return;
+      }
+      
       // setFieldVisible parse
       const visMatch = line.match(/setFieldVisible\("([^"]+)",\s*(true|false)\)/);
       if (visMatch) {
@@ -953,6 +974,19 @@ declare var formValues: Record<string, any>;
   // Script generation
   const generateScript = () => {
     let script = "";
+    
+    // 0. Buton görünürlük ayarları
+    const hiddenButtons = Object.entries(buttonVisibilitySettings)
+      .filter(([_, visible]) => visible === false)
+      .map(([buttonId]) => buttonId);
+    
+    if (hiddenButtons.length > 0) {
+      script += "// 🔘 Gizli butonlar\n";
+      hiddenButtons.forEach(buttonId => {
+        script += `setButtonVisible("${buttonId}", false);\n`;
+      });
+      script += "\n";
+    }
     
     // 1. Görünürlük ve Readonly ayarları
     const hiddenFields = Object.entries(visibilitySettings)
@@ -1345,6 +1379,7 @@ declare var formValues: Record<string, any>;
       totalButtonsCount: allButtons.length,
       initScript: generateScript(), // ✅ Form başlangıç scripti
       visibilitySettings: visibilitySettings, // ✅ Form başlangıç görünürlük ayarları
+      buttonVisibilitySettings: buttonVisibilitySettings, // ✅ Form başlangıç buton görünürlük ayarları
     };
 
     console.log("🔍 FormTaskModal - Kaydet:", {
@@ -2801,6 +2836,21 @@ if (gunSayisi && gunlukUcret) {
           } 
           sx={{ textTransform: "none", fontWeight: 600 }} 
         />
+        <Tab 
+          label={
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+              🔘 Butonlar
+              {Object.values(buttonVisibilitySettings).filter(v => v === false).length > 0 && (
+                <Chip 
+                  label={Object.values(buttonVisibilitySettings).filter(v => v === false).length} 
+                  size="small" 
+                  color="error" 
+                />
+              )}
+            </Box>
+          } 
+          sx={{ textTransform: "none", fontWeight: 600 }} 
+        />
       </Tabs>
 
       {/* TAB 0: DEĞER ATAMA */}
@@ -3226,10 +3276,130 @@ if (gunSayisi && gunlukUcret) {
         </Box>
       )}
 
+      {/* TAB 3: BUTONLAR */}
+      {initSettingsTab === 3 && (
+        <Box>
+          <Paper sx={{ mb: 2, p: 2, bgcolor: "info.lighter" }} variant="outlined">
+            <Typography variant="body2" fontWeight={600}>
+              🔘 Form açılırken hangi butonlar görünür olacak?
+            </Typography>
+          </Paper>
+          
+          <Box sx={{ display: "flex", gap: 1, mb: 2 }}>
+            <MDButton
+              size="small"
+              variant="outlined"
+              color="success"
+              startIcon={<VisibilityIcon />}
+              onClick={() => {
+                const allVisible = {};
+                formButtons.forEach(btn => allVisible[btn.id] = true);
+                setButtonVisibilitySettings(allVisible);
+              }}
+            >
+              Tümü Görünür
+            </MDButton>
+            <MDButton
+              size="small"
+              variant="outlined"
+              color="error"
+              startIcon={<VisibilityOffIcon />}
+              onClick={() => {
+                const allHidden = {};
+                formButtons.forEach(btn => allHidden[btn.id] = false);
+                setButtonVisibilitySettings(allHidden);
+              }}
+            >
+              Tümü Gizli
+            </MDButton>
+          </Box>
+
+          <Paper sx={{ p: 2 }} elevation={0}>
+            {formButtons.length === 0 ? (
+              <Box sx={{ textAlign: "center", py: 6 }}>
+                <Typography color="text.secondary">
+                  Bu formda buton tanımlanmamış.
+                </Typography>
+              </Box>
+            ) : (
+              <>
+                <Box sx={{ mb: 2, display: "flex", gap: 1 }}>
+                  <Chip 
+                    icon={<VisibilityIcon />}
+                    label={`Görünür: ${Object.values(buttonVisibilitySettings).filter(v => v === true || v === undefined).length}`}
+                    color="success"
+                    size="small"
+                  />
+                  <Chip 
+                    icon={<VisibilityOffIcon />}
+                    label={`Gizli: ${Object.values(buttonVisibilitySettings).filter(v => v === false).length}`}
+                    color="error"
+                    size="small"
+                  />
+                </Box>
+                <Box sx={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: 2 }}>
+                  {formButtons.map(button => {
+                    const isVisible = buttonVisibilitySettings[button.id] !== false;
+                    const bgColor = isVisible ? "#e8f5e9" : "#ffebee";
+                    const borderColor = isVisible ? "#66bb6a" : "#ef5350";
+                    
+                    return (
+                      <Paper
+                        key={button.id} 
+                        variant="outlined"
+                        sx={{ 
+                          p: 2,
+                          backgroundColor: bgColor,
+                          borderColor: borderColor,
+                          borderWidth: 2,
+                        }}
+                      >
+                        <Box sx={{ mb: 1.5 }}>
+                          <Typography variant="body2" fontWeight={700}>
+                            {button.label || button.name || "Buton"}
+                          </Typography>
+                          <Typography variant="caption" color="textSecondary">
+                            ID: {button.id}
+                          </Typography>
+                        </Box>
+                        
+                        <ToggleButtonGroup
+                          value={isVisible ? "visible" : "hidden"}
+                          exclusive
+                          onChange={(e, newState) => {
+                            if (newState !== null) {
+                              setButtonVisibilitySettings({
+                                ...buttonVisibilitySettings,
+                                [button.id]: newState === "visible"
+                              });
+                            }
+                          }}
+                          size="small"
+                          fullWidth
+                        >
+                          <ToggleButton value="visible">
+                            <VisibilityIcon sx={{ fontSize: 16, mr: 0.5 }} />
+                            Görünür
+                          </ToggleButton>
+                          <ToggleButton value="hidden">
+                            <VisibilityOffIcon sx={{ fontSize: 16, mr: 0.5 }} />
+                            Gizli
+                          </ToggleButton>
+                        </ToggleButtonGroup>
+                      </Paper>
+                    );
+                  })}
+                </Box>
+              </>
+            )}
+          </Paper>
+        </Box>
+      )}
+
       {/* SCRIPT ÖNİZLEME */}
       <Divider sx={{ my: 3 }} />
       
-      {(initRules.length > 0 || conditionalRules.length > 0 || Object.values(visibilitySettings).some(v => v === "hidden" || v === "readonly")) && (
+      {(initRules.length > 0 || conditionalRules.length > 0 || Object.values(visibilitySettings).some(v => v === "hidden" || v === "readonly") || Object.values(buttonVisibilitySettings).some(v => v === false)) && (
         <Box 
           sx={{ 
             p: 2.5, 

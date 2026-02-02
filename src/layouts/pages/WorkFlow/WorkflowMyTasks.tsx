@@ -428,6 +428,8 @@ function WorkflowMyTasks() {
       // ✅ FormTask ise runtime sayfasına yönlendir
       if (finalIsFormTask) {
 
+        alert(taskDetail.nodeScript);
+              alert(taskDetail.fieldScript);
         navigate(`/workflows/runtime/${workflowInstanceId}`, {
           state: {
             workflowInstance: {

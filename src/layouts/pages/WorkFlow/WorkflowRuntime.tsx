@@ -45,6 +45,7 @@ interface FormButton {
   type?: "primary" | "default" | "dashed" | "link" | "text";
   icon?: string;
   action?: string;
+  visible?: boolean;
 }
 
 /**
@@ -81,12 +82,12 @@ export default function WorkflowRuntime(): JSX.Element {
 
   const form = useMemo(() => createForm(), []);
   const SchemaField = useMemo(
-    () => createSchemaField({ 
-      components: { 
-        ...(AntdFormily as any), 
-        CurrencyInput, 
-        Card: AntdCard, 
-        Slider: AntdSlider, 
+    () => createSchemaField({
+      components: {
+        ...(AntdFormily as any),
+        CurrencyInput,
+        Card: AntdCard,
+        Slider: AntdSlider,
         Rate: AntdRate,
         DepartmentSelect,
         PositionSelect,
@@ -100,7 +101,7 @@ export default function WorkflowRuntime(): JSX.Element {
         CountrySelect,
         CitySelect,
         ApproverSelect,
-      } 
+      }
     }),
     []
   );
@@ -110,15 +111,16 @@ export default function WorkflowRuntime(): JSX.Element {
    * Script'teki setFieldVisible çağrılarını analiz edip schema'yı modifiye eder
    * Bu sayede alanlar render edilmeden önce gizli olur (flash olmaz)
    */
-  const applyScriptToSchema = (script: string, schema: any, formValues: any = {}): any => {
+  const applyScriptToSchema = (script: string, schema: any, formValues: any = {}): { schema: any; buttonVisibilityMap: Record<string, boolean> } => {
     if (!script || !script.trim() || !schema) {
-      return schema;
+      return { schema, buttonVisibilityMap: {} };
     }
 
     try {
       // Script'teki setFieldVisible çağrılarını yakalamak için mock fonksiyonlar
       const visibilityMap: Record<string, boolean> = {};
       const readonlyMap: Record<string, boolean> = {};
+      const buttonVisibilityMap: Record<string, boolean> = {};
 
       const setFieldVisible = (fieldKey: string, visible: boolean) => {
         visibilityMap[fieldKey] = visible;
@@ -126,6 +128,11 @@ export default function WorkflowRuntime(): JSX.Element {
 
       const setFieldReadonly = (fieldKey: string, readonly: boolean) => {
         readonlyMap[fieldKey] = readonly;
+      };
+
+      const setButtonVisible = (buttonId: string, visible: boolean) => {
+        buttonVisibilityMap[buttonId] = visible;
+        console.log(`🔧 applyScriptToSchema - setButtonVisible çağrıldı: ${buttonId} =`, visible);
       };
 
       const setFieldValue = (fieldKey: string, value: any) => {
@@ -140,7 +147,7 @@ export default function WorkflowRuntime(): JSX.Element {
       };
 
       // ✅ currentUser ve crypto mock'ları
-      const currentUserObj = currentUser || { 
+      const currentUserObj = currentUser || {
         userName: "Mock User",
         name: "Mock",
         surname: "User",
@@ -164,6 +171,7 @@ export default function WorkflowRuntime(): JSX.Element {
         "setFieldReadonly",
         "setFieldValue",
         "getFieldValue",
+        "setButtonVisible",
         "formValues",
         "currentUser",
         "crypto",
@@ -180,6 +188,7 @@ export default function WorkflowRuntime(): JSX.Element {
         setFieldReadonly,
         setFieldValue,
         getFieldValue,
+        setButtonVisible,
         formValues,
         currentUserObj,
         cryptoObj
@@ -188,8 +197,10 @@ export default function WorkflowRuntime(): JSX.Element {
       console.log("✅ applyScriptToSchema - Script çalıştırıldı, map'ler dolduruldu:", {
         visibilityMapSize: Object.keys(visibilityMap).length,
         readonlyMapSize: Object.keys(readonlyMap).length,
+        buttonVisibilityMapSize: Object.keys(buttonVisibilityMap).length,
         visibilityMap,
         readonlyMap,
+        buttonVisibilityMap,
       });
 
       // Schema'yı modifiye et
@@ -238,10 +249,10 @@ export default function WorkflowRuntime(): JSX.Element {
         readonlyMap,
         modifiedSchemaKeys: Object.keys(modifiedSchema.properties || {}),
       });
-      return modifiedSchema;
+      return { schema: modifiedSchema, buttonVisibilityMap };
     } catch (error) {
       console.error("❌ Schema modifikasyonu sırasında hata:", error);
-      return schema; // Hata durumunda orijinal schema'yı döndür
+      return { schema, buttonVisibilityMap: {} }; // Hata durumunda orijinal schema'yı döndür
     }
   };
 
@@ -311,22 +322,22 @@ export default function WorkflowRuntime(): JSX.Element {
       const setFieldValue = (fieldKey: string, value: any) => {
         try {
           console.log(`🔧 setFieldValue çağrıldı: ${fieldKey} =`, value, `(type: ${typeof value})`);
-          
+
           // Önce field'ı bul
           let field = formInstance.query(fieldKey).take();
-          
+
           if (field) {
             // Field bulunduysa, hem initialValue hem de value'yu set et
             field.setInitialValue(value);
             field.setValue(value);
-            
+
             // Radio button için bazen UI update olmaz, onInput ile trigger et
             const componentName = field.component?.[0] || field.componentType || '';
             if (componentName.includes('Radio') || componentName === 'Radio.Group') {
               field.onInput(value);
               console.log(`🔘 Radio component için onInput tetiklendi: ${fieldKey} (${componentName})`);
             }
-            
+
             console.log(`✅ setFieldValue (field.setValue): ${fieldKey} =`, value, {
               fieldType: field.component?.[0] || field.componentType,
               fieldDisplay: field.display,
@@ -338,27 +349,27 @@ export default function WorkflowRuntime(): JSX.Element {
             // Field bulunamadıysa, hem initialValues hem values'ı set et
             console.warn(`⚠️ setFieldValue - Field query ile bulunamadı: ${fieldKey}`);
             console.log(`Mevcut field'lar:`, Object.keys(formInstance.fields || {}));
-            
+
             // Hem initial hem current value'yu set et
             const updates = { [fieldKey]: value };
             formInstance.setInitialValues(updates);
             formInstance.setValues(updates);
             console.log(`✅ setFieldValue (formInstance.setInitialValues + setValues): ${fieldKey} =`, value);
-            
+
             // Radio button'lar için biraz bekleyip field mount olduktan sonra tekrar dene
             setTimeout(() => {
               const delayedField = formInstance.query(fieldKey).take();
               if (delayedField) {
                 delayedField.setInitialValue(value);
                 delayedField.setValue(value);
-                
+
                 // Radio button için onInput tetikle
                 const componentName = delayedField.component?.[0] || delayedField.componentType || '';
                 if (componentName.includes('Radio') || componentName === 'Radio.Group') {
                   delayedField.onInput(value);
                   console.log(`🔘 Radio component için onInput tetiklendi (delayed): ${fieldKey} (${componentName})`);
                 }
-                
+
                 console.log(`✅ setFieldValue (delayed field.setValue): ${fieldKey} =`, value, {
                   fieldType: delayedField.component?.[0],
                   currentValue: delayedField.value,
@@ -391,11 +402,26 @@ export default function WorkflowRuntime(): JSX.Element {
         }
       };
 
+      const setButtonVisible = (buttonId: string, visible: boolean) => {
+        try {
+          console.log(`🔘 setButtonVisible çağrıldı: ${buttonId} = ${visible}`);
+          setFormButtons((prevButtons) =>
+            prevButtons.map(btn =>
+              btn.id === buttonId
+                ? { ...btn, visible }
+                : btn
+            )
+          );
+        } catch (error) {
+          console.warn(`⚠️ setButtonVisible hatası (${buttonId}):`, error);
+        }
+      };
+
       // Form values'ı global değişken olarak erişilebilir yap
       const formValues = formInstance.values || {};
 
       // ✅ currentUser ve crypto (initScript için gerekli)
-      const currentUserObj = currentUser || { 
+      const currentUserObj = currentUser || {
         userName: "Kullanıcı",
         name: "Kullanıcı",
         surname: "",
@@ -404,7 +430,7 @@ export default function WorkflowRuntime(): JSX.Element {
         fullName: "Kullanıcı",
         email: ""
       };
-      
+
       console.log("👤 Script'te kullanılan currentUser:", {
         hasRealUser: !!currentUser,
         currentUserObj,
@@ -425,6 +451,7 @@ export default function WorkflowRuntime(): JSX.Element {
         "setFieldReadonly",
         "setFieldValue",
         "getFieldValue",
+        "setButtonVisible",
         "formValues",
         "currentUser",
         "crypto",
@@ -437,12 +464,13 @@ export default function WorkflowRuntime(): JSX.Element {
         setFieldReadonly,
         setFieldValue,
         getFieldValue,
+        setButtonVisible,
         formValues,
         currentUserObj,
         cryptoObj
       );
       console.log("✅ Script başarıyla çalıştırıldı");
-      
+
       // Script çalıştıktan sonra form durumunu kontrol et
       setTimeout(() => {
         console.log("📊 Script sonrası form durumu:", {
@@ -468,11 +496,11 @@ export default function WorkflowRuntime(): JSX.Element {
         const conf = getConfiguration();
         const userApi = new UserApi(conf);
         const userResponse = await userApi.apiUserGetLoginUserDetailGet();
-        
+
         // Tüm kullanıcı bilgisini sakla
         const userData = userResponse.data;
         const fullName = `${userData?.firstName || ""} ${userData?.lastName || ""}`.trim();
-        
+
         setCurrentUser({
           userName: userData?.userName || "",
           name: userData?.firstName || "",
@@ -484,7 +512,7 @@ export default function WorkflowRuntime(): JSX.Element {
           // Diğer tüm alanları da sakla
           ...userData,
         });
-        
+
         console.log("👤 Kullanıcı bilgisi yüklendi:", {
           userName: userData?.userName,
           firstName: userData?.firstName,
@@ -545,6 +573,8 @@ export default function WorkflowRuntime(): JSX.Element {
       }
 
       try {
+
+        alert("girdi");
         setLoading(true);
         const conf = getConfiguration();
         const formApi = new FormDataApi(conf);
@@ -637,21 +667,45 @@ export default function WorkflowRuntime(): JSX.Element {
               hasInitialFormValues: Object.keys(initialFormValues).length > 0,
               initialFormValues,
             });
-            finalSchema = applyScriptToSchema(activeScript, finalSchema, initialFormValues);
+            const scriptResult = applyScriptToSchema(activeScript, finalSchema, initialFormValues);
+            finalSchema = scriptResult.schema;
+            const buttonVisibilityMap = scriptResult.buttonVisibilityMap;
+
             console.log("✅ Schema script'e göre modifiye edildi (flash önlendi)", {
               scriptType: initScript ? "initScript" : "fieldScript",
+              buttonVisibilityMapSize: Object.keys(buttonVisibilityMap).length,
             });
+
+            // ✅ Button panel'i yükle VE script'ten gelen visibility'yi uygula
+            if (parsed.buttonPanel?.buttons && Array.isArray(parsed.buttonPanel.buttons)) {
+              const buttonsWithVisibility = parsed.buttonPanel.buttons.map((btn: FormButton) => ({
+                ...btn,
+                visible: buttonVisibilityMap.hasOwnProperty(btn.id)
+                  ? buttonVisibilityMap[btn.id]
+                  : btn.visible ?? true
+              }));
+              console.log("🔘 Butonlar visibility ile yükleniyor:", {
+                totalButtons: buttonsWithVisibility.length,
+                visibleButtons: buttonsWithVisibility.filter((b: FormButton) => b.visible !== false).length,
+                buttonVisibilityMap,
+              });
+              setFormButtons(buttonsWithVisibility);
+            }
           } catch (error) {
             console.warn("⚠️ Schema modifikasyonu sırasında hata, orijinal schema kullanılıyor:", error);
+            // Hata durumunda butonları normal şekilde yükle
+            if (parsed.buttonPanel?.buttons && Array.isArray(parsed.buttonPanel.buttons)) {
+              setFormButtons(parsed.buttonPanel.buttons);
+            }
+          }
+        } else {
+          // Script yoksa butonları direkt yükle
+          if (parsed.buttonPanel?.buttons && Array.isArray(parsed.buttonPanel.buttons)) {
+            setFormButtons(parsed.buttonPanel.buttons);
           }
         }
 
         setSchema(finalSchema);
-
-        // Button panel'i yükle
-        if (parsed.buttonPanel?.buttons && Array.isArray(parsed.buttonPanel.buttons)) {
-          setFormButtons(parsed.buttonPanel.buttons);
-        }
 
       } catch (err: any) {
         let errorMsg = "Form yüklenirken bir hata oluştu";
@@ -781,7 +835,7 @@ export default function WorkflowRuntime(): JSX.Element {
       const formValues = form.values;
       const formFields = form.fields;
       const formMounted = form.mounted;
-      
+
       console.log("⏰ Script çalıştırma kontrolü:", {
         formMounted,
         hasFormValues: !!formValues,
@@ -792,7 +846,7 @@ export default function WorkflowRuntime(): JSX.Element {
         currentUserName: currentUser?.fullName,
         isNewInstance,
       });
-      
+
       // Form mount olmamışsa biraz daha bekle
       if (!formMounted) {
         console.log("⏳ Form henüz mount olmadı, 300ms daha bekleniyor...");
@@ -817,7 +871,7 @@ export default function WorkflowRuntime(): JSX.Element {
         }, 300);
         return;
       }
-      
+
       // FormData yüklenmişse script'i çalıştır (değer atamaları için)
       // Visibility zaten schema'da ayarlandı, burada sadece dinamik kontroller yapılır
 
@@ -1306,30 +1360,30 @@ export default function WorkflowRuntime(): JSX.Element {
                   {formName}
                 </MDTypography>
                 {typeof revision === "number" && (
-                  <Chip 
-                    label={`Rev #${revision}`} 
-                    size="small" 
+                  <Chip
+                    label={`Rev #${revision}`}
+                    size="small"
                     color="primary"
                     sx={{ height: "22px", fontSize: "11px" }}
                   />
                 )}
                 {publicationStatus === 2 ? (
-                  <Chip 
-                    label="Yayınlanmış" 
-                    size="small" 
+                  <Chip
+                    label="Yayınlanmış"
+                    size="small"
                     color="success"
                     sx={{ height: "22px", fontSize: "11px" }}
                   />
                 ) : publicationStatus === 3 ? (
-                  <Chip 
-                    label="Arşivlenmiş" 
+                  <Chip
+                    label="Arşivlenmiş"
                     size="small"
                     sx={{ height: "22px", fontSize: "11px" }}
                   />
                 ) : (
-                  <Chip 
-                    label="Taslak" 
-                    size="small" 
+                  <Chip
+                    label="Taslak"
+                    size="small"
                     color="default"
                     sx={{ height: "22px", fontSize: "11px" }}
                   />
@@ -1409,30 +1463,32 @@ export default function WorkflowRuntime(): JSX.Element {
               minHeight: "70px",
             }}
           >
-            {formButtons.map((button) => {
-              const IconComponent = button.icon
-                ? (Icons as any)[button.icon] || Icons.CheckOutlined
-                : null;
+            {formButtons
+              .filter((button) => button.visible !== false) // ✅ Sadece görünür butonları göster
+              .map((button) => {
+                const IconComponent = button.icon
+                  ? (Icons as any)[button.icon] || Icons.CheckOutlined
+                  : null;
 
-              // ✅ Action kod kontrolü - BMP modülü için
-              const hasAction = button.action && button.action.trim();
-              const buttonDisabled = submitting || !hasAction;
+                // ✅ Action kod kontrolü - BMP modülü için
+                const hasAction = button.action && button.action.trim();
+                const buttonDisabled = submitting || !hasAction;
 
-              return (
-                <AntButton
-                  key={button.id}
-                  type={button.type || "primary"}
-                  icon={IconComponent ? <IconComponent /> : null}
-                  onClick={() => handleButtonClick(button)}
-                  size="large"
-                  loading={submitting}
-                  disabled={buttonDisabled}
-                  title={hasAction ? `Action: ${button.action}` : "Action Code tanımlanmamış!"}
-                >
-                  {submitting ? "Gönderiliyor..." : button.label}
-                </AntButton>
-              );
-            })}
+                return (
+                  <AntButton
+                    key={button.id}
+                    type={button.type || "primary"}
+                    icon={IconComponent ? <IconComponent /> : null}
+                    onClick={() => handleButtonClick(button)}
+                    size="large"
+                    loading={submitting}
+                    disabled={buttonDisabled}
+                    title={hasAction ? `Action: ${button.action}` : "Action Code tanımlanmamış!"}
+                  >
+                    {submitting ? "Gönderiliyor..." : button.label}
+                  </AntButton>
+                );
+              })}
           </Box>
         )}
 

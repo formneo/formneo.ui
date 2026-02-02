@@ -64,13 +64,15 @@ import "antd/dist/antd.css";
  */
 
 const FormNodeInitModal = ({ open, onClose, initialValues, node, workflowFormId, workflowFormName, onSave }) => {
-  const [activeTab, setActiveTab] = useState(0); // 0: Değer Atama, 1: Koşullar, 2: Görünürlük
+  const [activeTab, setActiveTab] = useState(0); // 0: Değer Atama, 1: Koşullar, 2: Görünürlük, 3: Butonlar
   const [initRules, setInitRules] = useState([]);
   const [conditionalRules, setConditionalRules] = useState([]);
   const [visibilitySettings, setVisibilitySettings] = useState({}); // { fieldName: "visible" | "readonly" | "hidden" }
   const [formFields, setFormFields] = useState([]);
   const [formSchema, setFormSchema] = useState(null);
   const [testPreviewOpen, setTestPreviewOpen] = useState(false);
+  const [formButtons, setFormButtons] = useState([]); // Form butonları
+  const [buttonVisibilitySettings, setButtonVisibilitySettings] = useState({}); // { buttonId: true/false }
 
   // Test form instance
   const testForm = useMemo(() => createForm(), []);
@@ -125,11 +127,13 @@ const FormNodeInitModal = ({ open, onClose, initialValues, node, workflowFormId,
       setInitRules(parsed.initRules);
       setConditionalRules(parsed.conditionalRules);
       setVisibilitySettings(parsed.visibilitySettings);
+      setButtonVisibilitySettings(parsed.buttonVisibilitySettings || {});
     } else if (open) {
       console.log("📝 Yeni modal açılıyor (initScript yok)");
       setInitRules([]);
       setConditionalRules([]);
       setVisibilitySettings({});
+      setButtonVisibilitySettings({});
     }
   }, [open, initialValues?.initScript]);
 
@@ -167,6 +171,17 @@ const FormNodeInitModal = ({ open, onClose, initialValues, node, workflowFormId,
             });
             setVisibilitySettings(defaultVisibility);
           }
+          
+          // Form butonlarını yükle
+          const buttons = design?.buttonPanel?.buttons || [];
+          setFormButtons(buttons);
+          
+          // Varsayılan buton görünürlük ayarları
+          const defaultButtonVisibility = {};
+          buttons.forEach(button => {
+            defaultButtonVisibility[button.id] = initialValues?.buttonVisibilitySettings?.[button.id] ?? true;
+          });
+          setButtonVisibilitySettings(defaultButtonVisibility);
         }
       } catch (error) {
         console.error("❌ Form alanları yüklenirken hata:", error);
@@ -270,6 +285,19 @@ const FormNodeInitModal = ({ open, onClose, initialValues, node, workflowFormId,
   const generateScript = () => {
     let script = "";
     
+    // 0. Buton görünürlük ayarları
+    const hiddenButtons = Object.entries(buttonVisibilitySettings)
+      .filter(([_, visible]) => visible === false)
+      .map(([buttonId]) => buttonId);
+    
+    if (hiddenButtons.length > 0) {
+      script += "// 🔘 Gizli butonlar\n";
+      hiddenButtons.forEach(buttonId => {
+        script += `setButtonVisible("${buttonId}", false);\n`;
+      });
+      script += "\n";
+    }
+    
     // 1. Görünürlük ve Readonly ayarları
     const hiddenFields = Object.entries(visibilitySettings)
       .filter(([_, state]) => state === false || state === "hidden")
@@ -367,11 +395,19 @@ const FormNodeInitModal = ({ open, onClose, initialValues, node, workflowFormId,
       initRules: [],
       conditionalRules: [],
       visibilitySettings: {},
+      buttonVisibilitySettings: {},
     };
     
     const lines = script.split("\n").filter(line => line.trim() && !line.trim().startsWith("//"));
     
     lines.forEach(line => {
+      // setButtonVisible parse
+      const btnVisMatch = line.match(/setButtonVisible\("([^"]+)",\s*(true|false)\)/);
+      if (btnVisMatch) {
+        result.buttonVisibilitySettings[btnVisMatch[1]] = btnVisMatch[2] === "true";
+        return;
+      }
+      
       // setFieldVisible parse
       const visMatch = line.match(/setFieldVisible\("([^"]+)",\s*(true|false)\)/);
       if (visMatch) {
@@ -510,6 +546,7 @@ const FormNodeInitModal = ({ open, onClose, initialValues, node, workflowFormId,
           ...initialValues,
           initScript: script,
           visibilitySettings: visibilitySettings,
+          buttonVisibilitySettings: buttonVisibilitySettings,
         },
       });
     }
@@ -605,6 +642,21 @@ const FormNodeInitModal = ({ open, onClose, initialValues, node, workflowFormId,
                     label={Object.values(visibilitySettings).filter(v => v === false).length} 
                     size="small" 
                     color="error" 
+                  />
+                )}
+              </Box>
+            } 
+            sx={{ textTransform: "none", fontWeight: 600 }} 
+          />
+          <Tab 
+            label={
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                🔘 Butonlar
+                {Object.values(buttonVisibilitySettings).filter(v => v === false).length > 0 && (
+                  <Chip 
+                    label={Object.values(buttonVisibilitySettings).filter(v => v === false).length} 
+                    size="small" 
+                    color="warning" 
                   />
                 )}
               </Box>
@@ -1115,10 +1167,165 @@ const FormNodeInitModal = ({ open, onClose, initialValues, node, workflowFormId,
             </Box>
           )}
 
+          {/* TAB 3: BUTONLAR */}
+          {activeTab === 3 && (
+            <Box sx={{ minHeight: "500px" }}>
+              <Alert severity="info" sx={{ mb: 2 }}>
+                🔘 Form açılırken hangi butonlar görünür olacak?
+              </Alert>
+              
+              <Box sx={{ display: "flex", gap: 1, mb: 2 }}>
+                <Button
+                  size="small"
+                  variant="outlined"
+                  color="success"
+                  startIcon={<VisibilityIcon />}
+                  onClick={() => {
+                    const allVisible = {};
+                    formButtons.forEach(btn => allVisible[btn.id] = true);
+                    setButtonVisibilitySettings(allVisible);
+                  }}
+                  sx={{ textTransform: "none", fontWeight: 600 }}
+                >
+                  Tümü Görünür
+                </Button>
+                <Button
+                  size="small"
+                  variant="outlined"
+                  color="error"
+                  startIcon={<VisibilityOffIcon />}
+                  onClick={() => {
+                    const allHidden = {};
+                    formButtons.forEach(btn => allHidden[btn.id] = false);
+                    setButtonVisibilitySettings(allHidden);
+                  }}
+                  sx={{ textTransform: "none", fontWeight: 600 }}
+                >
+                  Tümü Gizli
+                </Button>
+              </Box>
+
+              <Paper sx={{ p: 2 }} elevation={0}>
+                {formButtons.length === 0 ? (
+                  <Box sx={{ textAlign: "center", py: 6 }}>
+                    <Typography color="text.secondary">
+                      Bu formda buton tanımlanmamış.
+                    </Typography>
+                  </Box>
+                ) : (
+                  <>
+                    <Box sx={{ mb: 2, display: "flex", gap: 1 }}>
+                      <Chip 
+                        icon={<VisibilityIcon />}
+                        label={`Görünür: ${Object.values(buttonVisibilitySettings).filter(v => v === true || v === undefined).length}`}
+                        color="success"
+                        size="small"
+                        sx={{ fontWeight: 600 }}
+                      />
+                      <Chip 
+                        icon={<VisibilityOffIcon />}
+                        label={`Gizli: ${Object.values(buttonVisibilitySettings).filter(v => v === false).length}`}
+                        color="error"
+                        size="small"
+                        sx={{ fontWeight: 600 }}
+                      />
+                    </Box>
+                    <Box sx={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: 2 }}>
+                      {formButtons.map(button => {
+                        const isVisible = buttonVisibilitySettings[button.id] !== false;
+                        const bgColor = isVisible ? "#e8f5e9" : "#ffebee";
+                        const borderColor = isVisible ? "#66bb6a" : "#ef5350";
+                        
+                        return (
+                          <Card 
+                            key={button.id} 
+                            variant="outlined"
+                            sx={{ 
+                              p: 2,
+                              backgroundColor: bgColor,
+                              borderColor: borderColor,
+                              borderWidth: 2,
+                              transition: "all 0.2s",
+                              "&:hover": {
+                                boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+                                transform: "translateY(-2px)"
+                              }
+                            }}
+                          >
+                            <Box sx={{ mb: 1.5 }}>
+                              <Typography variant="body2" fontWeight={700} sx={{ color: "#2c3e50" }}>
+                                {button.label || button.name || "Buton"}
+                              </Typography>
+                              <Typography variant="caption" color="textSecondary">
+                                ID: {button.id}
+                              </Typography>
+                            </Box>
+                            
+                            <ToggleButtonGroup
+                              value={isVisible ? "visible" : "hidden"}
+                              exclusive
+                              onChange={(e, newState) => {
+                                if (newState !== null) {
+                                  setButtonVisibilitySettings({
+                                    ...buttonVisibilitySettings,
+                                    [button.id]: newState === "visible"
+                                  });
+                                }
+                              }}
+                              size="small"
+                              fullWidth
+                            >
+                              <ToggleButton 
+                                value="visible" 
+                                sx={{ 
+                                  textTransform: "none",
+                                  fontWeight: 600,
+                                  fontSize: "11px",
+                                  "&.Mui-selected": {
+                                    backgroundColor: "#66bb6a",
+                                    color: "white",
+                                    "&:hover": {
+                                      backgroundColor: "#57a55a"
+                                    }
+                                  }
+                                }}
+                              >
+                                <VisibilityIcon sx={{ fontSize: 16, mr: 0.5 }} />
+                                Görünür
+                              </ToggleButton>
+                              <ToggleButton 
+                                value="hidden"
+                                sx={{ 
+                                  textTransform: "none",
+                                  fontWeight: 600,
+                                  fontSize: "11px",
+                                  "&.Mui-selected": {
+                                    backgroundColor: "#ef5350",
+                                    color: "white",
+                                    "&:hover": {
+                                      backgroundColor: "#e53935"
+                                    }
+                                  }
+                                }}
+                              >
+                                <VisibilityOffIcon sx={{ fontSize: 16, mr: 0.5 }} />
+                                Gizli
+                              </ToggleButton>
+                            </ToggleButtonGroup>
+                          </Card>
+                        );
+                      })}
+                    </Box>
+                  </>
+                )}
+              </Paper>
+            </Box>
+          )}
+
           {/* SCRIPT ÖNİZLEME & TEST (Her tab'de) */}
           <Divider sx={{ my: 3 }} />
           
-          {(initRules.length > 0 || conditionalRules.length > 0 || Object.values(visibilitySettings).some(v => v === "hidden" || v === "readonly" || v === false)) ? (
+          {(initRules.length > 0 || conditionalRules.length > 0 || Object.values(visibilitySettings).some(v => v === "hidden" || v === "readonly" || v === false) || Object.values(buttonVisibilitySettings).some(v => v === false)) ? (
             <Box 
               sx={{ 
                 mt: 3, 
