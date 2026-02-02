@@ -125,6 +125,7 @@ const Settings = lazy(() => import("layouts/pages/users/userDetail/settings"));
 const WorkFlowList = lazy(() => import("layouts/pages/WorkFlow/WorkFlowList"));
 const WorkFlowDetail = lazy(() => import("layouts/pages/WorkFlow/WorkFlowDetail.jsx"));
 const ApproveList = lazy(() => import("layouts/pages/WorkFlow/ApproveList"));
+const ProcessHub = lazy(() => import("layouts/pages/ProcessHub"));
 const ParameterView = lazy(() => import("layouts/pages/FormManagement/listForm/ParameterView"));
 const FormilyDesigner = lazy(() => import("layouts/pages/FormEditor/FormilyDesigner"));
 const TenantsList = lazy(() => import("layouts/pages/tenants/index"));
@@ -258,6 +259,15 @@ const routes = [
         component: <UserFormList />,
       },
     ],
+  },
+  {
+    type: "collapse",
+    name: "Süreç Merkezi",
+    key: "processHub",
+    icon: <Icon fontSize="medium">widgets</Icon>,
+    route: "/process-hub",
+    component: <ProcessHub />,
+    noCollapse: true,
   },
   {
     type: "collapse",

@@ -111,6 +111,7 @@ const WorkFlowList = lazy(() => import("layouts/pages/WorkFlow/WorkFlowList"));
 const WorkFlowDetail = lazy(() => import("layouts/pages/WorkFlow/WorkFlowDetail.jsx"));
 const WorkflowMyTasks = lazy(() => import("layouts/pages/WorkFlow/WorkflowMyTasks"));
 const WorkflowRuntime = lazy(() => import("layouts/pages/WorkFlow/WorkflowRuntime"));
+const ProcessHub = lazy(() => import("layouts/pages/ProcessHub"));
 const ListFormPublic = lazy(() => import("layouts/pages/FormManagement/listForm"));
 const CreateFormPublic = lazy(() => import("layouts/pages/FormManagement/ParamtetersDefination"));
 const ParameterEditPublic = lazy(() => import("layouts/pages/FormManagement/ParameterEdit"));
@@ -257,6 +258,7 @@ export default function App() {
             <Route path="/tickets/customer" element={<CustomerSales />} />
             <Route path="/orders/console" element={<OrdersConsolePage />} />
             {/* Public WorkFlow routes */}
+            <Route path="/process-hub" element={<ProcessHub />} />
             <Route path="/workflowList" element={<WorkFlowList />} />
             <Route path="/WorkFlowList/detail" element={<WorkFlowDetail />} />
             <Route path="/WorkFlowList/detail/:id" element={<WorkFlowDetail />} />
