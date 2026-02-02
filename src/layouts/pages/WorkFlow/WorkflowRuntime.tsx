@@ -22,6 +22,22 @@ import * as Icons from "@ant-design/icons";
 import { WorkFlowContiuneApiDto } from "api/generated";
 import CurrencyInput from "../FormEditor/custom/CurrencyInput";
 
+// Custom combobox components
+import {
+  DepartmentSelect,
+  PositionSelect,
+  CompanySelect,
+  LocationSelect,
+  ProjectSelect,
+  SupplierSelect,
+  ProductSelect,
+  CategorySelect,
+  CurrencySelect,
+  CountrySelect,
+  CitySelect,
+  ApproverSelect,
+} from "../FormEditor/custom/StandardComboboxes";
+
 
 interface FormButton {
   id: string;
@@ -62,7 +78,30 @@ export default function WorkflowRuntime(): JSX.Element {
   const taskDetail = location.state?.taskDetail;
 
   const form = useMemo(() => createForm(), []);
-  const SchemaField = useMemo(() => createSchemaField({ components: { ...(AntdFormily as any), CurrencyInput, Card: AntdCard, Slider: AntdSlider, Rate: AntdRate } }), []);
+  const SchemaField = useMemo(
+    () => createSchemaField({ 
+      components: { 
+        ...(AntdFormily as any), 
+        CurrencyInput, 
+        Card: AntdCard, 
+        Slider: AntdSlider, 
+        Rate: AntdRate,
+        DepartmentSelect,
+        PositionSelect,
+        CompanySelect,
+        LocationSelect,
+        ProjectSelect,
+        SupplierSelect,
+        ProductSelect,
+        CategorySelect,
+        CurrencySelect,
+        CountrySelect,
+        CitySelect,
+        ApproverSelect,
+      } 
+    }),
+    []
+  );
 
   /**
    * ✅ Schema'yı fieldScript'e göre modifiye et
