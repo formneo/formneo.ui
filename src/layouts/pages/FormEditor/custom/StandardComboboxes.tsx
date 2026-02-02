@@ -1,17 +1,19 @@
-import React from "react";
-import { Select } from "antd";
+import React, { useEffect, useState } from "react";
+import { Select, Spin } from "antd";
 import { connect, mapProps, mapReadPretty } from "@formily/react";
 import { createResource, createBehavior } from "@designable/core";
+import { DepartmentsApi, PositionsApi } from "api/generated";
+import getConfiguration from "confiuration";
 
 // ==================== DATA SOURCES ====================
 
 const departmentData = [
   { label: 'İnsan Kaynakları', value: 'dept-hr' },
-  { label: 'Bilgi Teknolojileri', value: 'dept-it' },
+  { label: 'Bilgi Teknolojileri2', value: 'dept-it' },
   { label: 'Finans', value: 'dept-finance' },
   { label: 'Satış', value: 'dept-sales' },
   { label: 'Pazarlama', value: 'dept-marketing' },
-  { label: 'Operasyon', value: 'dept-operations' },
+  { label: 'Operasyo22n', value: 'dept-operations' },
   { label: 'Ar-Ge', value: 'dept-rnd' },
   { label: 'Lojistik', value: 'dept-logistics' },
 ];
@@ -119,6 +121,116 @@ const ComboboxComponent: React.FC<ComboboxProps> = (props) => {
   );
 };
 
+// ==================== API-BASED COMBOBOX COMPONENT ====================
+
+type ApiComboboxProps = ComboboxProps & {
+  loadData?: () => Promise<{ label: string; value: string }[]>;
+};
+
+const ApiComboboxComponent: React.FC<ApiComboboxProps> = (props) => {
+  const { value, onChange, placeholder, disabled, readOnly, mode, loadData } = props;
+  const [loading, setLoading] = useState(false);
+  const [dataSource, setDataSource] = useState<{ label: string; value: string }[]>([]);
+
+  useEffect(() => {
+    if (loadData && dataSource.length === 0) {
+      console.log("🔄 ApiComboboxComponent - API'den veri yükleniyor...");
+      setLoading(true);
+      loadData()
+        .then(data => {
+          console.log("✅ ApiComboboxComponent - Veri yüklendi:", data);
+          setDataSource(data);
+          setLoading(false);
+        })
+        .catch(error => {
+          console.error("❌ ApiComboboxComponent - Veri yükleme hatası:", error);
+          setLoading(false);
+        });
+    }
+  }, [loadData, dataSource.length]);
+
+  return (
+    <Select
+      value={value}
+      onChange={onChange}
+      placeholder={placeholder}
+      disabled={disabled || readOnly}
+      mode={mode}
+      showSearch
+      loading={loading}
+      filterOption={(input, option) =>
+        (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
+      }
+      options={dataSource}
+      style={{ width: '100%' }}
+      notFoundContent={loading ? <Spin size="small" /> : 'Veri bulunamadı'}
+    />
+  );
+};
+
+// ==================== API DATA LOADERS ====================
+
+const loadDepartments = async (): Promise<{ label: string; value: string }[]> => {
+  try {
+    console.log("🔄 Departmanlar API'den yükleniyor...");
+    const conf = getConfiguration();
+    const api = new DepartmentsApi(conf);
+    const response: any = await api.apiDepartmentsGet();
+    
+    console.log("📡 API Response (raw):", response);
+    console.log("📦 response.data:", response?.data);
+    
+    // Response array olabilir veya { data: [] } formatında olabilir
+    const departments = Array.isArray(response?.data) 
+      ? response.data 
+      : Array.isArray(response) 
+        ? response 
+        : [];
+    
+    console.log("✅ Departmanlar parse edildi:", departments);
+    console.log("📊 Departman sayısı:", departments.length);
+    
+    const mapped = departments.map((dept: any) => {
+      console.log("🏢 Departman:", dept);
+      return {
+        label: dept.departmentName || dept.name || 'İsimsiz',
+        value: dept.id || dept.departmentId || '',
+      };
+    });
+    
+    console.log("🎯 Son departman listesi:", mapped);
+    return mapped;
+  } catch (error) {
+    console.error("❌ Departmanlar yüklenirken hata:", error);
+    return [];
+  }
+};
+
+const loadPositions = async (): Promise<{ label: string; value: string }[]> => {
+  try {
+    const conf = getConfiguration();
+    const api = new PositionsApi(conf);
+    const response: any = await api.apiPositionsGet();
+    
+    // Response array olabilir veya { data: [] } formatında olabilir
+    const positions = Array.isArray(response?.data) 
+      ? response.data 
+      : Array.isArray(response) 
+        ? response 
+        : [];
+    
+    console.log("Pozisyonlar yüklendi:", positions);
+    
+    return positions.map((pos: any) => ({
+      label: pos.positionName || pos.name || 'İsimsiz',
+      value: pos.id || pos.positionId || '',
+    }));
+  } catch (error) {
+    console.error("Pozisyonlar yüklenirken hata:", error);
+    return [];
+  }
+};
+
 // ==================== CREATE COMBOBOX ====================
 
 const createCombobox = (name: string, title: string, dataSource: any[]) => {
@@ -194,10 +306,84 @@ const createCombobox = (name: string, title: string, dataSource: any[]) => {
   return Component;
 };
 
+// ==================== CREATE API-BASED COMBOBOX ====================
+
+const createApiCombobox = (name: string, title: string, loadData: () => Promise<{ label: string; value: string }[]>) => {
+  const Component: any = connect(
+    (props: any) => <ApiComboboxComponent {...props} loadData={loadData} />,
+    mapProps((props: any) => ({
+      ...props,
+      placeholder: props["x-component-props"]?.placeholder || props.placeholder || `${title} seçiniz...`,
+      disabled: props["x-component-props"]?.disabled || props.disabled,
+      readOnly: props["x-component-props"]?.readOnly || props.readOnly,
+      mode: props["x-component-props"]?.mode || props.mode,
+    })),
+    mapReadPretty((props: any) => {
+      const value = props.value;
+      if (!value) return <span style={{ color: "#999" }}>-</span>;
+      
+      // API'den gelen değerler için
+      if (Array.isArray(value)) {
+        return <span style={{ padding: '4px 8px', backgroundColor: '#f0f0f0', borderRadius: '4px' }}>{value.join(', ')}</span>;
+      }
+      
+      return <span style={{ padding: '4px 8px', backgroundColor: '#f0f0f0', borderRadius: '4px' }}>{value}</span>;
+    })
+  );
+
+  Component.Resource = createResource({
+    icon: "SelectSource",
+    title: title,
+    elements: [
+      {
+        componentName: "Field",
+        props: {
+          type: "string",
+          title: title,
+          "x-decorator": "FormItem",
+          "x-component": name,
+        },
+      },
+    ],
+  });
+
+  Component.Behavior = createBehavior({
+    name: name,
+    extends: ["Field"],
+    selector: (node: any) => node.props?.["x-component"] === name,
+    designerProps: {
+      propsSchema: {
+        type: "object",
+        properties: {
+          mode: {
+            type: "string",
+            title: "Seçim Modu",
+            enum: [
+              { label: 'Tekli', value: undefined },
+              { label: 'Çoklu', value: 'multiple' },
+              { label: 'Tags', value: 'tags' },
+            ],
+            "x-decorator": "FormItem",
+            "x-component": "Select",
+          },
+          placeholder: {
+            type: "string",
+            title: "Placeholder",
+            "x-decorator": "FormItem",
+            "x-component": "Input",
+          },
+        },
+      },
+    },
+  });
+
+  return Component;
+};
+
 // ==================== EXPORT COMPONENTS ====================
 
-export const DepartmentSelect = createCombobox("DepartmentSelect", "Departman", departmentData);
-export const PositionSelect = createCombobox("PositionSelect", "Pozisyon", positionData);
+export const DepartmentSelect = createApiCombobox("DepartmentSelect", "Departman", loadDepartments);
+export const PositionSelect = createApiCombobox("PositionSelect", "Pozisyon", loadPositions);
 export const CompanySelect = createCombobox("CompanySelect", "Şirket", companyData);
 export const LocationSelect = createCombobox("LocationSelect", "Lokasyon", locationData);
 export const ProjectSelect = createCombobox("ProjectSelect", "Proje", projectData);

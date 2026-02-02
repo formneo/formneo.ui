@@ -48,7 +48,7 @@ export default function WorkflowRuntime(): JSX.Element {
   const [formButtons, setFormButtons] = useState<FormButton[]>([]);
   const [formData, setFormData] = useState<any>({});
   const [submitting, setSubmitting] = useState<boolean>(false);
-  const [currentUser, setCurrentUser] = useState<string>("");
+  const [currentUser, setCurrentUser] = useState<any>(null); // Tüm kullanıcı bilgisini sakla
   const scriptExecutedRef = useRef<boolean>(false); // Script'in çalıştırılıp çalıştırılmadığını takip et
 
   // Timeline state
@@ -99,7 +99,15 @@ export default function WorkflowRuntime(): JSX.Element {
       };
 
       // ✅ currentUser ve crypto mock'ları
-      const currentUserObj = { name: currentUser || "Mock User" };
+      const currentUserObj = currentUser || { 
+        userName: "Mock User",
+        name: "Mock",
+        surname: "User",
+        firstName: "Mock",
+        lastName: "User",
+        fullName: "Mock User",
+        email: ""
+      };
       const cryptoObj = {
         randomUUID: () => {
           return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
@@ -261,31 +269,81 @@ export default function WorkflowRuntime(): JSX.Element {
 
       const setFieldValue = (fieldKey: string, value: any) => {
         try {
+          console.log(`🔧 setFieldValue çağrıldı: ${fieldKey} =`, value, `(type: ${typeof value})`);
+          
           // Önce field'ı bul
-          const field = formInstance.query(fieldKey).take();
+          let field = formInstance.query(fieldKey).take();
+          
           if (field) {
-            // Field bulunduysa, setValue ile değeri ata (reactive)
+            // Field bulunduysa, hem initialValue hem de value'yu set et
+            field.setInitialValue(value);
             field.setValue(value);
-            console.log(`✅ setFieldValue (field.setValue): ${fieldKey} =`, value);
+            
+            // Radio button için bazen UI update olmaz, onInput ile trigger et
+            const componentName = field.component?.[0] || field.componentType || '';
+            if (componentName.includes('Radio') || componentName === 'Radio.Group') {
+              field.onInput(value);
+              console.log(`🔘 Radio component için onInput tetiklendi: ${fieldKey} (${componentName})`);
+            }
+            
+            console.log(`✅ setFieldValue (field.setValue): ${fieldKey} =`, value, {
+              fieldType: field.component?.[0] || field.componentType,
+              fieldDisplay: field.display,
+              fieldPattern: field.pattern,
+              currentValue: field.value,
+              initialValue: field.initialValue,
+            });
           } else {
-            // Field bulunamadıysa da formInstance üzerinden dene
-            console.warn(`⚠️ setFieldValue - Field query ile bulunamadı, formInstance üzerinden deneniyor: ${fieldKey}`);
-            formInstance.setFieldValue(fieldKey, value);
-            console.log(`✅ setFieldValue (formInstance.setFieldValue): ${fieldKey} =`, value);
+            // Field bulunamadıysa, hem initialValues hem values'ı set et
+            console.warn(`⚠️ setFieldValue - Field query ile bulunamadı: ${fieldKey}`);
+            console.log(`Mevcut field'lar:`, Object.keys(formInstance.fields || {}));
+            
+            // Hem initial hem current value'yu set et
+            const updates = { [fieldKey]: value };
+            formInstance.setInitialValues(updates);
+            formInstance.setValues(updates);
+            console.log(`✅ setFieldValue (formInstance.setInitialValues + setValues): ${fieldKey} =`, value);
+            
+            // Radio button'lar için biraz bekleyip field mount olduktan sonra tekrar dene
+            setTimeout(() => {
+              const delayedField = formInstance.query(fieldKey).take();
+              if (delayedField) {
+                delayedField.setInitialValue(value);
+                delayedField.setValue(value);
+                
+                // Radio button için onInput tetikle
+                const componentName = delayedField.component?.[0] || delayedField.componentType || '';
+                if (componentName.includes('Radio') || componentName === 'Radio.Group') {
+                  delayedField.onInput(value);
+                  console.log(`🔘 Radio component için onInput tetiklendi (delayed): ${fieldKey} (${componentName})`);
+                }
+                
+                console.log(`✅ setFieldValue (delayed field.setValue): ${fieldKey} =`, value, {
+                  fieldType: delayedField.component?.[0],
+                  currentValue: delayedField.value,
+                });
+              } else {
+                console.warn(`⚠️ Field hala mount olmadı: ${fieldKey}`);
+              }
+            }, 100);
           }
         } catch (error) {
           console.error(`❌ setFieldValue hatası (${fieldKey}):`, error);
           console.error("Hata detayı:", {
             fieldKey,
             value,
+            valueType: typeof value,
             formInstanceFields: formInstance.fields ? Object.keys(formInstance.fields) : "yok",
+            formValues: formInstance.values,
           });
         }
       };
 
       const getFieldValue = (fieldKey: string): any => {
         try {
-          return formInstance.getFieldValue(fieldKey);
+          const value = formInstance.getFieldValue(fieldKey);
+          console.log(`📖 getFieldValue: ${fieldKey} =`, value);
+          return value;
         } catch (error) {
           console.warn(`⚠️ getFieldValue hatası (${fieldKey}):`, error);
           return undefined;
@@ -295,8 +353,21 @@ export default function WorkflowRuntime(): JSX.Element {
       // Form values'ı global değişken olarak erişilebilir yap
       const formValues = formInstance.values || {};
 
-      // ✅ currentUser ve crypto mock'ları (initScript için gerekli)
-      const currentUserObj = { name: currentUser || "Kullanıcı" };
+      // ✅ currentUser ve crypto (initScript için gerekli)
+      const currentUserObj = currentUser || { 
+        userName: "Kullanıcı",
+        name: "Kullanıcı",
+        surname: "",
+        firstName: "Kullanıcı",
+        lastName: "",
+        fullName: "Kullanıcı",
+        email: ""
+      };
+      
+      console.log("👤 Script'te kullanılan currentUser:", {
+        hasRealUser: !!currentUser,
+        currentUserObj,
+      });
       const cryptoObj = {
         randomUUID: () => {
           return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
@@ -330,6 +401,19 @@ export default function WorkflowRuntime(): JSX.Element {
         cryptoObj
       );
       console.log("✅ Script başarıyla çalıştırıldı");
+      
+      // Script çalıştıktan sonra form durumunu kontrol et
+      setTimeout(() => {
+        console.log("📊 Script sonrası form durumu:", {
+          formValues: formInstance.values,
+          formFields: formInstance.fields ? Object.keys(formInstance.fields).map(key => ({
+            key,
+            value: formInstance.fields[key].value,
+            initialValue: formInstance.fields[key].initialValue,
+            component: formInstance.fields[key].component?.[0],
+          })) : [],
+        });
+      }, 150);
     } catch (error) {
       console.error("❌ FieldScript çalıştırılırken hata:", error);
       console.error("❌ Script içeriği:", script);
@@ -343,9 +427,34 @@ export default function WorkflowRuntime(): JSX.Element {
         const conf = getConfiguration();
         const userApi = new UserApi(conf);
         const userResponse = await userApi.apiUserGetLoginUserDetailGet();
-        setCurrentUser(userResponse.data?.userName || "");
+        
+        // Tüm kullanıcı bilgisini sakla
+        const userData = userResponse.data;
+        const fullName = `${userData?.firstName || ""} ${userData?.lastName || ""}`.trim();
+        
+        setCurrentUser({
+          userName: userData?.userName || "",
+          name: userData?.firstName || "",
+          surname: userData?.lastName || "",
+          firstName: userData?.firstName || "",
+          lastName: userData?.lastName || "",
+          fullName: fullName || userData?.userName || "",
+          email: userData?.email || "",
+          // Diğer tüm alanları da sakla
+          ...userData,
+        });
+        
+        console.log("👤 Kullanıcı bilgisi yüklendi:", {
+          userName: userData?.userName,
+          firstName: userData?.firstName,
+          lastName: userData?.lastName,
+          fullName: fullName,
+          email: userData?.email,
+        });
       } catch (err) {
-        // Kullanıcı bilgisi yüklenemedi - sessizce devam et
+        console.warn("⚠️ Kullanıcı bilgisi yüklenemedi:", err);
+        // Kullanıcı bilgisi yüklenemedi - boş obje set et
+        setCurrentUser({ userName: "", name: "", surname: "", fullName: "", email: "" });
       }
     };
     loadUser();
@@ -451,9 +560,6 @@ export default function WorkflowRuntime(): JSX.Element {
           scriptLength: activeScript?.length || 0,
         });
 
-        alert("11");
-        alert(initScript);
-        alert(activeScript);
         if (activeScript && activeScript.trim()) {
           // FormData henüz yüklenmemiş olabilir, ama varsa kullan
           // workflowInstance veya taskDetail'den formData'yı al
@@ -617,19 +723,54 @@ export default function WorkflowRuntime(): JSX.Element {
       return;
     }
 
+    // ✅ currentUser yüklenene kadar bekle (API'den geliyor)
+    if (!currentUser) {
+      console.log("⏳ currentUser henüz yüklenmedi, script bekliyor...");
+      return;
+    }
+
     // FormData yüklenene kadar bekle (form.values hazır olmalı)
     // formData state'i set edildikten sonra script'i çalıştır
     const timeout = setTimeout(() => {
       const formValues = form.values;
       const formFields = form.fields;
+      const formMounted = form.mounted;
       
       console.log("⏰ Script çalıştırma kontrolü:", {
+        formMounted,
         hasFormValues: !!formValues,
         formValuesLength: formValues ? Object.keys(formValues).length : 0,
         hasFormFields: !!formFields,
         formFieldsLength: formFields ? Object.keys(formFields).length : 0,
+        hasCurrentUser: !!currentUser,
+        currentUserName: currentUser?.fullName,
         isNewInstance,
       });
+      
+      // Form mount olmamışsa biraz daha bekle
+      if (!formMounted) {
+        console.log("⏳ Form henüz mount olmadı, 300ms daha bekleniyor...");
+        setTimeout(() => {
+          console.log("🔧 Form mount kontrolü (delayed):", {
+            formMounted: form.mounted,
+            formFieldsLength: form.fields ? Object.keys(form.fields).length : 0,
+          });
+          if (form.mounted) {
+            executeFieldScript(activeScript, form);
+            scriptExecutedRef.current = true;
+            console.log("✅ Script başarıyla çalıştırıldı (delayed)!");
+          } else {
+            // Hala mount olmamışsa son bir deneme daha
+            console.log("⏳ Form hala mount olmadı, 300ms daha bekleniyor (son deneme)...");
+            setTimeout(() => {
+              executeFieldScript(activeScript, form);
+              scriptExecutedRef.current = true;
+              console.log("✅ Script başarıyla çalıştırıldı (final attempt)!");
+            }, 300);
+          }
+        }, 300);
+        return;
+      }
       
       // FormData yüklenmişse script'i çalıştır (değer atamaları için)
       // Visibility zaten schema'da ayarlandı, burada sadece dinamik kontroller yapılır
@@ -656,10 +797,10 @@ export default function WorkflowRuntime(): JSX.Element {
           hasFormValues: !!formValues,
         });
       }
-    }, 200); // Form mount olması için biraz daha fazla bekleme
+    }, 500); // Form mount olması için daha fazla bekleme (radio button'lar geç render olabilir)
 
     return () => clearTimeout(timeout);
-  }, [isNewInstance, (workflowInstance as any)?.initScript, taskDetail?.fieldScript, form, schema, loading, formData]);
+  }, [isNewInstance, (workflowInstance as any)?.initScript, taskDetail?.fieldScript, form, schema, loading, formData, currentUser]);
 
   /**
    * ✅ Form butonuna tıklandığında - Backend'e workflow başlatma isteği gönder
@@ -714,7 +855,7 @@ export default function WorkflowRuntime(): JSX.Element {
         // ✅ Mevcut instance varsa - Workflow devam ettir
         const continueDto: WorkFlowContiuneApiDto = {
           workFlowItemId: instanceId,
-          userName: currentUser || undefined,
+          userName: currentUser?.userName || undefined,
           formData: workFlowInfo, // ✅ input yerine formData kullanılıyor
           action: normalizedAction, // ✅ action property'sine eklendi
           note: normalizedAction,
@@ -750,7 +891,7 @@ export default function WorkflowRuntime(): JSX.Element {
         // ✅ Yeni instance - Workflow başlat
         const startDto: WorkFlowStartApiDto = {
           definationId: workflowInstance.workflowId,
-          userName: currentUser || undefined,
+          userName: currentUser?.userName || undefined,
           workFlowInfo: workFlowInfo,
           action: normalizedAction, // ✅ BMP modülü için action kodu (doğrudan alan olarak)
           formData: JSON.stringify(formValues) || "{}", // ✅ Form verileri (null olmaması için boş obje)
@@ -1124,10 +1265,10 @@ export default function WorkflowRuntime(): JSX.Element {
                     {workflowInstance.workflowName}
                   </Typography>
                 )}
-                {currentUser && (
+                {currentUser?.userName && (
                   <Typography variant="caption" color="textSecondary" sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
                     <Person sx={{ fontSize: "12px" }} />
-                    {currentUser}
+                    {currentUser.fullName || currentUser.userName}
                   </Typography>
                 )}
               </Box>

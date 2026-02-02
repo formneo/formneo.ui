@@ -17,6 +17,22 @@ import DashboardNavbar from "examples/Navbars/DashboardNavbar";
 import MDBox from "components/MDBox";
 import { Typography } from "@mui/material";
 
+// Custom components - Formily için
+import {
+  DepartmentSelect,
+  PositionSelect,
+  CompanySelect,
+  LocationSelect,
+  ProjectSelect,
+  SupplierSelect,
+  ProductSelect,
+  CategorySelect,
+  CurrencySelect,
+  CountrySelect,
+  CitySelect,
+  ApproverSelect,
+} from "layouts/pages/FormEditor/custom/StandardComboboxes";
+
 interface FormButton {
   id: string;
   label: string;
@@ -34,7 +50,29 @@ export default function FormilyPreviewPage(): JSX.Element {
   const [formButtons, setFormButtons] = useState<FormButton[]>([]);
 
   const form = useMemo(() => createForm(), []);
-  const SchemaField = useMemo(() => createSchemaField({ components: { ...(AntdFormily as any), Card: AntdCard, Slider: AntdSlider, Rate: AntdRate } }), []);
+  const SchemaField = useMemo(
+    () => createSchemaField({ 
+      components: { 
+        ...(AntdFormily as any), 
+        Card: AntdCard, 
+        Slider: AntdSlider, 
+        Rate: AntdRate,
+        DepartmentSelect,
+        PositionSelect,
+        CompanySelect,
+        LocationSelect,
+        ProjectSelect,
+        SupplierSelect,
+        ProductSelect,
+        CategorySelect,
+        CurrencySelect,
+        CountrySelect,
+        CitySelect,
+        ApproverSelect,
+      } 
+    }),
+    []
+  );
 
   useEffect(() => {
     const load = async () => {

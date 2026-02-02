@@ -187,6 +187,7 @@ const FormNodeInitModal = ({ open, onClose, initialValues, node, workflowFormId,
         valueType: "static", // static, currentDate, currentUser, uuid, expression
         value: "",
         expression: "",
+        userProperty: "fullName", // currentUser için hangi property
       },
     ]);
   };
@@ -305,7 +306,8 @@ const FormNodeInitModal = ({ open, onClose, initialValues, node, workflowFormId,
               script += `setFieldValue("${rule.fieldName}", new Date().toISOString());\n`;
               break;
             case "currentUser":
-              script += `setFieldValue("${rule.fieldName}", currentUser.name);\n`;
+              const userProp = rule.userProperty || "fullName";
+              script += `setFieldValue("${rule.fieldName}", currentUser.${userProp});\n`;
               break;
             case "uuid":
               script += `setFieldValue("${rule.fieldName}", crypto.randomUUID());\n`;
@@ -396,11 +398,17 @@ const FormNodeInitModal = ({ open, onClose, initialValues, node, workflowFormId,
         let valueType = "static";
         let value = "";
         let expression = "";
+        let userProperty = "fullName";
         
         if (valueExpr.includes("new Date()")) {
           valueType = "currentDate";
         } else if (valueExpr.includes("currentUser")) {
           valueType = "currentUser";
+          // currentUser.fullName gibi ifadeden property'yi çıkar
+          const userPropMatch = valueExpr.match(/currentUser\.(\w+)/);
+          if (userPropMatch) {
+            userProperty = userPropMatch[1];
+          }
         } else if (valueExpr.includes("randomUUID")) {
           valueType = "uuid";
         } else if (valueExpr.match(/^["'].*["']$/)) {
@@ -414,7 +422,7 @@ const FormNodeInitModal = ({ open, onClose, initialValues, node, workflowFormId,
           expression = valueExpr;
         }
         
-        result.initRules.push({ fieldName, valueType, value, expression });
+        result.initRules.push({ fieldName, valueType, value, expression, userProperty });
       }
     });
     
@@ -459,7 +467,15 @@ const FormNodeInitModal = ({ open, onClose, initialValues, node, workflowFormId,
       };
       
       // Mock currentUser ve crypto
-      const currentUser = { name: "Test Kullanıcı" };
+      const currentUser = { 
+        userName: "testuser",
+        firstName: "Test",
+        lastName: "Kullanıcı",
+        name: "Test",
+        surname: "Kullanıcı",
+        fullName: "Test Kullanıcı",
+        email: "test@example.com"
+      };
       const crypto = { randomUUID: () => "test-uuid-" + Date.now() };
       
       // Script'i çalıştır
@@ -507,7 +523,7 @@ const FormNodeInitModal = ({ open, onClose, initialValues, node, workflowFormId,
     const labels = {
       static: "Sabit Değer",
       currentDate: "Şu Anki Tarih",
-      currentUser: "Kullanıcı Adı",
+      currentUser: "Kullanıcı Bilgisi",
       uuid: "Benzersiz ID (UUID)",
       expression: "Formül/İfade",
     };
@@ -606,14 +622,7 @@ const FormNodeInitModal = ({ open, onClose, initialValues, node, workflowFormId,
                 <Typography variant="body2" fontWeight={600} gutterBottom>
                   💡 Form açılırken otomatik değer atanacak alanları seçin
                 </Typography>
-                <Typography variant="caption" component="div" sx={{ mt: 1 }}>
-                  <strong>Formül Örnekleri:</strong>
-                  <Box component="ul" sx={{ m: 0, mt: 0.5, pl: 2 }}>
-                    <li>&quot;TR-&quot; + new Date().getFullYear() → TR-2026</li>
-                    <li>new Date().getTime() → 1738425600000</li>
-                    <li>Math.floor(Math.random() * 1000) → 0-999</li>
-                  </Box>
-                </Typography>
+
               </Alert>
 
               <TableContainer component={Paper} variant="outlined" sx={{ boxShadow: "0 2px 8px rgba(0,0,0,0.08)" }}>
@@ -660,12 +669,22 @@ const FormNodeInitModal = ({ open, onClose, initialValues, node, workflowFormId,
                           <TableCell>
                             <Autocomplete
                               size="small"
-                              value={{ value: rule.valueType, label: getValueTypeLabel(rule.valueType) }}
+                              value={(() => {
+                                const valueType = rule.valueType || "static";
+                                const options = [
+                                  { value: "static", label: "Sabit Değer", icon: "📝" },
+                                  { value: "currentDate", label: "Şu Anki Tarih", icon: "📅" },
+                                  { value: "currentUser", label: "Kullanıcı Bilgisi", icon: "👤" },
+                                  { value: "uuid", label: "Benzersiz ID", icon: "🔑" },
+                                  { value: "expression", label: "Formül/İfade", icon: "🧮" },
+                                ];
+                                return options.find(opt => opt.value === valueType) || options[0];
+                              })()}
                               onChange={(e, newValue) => handleUpdateRule(index, "valueType", newValue?.value || "static")}
                               options={[
                                 { value: "static", label: "Sabit Değer", icon: "📝" },
                                 { value: "currentDate", label: "Şu Anki Tarih", icon: "📅" },
-                                { value: "currentUser", label: "Kullanıcı Adı", icon: "👤" },
+                                { value: "currentUser", label: "Kullanıcı Bilgisi", icon: "👤" },
                                 { value: "uuid", label: "Benzersiz ID", icon: "🔑" },
                                 { value: "expression", label: "Formül/İfade", icon: "🧮" },
                               ]}
@@ -693,6 +712,20 @@ const FormNodeInitModal = ({ open, onClose, initialValues, node, workflowFormId,
                                 placeholder='Örn: "TR-" + new Date().getFullYear()'
                                 variant="outlined"
                               />
+                            ) : rule.valueType === "currentUser" ? (
+                              <FormControl fullWidth size="small">
+                                <Select
+                                  value={rule.userProperty || "fullName"}
+                                  onChange={(e) => handleUpdateRule(index, "userProperty", e.target.value)}
+                                  variant="outlined"
+                                >
+                                  <MenuItem value="fullName">👤 Ad Soyad (fullName)</MenuItem>
+                                  <MenuItem value="firstName">📝 Ad (firstName)</MenuItem>
+                                  <MenuItem value="lastName">📝 Soyad (lastName)</MenuItem>
+                                  <MenuItem value="userName">🔑 Kullanıcı Adı (userName)</MenuItem>
+                                  <MenuItem value="email">📧 E-posta (email)</MenuItem>
+                                </Select>
+                              </FormControl>
                             ) : (
                               <Chip
                                 label={getValueTypeLabel(rule.valueType)}

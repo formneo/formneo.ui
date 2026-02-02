@@ -41,6 +41,63 @@ export class DSPositionSelectComponent extends SelectComponent {
   }
 
   async loadPositions() {
+    try {
+      console.log('🔄 Pozisyonlar API\'den yükleniyor...');
+      
+      // API entegrasyonu
+      const getConfiguration = (await import('../../../../../confiuration')).default;
+      const { PositionsApi } = await import('../../../../../api/generated');
+      const conf = getConfiguration();
+      const api = new PositionsApi(conf);
+      const response = await api.apiPositionsGet();
+      
+      console.log('📡 API Response (Positions):', response);
+      
+      // Response'u parse et
+      const positions = Array.isArray(response?.data) 
+        ? response.data 
+        : Array.isArray(response) 
+          ? response 
+          : [];
+      
+      console.log('✅ Pozisyonlar parse edildi:', positions);
+      console.log('📊 Pozisyon sayısı:', positions.length);
+      
+      if (positions.length > 0) {
+        // API'den gelen data'yı kullan
+        const formattedPositions = positions.map(pos => ({
+          label: pos.positionName || pos.name || 'İsimsiz',
+          value: pos.id || pos.positionId || ''
+        }));
+        
+        console.log('🎯 Formatlanmış pozisyonlar:', formattedPositions);
+        
+        this.component.dataSrc = 'values';
+        this.component.data = {
+          values: formattedPositions
+        };
+        
+        this.triggerUpdate();
+        
+        if (this.choices) {
+          this.choices.clearStore();
+          this.choices.setChoices(formattedPositions, 'value', 'label', true);
+        } else {
+          this.redraw();
+        }
+      } else {
+        console.warn('⚠️ API\'den boş liste geldi (Positions), fallback kullanılıyor');
+        this.loadFallbackPositions();
+      }
+      
+    } catch (error) {
+      console.error('❌ Pozisyon listesi yüklenirken hata:', error);
+      this.loadFallbackPositions();
+    }
+  }
+  
+  loadFallbackPositions() {
+    console.log('📦 Fallback pozisyonlar yükleniyor...');
     this.component.dataSrc = 'values';
     this.component.data = {
       values: [

@@ -951,20 +951,55 @@ export default function FormilyDesigner(): JSX.Element {
           }
           actions={
             <AntSpace size="small">
-              <AntButton type="primary" size="small" icon={<SaveOutlined />} onClick={handleSave}>
+              <AntButton 
+                type="primary" 
+                size="small" 
+                icon={<SaveOutlined />} 
+                onClick={handleSave}
+                loading={isBusy}
+                disabled={isBusy}
+              >
                 Kaydet
               </AntButton>
-              <AntButton size="small" icon={<RocketOutlined />} onClick={handlePublish}>
+              <AntButton 
+                size="small" 
+                icon={<RocketOutlined />} 
+                onClick={handlePublish}
+                loading={isBusy}
+                disabled={isBusy}
+              >
                 Yayınla
               </AntButton>
-              <AntButton size="small" icon={<HistoryOutlined />} onClick={handleOpenVersions}>
+              <AntButton 
+                size="small" 
+                icon={<HistoryOutlined />} 
+                onClick={handleOpenVersions}
+                disabled={isBusy}
+              >
                 Revizyonlar
               </AntButton>
-              <AntButton size="small" onClick={handleCreateRevision}>Revizyon Oluştur</AntButton>
-              <AntButton size="small" icon={<EyeOutlined />} onClick={() => {}}>
+              <AntButton 
+                size="small" 
+                onClick={handleCreateRevision}
+                loading={isBusy}
+                disabled={isBusy}
+              >
+                Revizyon Oluştur
+              </AntButton>
+              <AntButton 
+                size="small" 
+                icon={<EyeOutlined />} 
+                onClick={() => {}}
+                disabled={isBusy}
+              >
                 Preview
               </AntButton>
-              <AntButton size="small" icon={<CodeOutlined />} onClick={() => {}}>
+              <AntButton 
+                size="small" 
+                icon={<CodeOutlined />} 
+                onClick={() => {}}
+                disabled={isBusy}
+              >
                 JSON
               </AntButton>
             </AntSpace>

@@ -37,7 +37,7 @@ export class DSDepartmentSelectComponent extends SelectComponent {
 
   static get builderInfo() {
     return {
-      title: 'Departman Seçici',
+      title: 'Departman Seçici (API)',
       group: 'dscomponents',
       icon: 'domain',
       weight: 27,
@@ -60,17 +60,53 @@ export class DSDepartmentSelectComponent extends SelectComponent {
    */
   async loadDepartments() {
     try {
+      console.log('🔄 Departmanlar API\'den yükleniyor...');
       
+      // API entegrasyonu
+      const getConfiguration = (await import('../../../../../confiuration')).default;
+      const { DepartmentsApi } = await import('../../../../../api/generated');
+      const conf = getConfiguration();
+      const api = new DepartmentsApi(conf);
+      const response = await api.apiDepartmentsGet();
       
-      // TODO: API entegrasyonu yapılacak
-      // const getConfiguration = (await import('../../../../../confiuration')).default;
-      // const { DepartmentApi } = await import('../../../../../api/generated');
-      // const conf = getConfiguration();
-      // const api = new DepartmentApi(conf);
-      // const response = await api.apiDepartmentGet();
+      console.log('📡 API Response:', response);
       
-      // Şimdilik fallback data kullan
-      this.loadFallbackDepartments();
+      // Response'u parse et
+      const departments = Array.isArray(response?.data) 
+        ? response.data 
+        : Array.isArray(response) 
+          ? response 
+          : [];
+      
+      console.log('✅ Departmanlar parse edildi:', departments);
+      console.log('📊 Departman sayısı:', departments.length);
+      
+      if (departments.length > 0) {
+        // API'den gelen data'yı kullan
+        const formattedDepartments = departments.map(dept => ({
+          label: dept.departmentName || dept.name || 'İsimsiz',
+          value: dept.id || dept.departmentId || ''
+        }));
+        
+        console.log('🎯 Formatlanmış departmanlar:', formattedDepartments);
+        
+        this.component.dataSrc = 'values';
+        this.component.data = {
+          values: formattedDepartments
+        };
+        
+        this.triggerUpdate();
+        
+        if (this.choices) {
+          this.choices.clearStore();
+          this.choices.setChoices(formattedDepartments, 'value', 'label', true);
+        } else {
+          this.redraw();
+        }
+      } else {
+        console.warn('⚠️ API\'den boş liste geldi, fallback kullanılıyor');
+        this.loadFallbackDepartments();
+      }
       
     } catch (error) {
       console.error('❌ Departman listesi yüklenirken hata:', error);
@@ -82,7 +118,7 @@ export class DSDepartmentSelectComponent extends SelectComponent {
    * Fallback - Test departmanları yükle
    */
   loadFallbackDepartments() {
-    
+    console.log('📦 Fallback departmanlar yükleniyor...');
     
     this.component.dataSrc = 'values';
     this.component.data = {
