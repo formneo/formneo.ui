@@ -15,21 +15,12 @@ import {
   ListItemText,
   Typography,
   Paper,
-  Grid,
-  Card,
-  CardContent,
-  Chip,
   IconButton,
   Collapse,
-  Badge,
   Divider,
-  Button,
   Tooltip,
-  Avatar,
-  Stack,
   CircularProgress,
 } from "@mui/material";
-import { DataGrid, GridColDef, GridRenderCellParams } from "@mui/x-data-grid";
 import * as MuiIcons from "@mui/icons-material";
 import DashboardLayout from "examples/LayoutContainers/DashboardLayout";
 import DashboardNavbar from "examples/Navbars/DashboardNavbar";
@@ -80,30 +71,6 @@ const categoryColors = [
 ];
 
 const DRAWER_WIDTH = 320;
-
-// Örnek veri - Gerçek uygulamada API'den gelecek
-const generateMockData = (categoryId: string, subCategoryId: string) => {
-  const statuses = ["Onay Bekliyor", "Onaylandı", "Reddedildi", "Taslak"];
-  const statusColors: Record<string, "warning" | "success" | "error" | "default"> = {
-    "Onay Bekliyor": "warning",
-    "Onaylandı": "success",
-    "Reddedildi": "error",
-    "Taslak": "default",
-  };
-  
-  return Array.from({ length: 25 }, (_, i) => ({
-    id: i + 1,
-    requestId: `${categoryId.toUpperCase()}-${1000 + i}`,
-    title: `${categoryId === "expense" ? "Masraf" : categoryId === "leave" ? "İzin" : "Öneri"} Talebi #${i + 1}`,
-    description: "Lorem ipsum dolor sit amet, consectetur adipiscing elit",
-    creator: `Kullanıcı ${Math.floor(Math.random() * 10) + 1}`,
-    status: statuses[Math.floor(Math.random() * statuses.length)],
-    statusColor: statusColors[statuses[Math.floor(Math.random() * statuses.length)]],
-    amount: categoryId === "expense" ? `${(Math.random() * 5000 + 100).toFixed(2)} ₺` : null,
-    date: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000).toLocaleDateString("tr-TR"),
-    priority: ["Düşük", "Orta", "Yüksek"][Math.floor(Math.random() * 3)],
-  }));
-};
 
 export default function ProcessHub(): JSX.Element {
   const navigate = useNavigate();
@@ -163,9 +130,6 @@ export default function ProcessHub(): JSX.Element {
     loadMenuStructure();
   }, []);
 
-  // Grid verileri
-  const rows = generateMockData(selectedCategory, selectedSubCategory);
-
   // URL parametrelerini güncelle
   useEffect(() => {
     setSearchParams({ category: selectedCategory, subCategory: selectedSubCategory });
@@ -187,11 +151,16 @@ export default function ProcessHub(): JSX.Element {
     }));
   };
 
-  // View seç (kategori ve workflow_view ID)
-  const handleSelectView = (categoryId: string, workflowViewId: string) => {
+  // View seç ve route'a git
+  const handleSelectView = (categoryId: string, workflowViewId: string, workflowGuid?: string, viewId?: string) => {
     setSelectedCategory(categoryId);
     setSelectedSubCategory(workflowViewId);
     setMobileOpen(false); // Mobilde drawer'ı kapat
+    
+    // Backend için route: workflowId ve viewType ile
+    if (workflowGuid && viewId) {
+      navigate(`/process-hub/view?workflowId=${workflowGuid}&viewType=${viewId}`);
+    }
   };
 
   // Yeni talep oluştur
@@ -218,118 +187,6 @@ export default function ProcessHub(): JSX.Element {
   const currentCategoryIndex = menuData.findIndex((c) => c.id === selectedCategory);
   const currentColor = currentCategoryIndex >= 0 ? getCategoryColor(currentCategoryIndex) : categoryColors[0];
 
-  // DataGrid sütun tanımları
-  const columns: GridColDef[] = [
-    {
-      field: "requestId",
-      headerName: "Talep No",
-      width: 150,
-      renderCell: (params: GridRenderCellParams) => (
-        <Chip
-          label={params.value}
-          size="small"
-          sx={{ fontWeight: 600, fontSize: "11px" }}
-        />
-      ),
-    },
-    {
-      field: "title",
-      headerName: "Başlık",
-      flex: 1,
-      minWidth: 200,
-      renderCell: (params: GridRenderCellParams) => (
-        <Box>
-          <Typography variant="body2" fontWeight={600}>
-            {params.value}
-          </Typography>
-          <Typography variant="caption" color="text.secondary">
-            {params.row.description}
-          </Typography>
-        </Box>
-      ),
-    },
-    {
-      field: "creator",
-      headerName: "Oluşturan",
-      width: 150,
-      renderCell: (params: GridRenderCellParams) => (
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-          <Avatar sx={{ width: 28, height: 28, fontSize: "12px", bgcolor: currentColor }}>
-            {params.value.charAt(0)}
-          </Avatar>
-          <Typography variant="caption">{params.value}</Typography>
-        </Box>
-      ),
-    },
-    {
-      field: "amount",
-      headerName: "Tutar",
-      width: 120,
-      renderCell: (params: GridRenderCellParams) => (
-        <Typography variant="body2" fontWeight={600} color="primary">
-          {params.value || "-"}
-        </Typography>
-      ),
-    },
-    {
-      field: "priority",
-      headerName: "Öncelik",
-      width: 120,
-      renderCell: (params: GridRenderCellParams) => {
-        const colors: Record<string, "error" | "warning" | "success"> = {
-          "Yüksek": "error",
-          "Orta": "warning",
-          "Düşük": "success",
-        };
-        return (
-          <Chip
-            label={params.value}
-            size="small"
-            color={colors[params.value as string]}
-            sx={{ fontWeight: 600, fontSize: "10px" }}
-          />
-        );
-      },
-    },
-    {
-      field: "status",
-      headerName: "Durum",
-      width: 140,
-      renderCell: (params: GridRenderCellParams) => (
-        <Chip
-          label={params.value}
-          size="small"
-          color={params.row.statusColor}
-          sx={{ fontWeight: 600, fontSize: "11px" }}
-        />
-      ),
-    },
-    {
-      field: "date",
-      headerName: "Tarih",
-      width: 120,
-    },
-    {
-      field: "actions",
-      headerName: "İşlemler",
-      width: 120,
-      sortable: false,
-      renderCell: (params: GridRenderCellParams) => (
-        <Box sx={{ display: "flex", gap: 0.5 }}>
-          <Tooltip title="Görüntüle">
-            <IconButton size="small" onClick={() => navigate(`/workflows/runtime/${params.row.id}`)}>
-              <MuiIcons.Visibility fontSize="small" />
-            </IconButton>
-          </Tooltip>
-          <Tooltip title="Düzenle">
-            <IconButton size="small">
-              <MuiIcons.Edit fontSize="small" />
-            </IconButton>
-          </Tooltip>
-        </Box>
-      ),
-    },
-  ];
 
   // Sidebar içeriği
   const drawerContent = (
@@ -488,7 +345,14 @@ export default function ProcessHub(): JSX.Element {
                                         backgroundColor: "rgba(102, 126, 234, 0.08)",
                                       },
                                     }}
-                                    onClick={() => handleSelectView(category.id || "", viewId)}
+                                    onClick={() => 
+                                      handleSelectView(
+                                        category.id || "", 
+                                        viewId, 
+                                        workflow.workflowGuid, 
+                                        view.id
+                                      )
+                                    }
                                   >
                                     <ListItemIcon sx={{ minWidth: 32, color: categoryColor }}>
                                       {viewIcon}
@@ -675,154 +539,51 @@ export default function ProcessHub(): JSX.Element {
               </Box>
             </Paper>
 
-            {/* DataGrid */}
-            {rows.length > 0 ? (
-              <Paper
-                sx={{
-                  height: 650,
-                  width: "100%",
-                  borderRadius: "16px",
-                  border: "1px solid #e0e0e0",
-                  overflow: "hidden",
-                  boxShadow: "0 2px 12px rgba(0, 0, 0, 0.08)",
-                  "& .MuiDataGrid-root": {
-                    border: "none",
-                  },
-                  "& .MuiDataGrid-cell": {
-                    borderBottom: "1px solid #f0f0f0",
-                  },
-                  "& .MuiDataGrid-columnHeaders": {
-                    backgroundColor: "#f8f9fa",
-                    borderBottom: "2px solid #e0e0e0",
-                    fontWeight: 700,
-                  },
-                  "& .MuiDataGrid-row:hover": {
-                    backgroundColor: `${currentColor}11`,
-                  },
-                }}
+            {/* İçerik Alanı - Backend entegrasyonu için hazır */}
+            <Paper
+              sx={{
+                p: 8,
+                textAlign: "center",
+                borderRadius: "16px",
+                border: "2px dashed #e0e0e0",
+                minHeight: 400,
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <Box sx={{ color: currentColor, mb: 3, fontSize: 64 }}>
+                <MuiIcons.Construction />
+              </Box>
+              <Typography variant="h5" gutterBottom fontWeight={700}>
+                Bu Alan Backend Entegrasyonu İçin Hazır
+              </Typography>
+              <Typography variant="body1" color="text.secondary" sx={{ mb: 2, maxWidth: 500 }}>
+                {currentWorkflow?.label && currentView?.label && (
+                  <>
+                    <strong>Workflow:</strong> {currentWorkflow.label}
+                    <br />
+                    <strong>View:</strong> {currentView.label}
+                    <br />
+                    <strong>Workflow ID:</strong> {currentWorkflow.workflowGuid}
+                    <br />
+                    <strong>View Type:</strong> {viewId}
+                  </>
+                )}
+              </Typography>
+              <Typography variant="caption" color="text.secondary" sx={{ mb: 4 }}>
+                URL: /process-hub/view?workflowId={currentWorkflow?.workflowGuid}&viewType={viewId}
+              </Typography>
+              <MDButton
+                variant="gradient"
+                color="info"
+                startIcon={<MuiIcons.Add />}
+                onClick={handleNewRequest}
               >
-                <DataGrid
-                  rows={rows}
-                  columns={columns}
-                  loading={loading}
-                  pageSizeOptions={[10, 25, 50, 100]}
-                  initialState={{
-                    pagination: {
-                      paginationModel: { pageSize: 25, page: 0 },
-                    },
-                    columns: {
-                      columnVisibilityModel: {
-                        amount: selectedCategory === "expense",
-                      },
-                    },
-                  }}
-                  checkboxSelection
-                  disableRowSelectionOnClick
-                  sx={{
-                    "& .MuiDataGrid-cell:focus": {
-                      outline: "none",
-                    },
-                    "& .MuiDataGrid-row": {
-                      cursor: "pointer",
-                    },
-                  }}
-                  onRowClick={(params) => {
-                    // Satıra tıklandığında detay sayfasına git
-                    console.log("Row clicked:", params.row);
-                  }}
-                  localeText={{
-                    // Türkçe çeviriler
-                    noRowsLabel: "Kayıt bulunamadı",
-                    noResultsOverlayLabel: "Sonuç bulunamadı",
-                    toolbarDensity: "Yoğunluk",
-                    toolbarDensityLabel: "Yoğunluk",
-                    toolbarDensityCompact: "Kompakt",
-                    toolbarDensityStandard: "Standart",
-                    toolbarDensityComfortable: "Rahat",
-                    toolbarColumns: "Sütunlar",
-                    toolbarColumnsLabel: "Sütunları seç",
-                    toolbarFilters: "Filtreler",
-                    toolbarFiltersLabel: "Filtreleri göster",
-                    toolbarFiltersTooltipHide: "Filtreleri gizle",
-                    toolbarFiltersTooltipShow: "Filtreleri göster",
-                    toolbarExport: "Dışa Aktar",
-                    toolbarExportLabel: "Dışa aktar",
-                    toolbarExportCSV: "CSV olarak indir",
-                    toolbarExportPrint: "Yazdır",
-                    columnsPanelTextFieldLabel: "Sütun bul",
-                    columnsPanelTextFieldPlaceholder: "Sütun başlığı",
-                    columnsPanelDragIconLabel: "Sütunu yeniden sırala",
-                    columnsPanelShowAllButton: "Tümünü göster",
-                    columnsPanelHideAllButton: "Tümünü gizle",
-                    filterPanelAddFilter: "Filtre ekle",
-                    filterPanelDeleteIconLabel: "Sil",
-                    filterPanelOperator: "Operatör",
-                    filterPanelOperatorAnd: "Ve",
-                    filterPanelOperatorOr: "Veya",
-                    filterPanelColumns: "Sütunlar",
-                    filterPanelInputLabel: "Değer",
-                    filterPanelInputPlaceholder: "Filtre değeri",
-                    filterOperatorContains: "içerir",
-                    filterOperatorEquals: "eşittir",
-                    filterOperatorStartsWith: "ile başlar",
-                    filterOperatorEndsWith: "ile biter",
-                    filterOperatorIs: "eşittir",
-                    filterOperatorNot: "eşit değildir",
-                    filterOperatorAfter: "sonra",
-                    filterOperatorOnOrAfter: "veya sonra",
-                    filterOperatorBefore: "önce",
-                    filterOperatorOnOrBefore: "veya önce",
-                    filterOperatorIsEmpty: "boş",
-                    filterOperatorIsNotEmpty: "dolu",
-                    columnMenuLabel: "Menü",
-                    columnMenuShowColumns: "Sütunları göster",
-                    columnMenuFilter: "Filtrele",
-                    columnMenuHideColumn: "Gizle",
-                    columnMenuUnsort: "Sıralamayı kaldır",
-                    columnMenuSortAsc: "Artan sırala",
-                    columnMenuSortDesc: "Azalan sırala",
-                    footerRowSelected: (count) =>
-                      count !== 1
-                        ? `${count.toLocaleString()} satır seçildi`
-                        : `${count.toLocaleString()} satır seçildi`,
-                    footerTotalRows: "Toplam Satır:",
-                    MuiTablePagination: {
-                      labelRowsPerPage: "Sayfa başına satır:",
-                      labelDisplayedRows: ({ from, to, count }) =>
-                        `${from}-${to} / ${count !== -1 ? count : `${to}'dan fazla`}`,
-                    },
-                  }}
-                />
-              </Paper>
-            ) : (
-              // Boş State
-              <Paper
-                sx={{
-                  p: 8,
-                  textAlign: "center",
-                  borderRadius: "16px",
-                  border: "2px dashed #e0e0e0",
-                }}
-              >
-                <Box sx={{ color: currentColor, mb: 2, fontSize: 48 }}>
-                  {getIconComponent(currentCategory?.icon)}
-                </Box>
-                <Typography variant="h6" gutterBottom fontWeight={600}>
-                  Henüz kayıt bulunmuyor
-                </Typography>
-                <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-                  İlk talebi oluşturarak başlayın
-                </Typography>
-                <MDButton
-                  variant="gradient"
-                  color="info"
-                  startIcon={<MuiIcons.Add />}
-                  onClick={handleNewRequest}
-                >
-                  Yeni Talep Oluştur
-                </MDButton>
-              </Paper>
-            )}
+                Yeni Talep Oluştur
+              </MDButton>
+            </Paper>
           </Box>
         </Box>
       </MDBox>
