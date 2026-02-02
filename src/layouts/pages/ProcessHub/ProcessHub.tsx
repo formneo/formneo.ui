@@ -27,112 +27,56 @@ import {
   Tooltip,
   Avatar,
   Stack,
+  CircularProgress,
 } from "@mui/material";
 import { DataGrid, GridColDef, GridRenderCellParams } from "@mui/x-data-grid";
-import {
-  ExpandLess as ExpandLessIcon,
-  ExpandMore as ExpandMoreIcon,
-  Add as AddIcon,
-  Receipt as ReceiptIcon,
-  BeachAccess as BeachAccessIcon,
-  Lightbulb as LightbulbIcon,
-  Work as WorkIcon,
-  ShoppingCart as ShoppingCartIcon,
-  Build as BuildIcon,
-  Menu as MenuIcon,
-  Close as CloseIcon,
-  Person as PersonIcon,
-  HourglassEmpty as HourglassEmptyIcon,
-  Assignment as AssignmentIcon,
-  Search as SearchIcon,
-  FilterList as FilterListIcon,
-  Visibility as VisibilityIcon,
-  Edit as EditIcon,
-  Delete as DeleteIcon,
-  MoreVert as MoreVertIcon,
-} from "@mui/icons-material";
+import * as MuiIcons from "@mui/icons-material";
 import DashboardLayout from "examples/LayoutContainers/DashboardLayout";
 import DashboardNavbar from "examples/Navbars/DashboardNavbar";
 import MDBox from "components/MDBox";
 import MDButton from "components/MDButton";
 import MDTypography from "components/MDTypography";
+import { 
+  WorkFlowDefinationApi, 
+  WorkFlowMenuResponseDto,
+  WorkFlowMenuGroupDto,
+  WorkFlowMenuItemDto,
+  WorkFlowMenuViewDto,
+} from "api/generated/api";
+import getConfiguration from "confiuration";
 
-// Süreç kategorileri tipi
-interface ProcessCategory {
-  id: string;
-  name: string;
-  icon: React.ReactNode;
-  color: string;
-  subCategories: {
-    id: string;
-    name: string;
-    icon: React.ReactNode;
-    count?: number;
-    badge?: string;
-  }[];
-  workflowKey?: string; // İlgili workflow key
-}
+// Icon mapping helper - API'den gelen string icon ismini MUI icon'a çevir
+const getIconComponent = (iconName?: string | null): React.ReactNode => {
+  if (!iconName) return <MuiIcons.Work />;
+  
+  // Icon name'i MUI format'a çevir (örn: "Receipt" -> ReceiptIcon)
+  const formattedName = iconName.endsWith('Icon') ? iconName : `${iconName}Icon`;
+  const IconComponent = (MuiIcons as any)[formattedName] || (MuiIcons as any)[iconName];
+  
+  return IconComponent ? <IconComponent /> : <MuiIcons.Work />;
+};
 
-// Süreç kategorileri tanımı
-const processCategories: ProcessCategory[] = [
-  {
-    id: "expense",
-    name: "Masraf Talebi",
-    icon: <ReceiptIcon />,
-    color: "#667eea",
-    workflowKey: "expense-request",
-    subCategories: [
-      { id: "my-requests", name: "Benim Taleplerim", icon: <PersonIcon />, count: 5 },
-      { id: "pending-approval", name: "Onay Bekleyenler", icon: <HourglassEmptyIcon />, count: 3, badge: "new" },
-      { id: "all-records", name: "Tüm Kayıtlar (Admin)", icon: <AssignmentIcon />, count: 45 },
-    ],
-  },
-  {
-    id: "leave",
-    name: "İzin Talebi",
-    icon: <BeachAccessIcon />,
-    color: "#f093fb",
-    workflowKey: "leave-request",
-    subCategories: [
-      { id: "my-requests", name: "Benim Taleplerim", icon: <PersonIcon />, count: 2 },
-      { id: "pending-approval", name: "Onay Bekleyenler", icon: <HourglassEmptyIcon />, count: 1 },
-      { id: "all-records", name: "Tüm Kayıtlar", icon: <AssignmentIcon />, count: 28 },
-    ],
-  },
-  {
-    id: "suggestion",
-    name: "Öneri Süreci",
-    icon: <LightbulbIcon />,
-    color: "#feca57",
-    workflowKey: "suggestion",
-    subCategories: [
-      { id: "records", name: "Kayıtlar", icon: <AssignmentIcon />, count: 12 },
-    ],
-  },
-  {
-    id: "purchase",
-    name: "Satın Alma Talebi",
-    icon: <ShoppingCartIcon />,
-    color: "#48dbfb",
-    workflowKey: "purchase-request",
-    subCategories: [
-      { id: "my-requests", name: "Benim Taleplerim", icon: <PersonIcon />, count: 3 },
-      { id: "pending-approval", name: "Onay Bekleyenler", icon: <HourglassEmptyIcon />, count: 7 },
-      { id: "all-records", name: "Tüm Kayıtlar", icon: <AssignmentIcon />, count: 67 },
-    ],
-  },
-  {
-    id: "maintenance",
-    name: "Bakım Onarım Talebi",
-    icon: <BuildIcon />,
-    color: "#ff6b6b",
-    workflowKey: "maintenance-request",
-    subCategories: [
-      { id: "my-requests", name: "Benim Taleplerim", icon: <PersonIcon />, count: 1 },
-      { id: "pending-approval", name: "Onay Bekleyenler", icon: <HourglassEmptyIcon />, count: 4 },
-      { id: "all-records", name: "Tüm Kayıtlar", icon: <AssignmentIcon />, count: 89 },
-    ],
-  },
+// View icon mapping - view id'ye göre icon
+const getViewIcon = (viewId?: string | null): React.ReactNode => {
+  if (!viewId) return <MuiIcons.Assignment />;
+  
+  if (viewId.includes('my') || viewId.includes('requests')) {
+    return <MuiIcons.Person />;
+  }
+  if (viewId.includes('approval') || viewId.includes('pending')) {
+    return <MuiIcons.HourglassEmpty />;
+  }
+  if (viewId.includes('all') || viewId.includes('records')) {
+    return <MuiIcons.Assignment />;
+  }
+  
+  return <MuiIcons.Assignment />;
+};
+
+// Renk paleti - kategori renkleri için
+const categoryColors = [
+  "#667eea", "#f093fb", "#feca57", "#48dbfb", "#ff6b6b",
+  "#4ecdc4", "#a8e6cf", "#ffd93d", "#6c5ce7", "#fd79a8"
 ];
 
 const DRAWER_WIDTH = 320;
@@ -164,17 +108,60 @@ const generateMockData = (categoryId: string, subCategoryId: string) => {
 export default function ProcessHub(): JSX.Element {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
+  const [menuData, setMenuData] = useState<WorkFlowMenuGroupDto[]>([]);
+  const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState<string>(
-    searchParams.get("category") || "expense"
+    searchParams.get("category") || ""
   );
   const [selectedSubCategory, setSelectedSubCategory] = useState<string>(
-    searchParams.get("subCategory") || "my-requests"
+    searchParams.get("subCategory") || ""
   );
-  const [expandedCategories, setExpandedCategories] = useState<Record<string, boolean>>({
-    expense: true,
-  });
+  const [expandedCategories, setExpandedCategories] = useState<Record<string, boolean>>({});
+  const [expandedWorkflows, setExpandedWorkflows] = useState<Record<string, boolean>>({});
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [loading, setLoading] = useState(false);
+
+  // API'den menü yapısını yükle
+  useEffect(() => {
+    const loadMenuStructure = async () => {
+      try {
+        setLoading(true);
+        const conf = getConfiguration();
+        const api = new WorkFlowDefinationApi(conf);
+        const response = await api.apiWorkFlowDefinationMenuStructureGet();
+        const menus = response.data.menus || [];
+        setMenuData(menus);
+        
+        // İlk kategori, workflow ve view'ı varsayılan olarak seç ve aç
+        if (menus.length > 0) {
+          const firstCategory = menus[0];
+          const firstCategoryId = firstCategory.id || "";
+          const firstWorkflow = firstCategory.children?.[0];
+          const firstWorkflowId = firstWorkflow?.id || "";
+          const firstView = firstWorkflow?.views?.[0];
+          const firstSubCategoryId = firstWorkflow && firstView 
+            ? `${firstWorkflow.id}_${firstView.id}` 
+            : "";
+          
+          // Kategori ve ilk workflow'u aç
+          setExpandedCategories({ [firstCategoryId]: true });
+          setExpandedWorkflows({ [firstWorkflowId]: true });
+          
+          if (!selectedCategory) {
+            setSelectedCategory(firstCategoryId);
+          }
+          if (!selectedSubCategory && firstSubCategoryId) {
+            setSelectedSubCategory(firstSubCategoryId);
+          }
+        }
+      } catch (error) {
+        console.error("Menü yapısı yüklenirken hata:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadMenuStructure();
+  }, []);
 
   // Grid verileri
   const rows = generateMockData(selectedCategory, selectedSubCategory);
@@ -192,24 +179,44 @@ export default function ProcessHub(): JSX.Element {
     }));
   };
 
-  // Kategori seç
-  const handleSelectCategory = (categoryId: string, subCategoryId: string) => {
+  // Workflow genişlet/daralt
+  const handleToggleWorkflow = (workflowId: string) => {
+    setExpandedWorkflows((prev) => ({
+      ...prev,
+      [workflowId]: !prev[workflowId],
+    }));
+  };
+
+  // View seç (kategori ve workflow_view ID)
+  const handleSelectView = (categoryId: string, workflowViewId: string) => {
     setSelectedCategory(categoryId);
-    setSelectedSubCategory(subCategoryId);
+    setSelectedSubCategory(workflowViewId);
     setMobileOpen(false); // Mobilde drawer'ı kapat
   };
 
   // Yeni talep oluştur
   const handleNewRequest = () => {
-    const category = processCategories.find((c) => c.id === selectedCategory);
-    if (category?.workflowKey) {
-      navigate(`/workflows/runtime/new?workflow=${category.workflowKey}`);
+    // selectedSubCategory format: "workflowId_viewId"
+    const [workflowId] = selectedSubCategory.split('_');
+    const category = menuData.find((c) => c.id === selectedCategory);
+    const workflow = category?.children?.find((item) => item.id === workflowId);
+    if (workflow?.workflowGuid) {
+      navigate(`/workflows/runtime/new?workflowId=${workflow.workflowGuid}`);
     }
   };
 
-  // Seçili kategori ve alt kategoriyi bul
-  const currentCategory = processCategories.find((c) => c.id === selectedCategory);
-  const currentSubCategory = currentCategory?.subCategories.find((s) => s.id === selectedSubCategory);
+  // Seçili kategori ve view'ı bul
+  const currentCategory = menuData.find((c) => c.id === selectedCategory);
+  
+  // selectedSubCategory format: "workflowId_viewId"
+  const [workflowId, viewId] = selectedSubCategory.split('_');
+  const currentWorkflow = currentCategory?.children?.find((w) => w.id === workflowId);
+  const currentView = currentWorkflow?.views?.find((v) => v.id === viewId);
+  
+  // Renk ve icon helper'ları
+  const getCategoryColor = (index: number) => categoryColors[index % categoryColors.length];
+  const currentCategoryIndex = menuData.findIndex((c) => c.id === selectedCategory);
+  const currentColor = currentCategoryIndex >= 0 ? getCategoryColor(currentCategoryIndex) : categoryColors[0];
 
   // DataGrid sütun tanımları
   const columns: GridColDef[] = [
@@ -247,7 +254,7 @@ export default function ProcessHub(): JSX.Element {
       width: 150,
       renderCell: (params: GridRenderCellParams) => (
         <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-          <Avatar sx={{ width: 28, height: 28, fontSize: "12px", bgcolor: currentCategory?.color }}>
+          <Avatar sx={{ width: 28, height: 28, fontSize: "12px", bgcolor: currentColor }}>
             {params.value.charAt(0)}
           </Avatar>
           <Typography variant="caption">{params.value}</Typography>
@@ -311,12 +318,12 @@ export default function ProcessHub(): JSX.Element {
         <Box sx={{ display: "flex", gap: 0.5 }}>
           <Tooltip title="Görüntüle">
             <IconButton size="small" onClick={() => navigate(`/workflows/runtime/${params.row.id}`)}>
-              <VisibilityIcon fontSize="small" />
+              <MuiIcons.Visibility fontSize="small" />
             </IconButton>
           </Tooltip>
           <Tooltip title="Düzenle">
             <IconButton size="small">
-              <EditIcon fontSize="small" />
+              <MuiIcons.Edit fontSize="small" />
             </IconButton>
           </Tooltip>
         </Box>
@@ -343,7 +350,7 @@ export default function ProcessHub(): JSX.Element {
             sx={{ color: "white", display: { sm: "none" } }}
             onClick={() => setMobileOpen(false)}
           >
-            <CloseIcon />
+            <MuiIcons.Close />
           </IconButton>
         </Box>
         <Typography variant="caption" sx={{ opacity: 0.9 }}>
@@ -373,97 +380,141 @@ export default function ProcessHub(): JSX.Element {
           },
         }}
       >
-        {processCategories.map((category) => (
-          <React.Fragment key={category.id}>
-            {/* Ana Kategori */}
-            <ListItem disablePadding>
-              <ListItemButton
-                onClick={() => handleToggleCategory(category.id)}
-                sx={{
-                  py: 1.5,
-                  px: 2,
-                  "&:hover": {
-                    backgroundColor: "rgba(102, 126, 234, 0.08)",
-                  },
-                }}
-              >
-                <ListItemIcon sx={{ color: category.color, minWidth: 40 }}>
-                  {category.icon}
-                </ListItemIcon>
-                <ListItemText
-                  primary={
-                    <Typography variant="body2" fontWeight={600}>
-                      {category.name}
-                    </Typography>
-                  }
-                />
-                {expandedCategories[category.id] ? <ExpandLessIcon /> : <ExpandMoreIcon />}
-              </ListItemButton>
-            </ListItem>
+        {loading ? (
+          <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", py: 4 }}>
+            <CircularProgress size={32} />
+          </Box>
+        ) : menuData.length === 0 ? (
+          <Box sx={{ p: 3, textAlign: "center" }}>
+            <Typography variant="body2" color="text.secondary">
+              Henüz süreç tanımlı değil
+            </Typography>
+          </Box>
+        ) : (
+          menuData.map((category, categoryIndex) => {
+            const categoryColor = getCategoryColor(categoryIndex);
+            const categoryIcon = getIconComponent(category.icon);
 
-            {/* Alt Kategoriler */}
-            <Collapse in={expandedCategories[category.id]} timeout="auto" unmountOnExit>
-              <List component="div" disablePadding>
-                {category.subCategories.map((subCat) => (
+            return (
+              <React.Fragment key={category.id}>
+                {/* Ana Kategori */}
+                <ListItem disablePadding>
                   <ListItemButton
-                    key={subCat.id}
+                    onClick={() => handleToggleCategory(category.id || "")}
                     sx={{
-                      pl: 6,
-                      py: 1,
-                      backgroundColor:
-                        selectedCategory === category.id && selectedSubCategory === subCat.id
-                          ? "rgba(102, 126, 234, 0.12)"
-                          : "transparent",
-                      borderLeft:
-                        selectedCategory === category.id && selectedSubCategory === subCat.id
-                          ? `3px solid ${category.color}`
-                          : "3px solid transparent",
+                      py: 1.5,
+                      px: 2,
                       "&:hover": {
                         backgroundColor: "rgba(102, 126, 234, 0.08)",
                       },
                     }}
-                    onClick={() => handleSelectCategory(category.id, subCat.id)}
                   >
-                    <ListItemIcon sx={{ minWidth: 36, color: category.color }}>
-                      {subCat.icon}
+                    <ListItemIcon sx={{ color: categoryColor, minWidth: 40 }}>
+                      {categoryIcon}
                     </ListItemIcon>
                     <ListItemText
                       primary={
-                        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                          <Typography variant="caption" fontWeight={500}>
-                            {subCat.name}
-                          </Typography>
-                          {subCat.count !== undefined && (
-                            <Chip
-                              label={subCat.count}
-                              size="small"
-                              sx={{
-                                height: 20,
-                                fontSize: "10px",
-                                fontWeight: 700,
-                                backgroundColor: category.color,
-                                color: "white",
-                              }}
-                            />
-                          )}
-                          {subCat.badge === "new" && (
-                            <Chip
-                              label="Yeni"
-                              size="small"
-                              color="error"
-                              sx={{ height: 18, fontSize: "9px" }}
-                            />
-                          )}
-                        </Box>
+                        <Typography variant="body2" fontWeight={600}>
+                          {category.label}
+                        </Typography>
                       }
                     />
+                    {expandedCategories[category.id || ""] ? (
+                      <MuiIcons.ExpandLess />
+                    ) : (
+                      <MuiIcons.ExpandMore />
+                    )}
                   </ListItemButton>
-                ))}
-              </List>
-            </Collapse>
-            <Divider sx={{ my: 0.5 }} />
-          </React.Fragment>
-        ))}
+                </ListItem>
+
+                {/* Workflow'lar (Nested) */}
+                <Collapse in={expandedCategories[category.id || ""]} timeout="auto" unmountOnExit>
+                  <List component="div" disablePadding>
+                    {category.children?.map((workflow) => {
+                      const workflowIcon = getIconComponent(workflow.icon);
+
+                      return (
+                        <React.Fragment key={workflow.id}>
+                          {/* Workflow Header */}
+                          <ListItemButton
+                            onClick={() => handleToggleWorkflow(workflow.id || "")}
+                            sx={{
+                              pl: 4,
+                              py: 1.5,
+                              "&:hover": {
+                                backgroundColor: "rgba(102, 126, 234, 0.05)",
+                              },
+                            }}
+                          >
+                            <ListItemIcon sx={{ color: categoryColor, minWidth: 36 }}>
+                              {workflowIcon}
+                            </ListItemIcon>
+                            <ListItemText
+                              primary={
+                                <Typography variant="body2" fontWeight={600} fontSize="13px">
+                                  {workflow.label}
+                                </Typography>
+                              }
+                            />
+                            {expandedWorkflows[workflow.id || ""] ? (
+                              <MuiIcons.ExpandLess fontSize="small" />
+                            ) : (
+                              <MuiIcons.ExpandMore fontSize="small" />
+                            )}
+                          </ListItemButton>
+
+                          {/* Views (Alt kategoriler) */}
+                          <Collapse in={expandedWorkflows[workflow.id || ""]} timeout="auto" unmountOnExit>
+                            <List component="div" disablePadding>
+                              {workflow.views?.map((view) => {
+                                const viewId = `${workflow.id}_${view.id}`;
+                                const viewIcon = getViewIcon(view.id);
+                                const isSelected =
+                                  selectedCategory === category.id && selectedSubCategory === viewId;
+
+                                return (
+                                  <ListItemButton
+                                    key={viewId}
+                                    sx={{
+                                      pl: 8,
+                                      py: 0.75,
+                                      backgroundColor: isSelected
+                                        ? "rgba(102, 126, 234, 0.12)"
+                                        : "transparent",
+                                      borderLeft: isSelected
+                                        ? `3px solid ${categoryColor}`
+                                        : "3px solid transparent",
+                                      "&:hover": {
+                                        backgroundColor: "rgba(102, 126, 234, 0.08)",
+                                      },
+                                    }}
+                                    onClick={() => handleSelectView(category.id || "", viewId)}
+                                  >
+                                    <ListItemIcon sx={{ minWidth: 32, color: categoryColor }}>
+                                      {viewIcon}
+                                    </ListItemIcon>
+                                    <ListItemText
+                                      primary={
+                                        <Typography variant="caption" fontWeight={500}>
+                                          {view.label}
+                                        </Typography>
+                                      }
+                                    />
+                                  </ListItemButton>
+                                );
+                              })}
+                            </List>
+                          </Collapse>
+                        </React.Fragment>
+                      );
+                    })}
+                  </List>
+                </Collapse>
+                <Divider sx={{ my: 0.5 }} />
+              </React.Fragment>
+            );
+          })
+        )}
       </List>
 
       {/* Sidebar Footer */}
@@ -490,8 +541,8 @@ export default function ProcessHub(): JSX.Element {
   return (
     <DashboardLayout>
       <DashboardNavbar />
-      <MDBox py={3} sx={{ height: "calc(100vh - 120px)", overflow: "hidden" }}>
-        <Box sx={{ display: "flex", gap: 3, height: "100%" }}>
+      <MDBox sx={{ height: "calc(100vh - 74px)", overflow: "hidden", pt: 2 }}>
+        <Box sx={{ display: "flex", gap: 3, height: "100%", px: 3, pb: 3 }}>
           {/* Mobile Menu Button */}
           <IconButton
             sx={{
@@ -506,7 +557,7 @@ export default function ProcessHub(): JSX.Element {
             }}
             onClick={() => setMobileOpen(true)}
           >
-            <MenuIcon />
+            <MuiIcons.Menu />
           </IconButton>
 
           {/* Sidebar - Desktop */}
@@ -583,46 +634,39 @@ export default function ProcessHub(): JSX.Element {
                 p: 3,
                 mb: 3,
                 borderRadius: "16px",
-                background: `linear-gradient(135deg, ${currentCategory?.color}22 0%, ${currentCategory?.color}11 100%)`,
-                border: `1px solid ${currentCategory?.color}33`,
+                background: `linear-gradient(135deg, ${currentColor}22 0%, ${currentColor}11 100%)`,
+                border: `1px solid ${currentColor}33`,
                 boxShadow: "0 2px 12px rgba(0, 0, 0, 0.08)",
               }}
             >
               <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 2 }}>
                 <Box>
                   <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
-                    <Box sx={{ color: currentCategory?.color }}>{currentCategory?.icon}</Box>
+                    <Box sx={{ color: currentColor }}>{getIconComponent(currentCategory?.icon)}</Box>
                     <Typography variant="h4" fontWeight={700}>
-                      {currentCategory?.name}
+                      {currentWorkflow?.label || currentCategory?.label || "Süreç Merkezi"}
                     </Typography>
                   </Box>
                   <Typography variant="body2" color="text.secondary">
-                    {currentSubCategory?.name}
-                    {currentSubCategory?.count !== undefined && (
-                      <Chip
-                        label={`${currentSubCategory.count} kayıt`}
-                        size="small"
-                        sx={{ ml: 1, height: 22 }}
-                      />
-                    )}
+                    {currentView?.label || ""}
                   </Typography>
                 </Box>
 
                 <Box sx={{ display: "flex", gap: 1 }}>
                   <Tooltip title="Filtrele">
                     <IconButton>
-                      <FilterListIcon />
+                      <MuiIcons.FilterList />
                     </IconButton>
                   </Tooltip>
                   <Tooltip title="Ara">
                     <IconButton>
-                      <SearchIcon />
+                      <MuiIcons.Search />
                     </IconButton>
                   </Tooltip>
                   <MDButton
                     variant="gradient"
                     color="info"
-                    startIcon={<AddIcon />}
+                    startIcon={<MuiIcons.Add />}
                     onClick={handleNewRequest}
                   >
                     Yeni Talep
@@ -653,7 +697,7 @@ export default function ProcessHub(): JSX.Element {
                     fontWeight: 700,
                   },
                   "& .MuiDataGrid-row:hover": {
-                    backgroundColor: `${currentCategory?.color}11`,
+                    backgroundColor: `${currentColor}11`,
                   },
                 }}
               >
@@ -760,8 +804,8 @@ export default function ProcessHub(): JSX.Element {
                   border: "2px dashed #e0e0e0",
                 }}
               >
-                <Box sx={{ color: currentCategory?.color, mb: 2, fontSize: 48 }}>
-                  {currentCategory?.icon}
+                <Box sx={{ color: currentColor, mb: 2, fontSize: 48 }}>
+                  {getIconComponent(currentCategory?.icon)}
                 </Box>
                 <Typography variant="h6" gutterBottom fontWeight={600}>
                   Henüz kayıt bulunmuyor
@@ -772,7 +816,7 @@ export default function ProcessHub(): JSX.Element {
                 <MDButton
                   variant="gradient"
                   color="info"
-                  startIcon={<AddIcon />}
+                  startIcon={<MuiIcons.Add />}
                   onClick={handleNewRequest}
                 >
                   Yeni Talep Oluştur

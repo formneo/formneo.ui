@@ -4001,6 +4001,7 @@ export interface WorkFlowDefinationDetailDto {
     'revision'?: number;
     'formId'?: string | null;
     'formName'?: string | null;
+    'formRevision'?: number | null;
 }
 export interface WorkFlowDefinationInsertDto {
     'workflowName'?: string | null;
@@ -4016,6 +4017,7 @@ export interface WorkFlowDefinationListDto {
     'revision'?: number;
     'formId'?: string | null;
     'formName'?: string | null;
+    'formRevision'?: number | null;
 }
 export interface WorkFlowDefinationUpdateDto {
     'id'?: string;
@@ -4032,6 +4034,7 @@ export interface WorkFlowDefinationWithInitScriptDto {
     'revision'?: number;
     'formId'?: string | null;
     'formName'?: string | null;
+    'formRevision'?: number | null;
     'initScript'?: string | null;
 }
 export interface WorkFlowHeadDetailDto {
@@ -4117,6 +4120,32 @@ export interface WorkFlowItemDtoWithApproveItems {
 }
 
 
+export interface WorkFlowMenuGroupDto {
+    'id'?: string | null;
+    'label'?: string | null;
+    'icon'?: string | null;
+    'children'?: Array<WorkFlowMenuItemDto> | null;
+}
+export interface WorkFlowMenuItemDto {
+    'id'?: string | null;
+    'label'?: string | null;
+    'icon'?: string | null;
+    'workflowId'?: string | null;
+    'workflowGuid'?: string;
+    'revision'?: number;
+    'formId'?: string | null;
+    'formName'?: string | null;
+    'formRevision'?: number | null;
+    'views'?: Array<WorkFlowMenuViewDto> | null;
+}
+export interface WorkFlowMenuResponseDto {
+    'menus'?: Array<WorkFlowMenuGroupDto> | null;
+}
+export interface WorkFlowMenuViewDto {
+    'id'?: string | null;
+    'label'?: string | null;
+    'path'?: string | null;
+}
 export interface WorkFlowStartApiDto {
     'workFlowInfo'?: string | null;
     'definationId'?: string | null;
@@ -39791,6 +39820,39 @@ export const WorkFlowDefinationApiAxiosParamCreator = function (configuration?: 
         },
         /**
          * 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        apiWorkFlowDefinationMenuStructureGet: async (options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            const localVarPath = `/api/WorkFlowDefination/menu-structure`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication Bearer required
+            // http bearer authentication required
+            await setBearerAuthToObject(localVarHeaderParameter, configuration)
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @param {WorkFlowDefinationInsertDto} [workFlowDefinationInsertDto] 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -39920,6 +39982,17 @@ export const WorkFlowDefinationApiFp = function(configuration?: Configuration) {
         },
         /**
          * 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async apiWorkFlowDefinationMenuStructureGet(options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<WorkFlowMenuResponseDto>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.apiWorkFlowDefinationMenuStructureGet(options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['WorkFlowDefinationApi.apiWorkFlowDefinationMenuStructureGet']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * 
          * @param {WorkFlowDefinationInsertDto} [workFlowDefinationInsertDto] 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -39987,6 +40060,14 @@ export const WorkFlowDefinationApiFactory = function (configuration?: Configurat
         },
         /**
          * 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        apiWorkFlowDefinationMenuStructureGet(options?: RawAxiosRequestConfig): AxiosPromise<WorkFlowMenuResponseDto> {
+            return localVarFp.apiWorkFlowDefinationMenuStructureGet(options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
          * @param {WorkFlowDefinationInsertDto} [workFlowDefinationInsertDto] 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -40046,6 +40127,15 @@ export class WorkFlowDefinationApi extends BaseAPI {
      */
     public apiWorkFlowDefinationIdGet(id: string, options?: RawAxiosRequestConfig) {
         return WorkFlowDefinationApiFp(this.configuration).apiWorkFlowDefinationIdGet(id, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    public apiWorkFlowDefinationMenuStructureGet(options?: RawAxiosRequestConfig) {
+        return WorkFlowDefinationApiFp(this.configuration).apiWorkFlowDefinationMenuStructureGet(options).then((request) => request(this.axios, this.basePath));
     }
 
     /**

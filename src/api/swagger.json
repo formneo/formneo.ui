@@ -16265,6 +16265,35 @@
         }
       }
     },
+    "/api/WorkFlowDefination/menu-structure": {
+      "get": {
+        "tags": [
+          "WorkFlowDefination"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkFlowMenuResponseDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkFlowMenuResponseDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkFlowMenuResponseDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/WorkFlowItem/GetApproveItems/{workFlowHeadId}": {
       "get": {
         "tags": [
@@ -30414,6 +30443,11 @@
           "formName": {
             "type": "string",
             "nullable": true
+          },
+          "formRevision": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
           }
         },
         "additionalProperties": false
@@ -30469,6 +30503,11 @@
           },
           "formName": {
             "type": "string",
+            "nullable": true
+          },
+          "formRevision": {
+            "type": "integer",
+            "format": "int32",
             "nullable": true
           }
         },
@@ -30529,6 +30568,11 @@
           },
           "formName": {
             "type": "string",
+            "nullable": true
+          },
+          "formRevision": {
+            "type": "integer",
+            "format": "int32",
             "nullable": true
           },
           "initScript": {
@@ -30781,6 +30825,113 @@
             "items": {
               "$ref": "#/components/schemas/FormItemsDto"
             },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "WorkFlowMenuGroupDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "nullable": true
+          },
+          "label": {
+            "type": "string",
+            "nullable": true
+          },
+          "icon": {
+            "type": "string",
+            "nullable": true
+          },
+          "children": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WorkFlowMenuItemDto"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "WorkFlowMenuItemDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "nullable": true
+          },
+          "label": {
+            "type": "string",
+            "nullable": true
+          },
+          "icon": {
+            "type": "string",
+            "nullable": true
+          },
+          "workflowId": {
+            "type": "string",
+            "nullable": true
+          },
+          "workflowGuid": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "revision": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "formId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "formName": {
+            "type": "string",
+            "nullable": true
+          },
+          "formRevision": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "views": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WorkFlowMenuViewDto"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "WorkFlowMenuResponseDto": {
+        "type": "object",
+        "properties": {
+          "menus": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WorkFlowMenuGroupDto"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "WorkFlowMenuViewDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "nullable": true
+          },
+          "label": {
+            "type": "string",
+            "nullable": true
+          },
+          "path": {
+            "type": "string",
             "nullable": true
           }
         },
