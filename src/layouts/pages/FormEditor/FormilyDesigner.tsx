@@ -7,7 +7,7 @@ import "@designable/react-settings-form/dist/designable.settings-form.umd.produc
 
 // Ant Design UI (üst bar için)
 import { Space as AntSpace, Button as AntButton, Typography, Input as AntdInput, Form as AntdForm, message, Tag, Drawer, List, Select as AntdSelect, InputNumber as AntdInputNumber, Switch as AntdSwitch, Divider as AntdDivider, Modal, Card as AntdCard, Slider as AntdSlider, Rate as AntdRate } from "antd";
-import { SaveOutlined, RocketOutlined, HistoryOutlined, EyeOutlined, CodeOutlined, PlusOutlined, EditOutlined, DeleteOutlined, DollarCircleOutlined, DollarOutlined, MoneyCollectOutlined, BankOutlined, WalletOutlined } from "@ant-design/icons";
+import { SaveOutlined, RocketOutlined, HistoryOutlined, EyeOutlined, CodeOutlined, PlusOutlined, EditOutlined, DeleteOutlined, DollarCircleOutlined, DollarOutlined, MoneyCollectOutlined, BankOutlined, WalletOutlined, InfoCircleOutlined, CheckCircleOutlined } from "@ant-design/icons";
 import * as Icons from "@ant-design/icons";
 import formNeoLogo from "assets/images/logoson.svg";
 
@@ -438,204 +438,186 @@ export default function FormilyDesigner(): JSX.Element {
   };
 
   const handleCreateRevision = async () => {
-    try {
-      if (!id) {
-        message.warning("Save as draft first");
-        return;
-      }
-      setIsBusy(true);
-      
-      const conf = getConfiguration();
-      const api = new FormDataApi(conf);
-      
-      // Mevcut form bilgilerini al
-      const currentFormRes = await api.apiFormDataIdGet(id);
-      const currentForm = currentFormRes?.data as any;
-      
-      // Mevcut formDesign'ı al ve buttonPanel'i ekle/güncelle
-      const currentDesign = currentForm?.formDesign ? JSON.parse(currentForm.formDesign) : { schema: {} };
-      const workspace = engine.workbench?.activeWorkspace;
-      const tree = workspace?.operation?.tree;
-      const result = tree ? transformToSchema(tree) : currentDesign;
-      
-      // ✅ ÖNEMLİ: ButtonPanel'i önce state'ten al (kullanıcının yeni eklediği butonlar dahil)
-      // State'te buton varsa onu kullan, yoksa API'den gelen veriyi kullan
-      const buttonsToUse = formButtons.length > 0 
-        ? formButtons 
-        : (currentDesign?.buttonPanel?.buttons || []);
-      
-      const designWithButtons = {
-        ...result,
-        buttonPanel: {
-          buttons: buttonsToUse,
-        },
-      };
-      
-      // Eğer form yayınlanmışsa (publicationStatus === 2), mevcut formu güncelleme
-      // Sadece revizyon oluştur ve buttonPanel'i yeni revizyona kopyala
-      if (currentForm.publicationStatus === 2) {
-        // ✅ ÖNEMLİ: Yayınlanan formdan revizyon oluştururken, state'teki formButtons'ı kullan
-        // Çünkü kullanıcı yeni buton eklemiş olabilir ama henüz kaydetmemiş olabilir
-        // State'teki butonlar öncelikli olmalı (yeni eklenenler dahil)
-        const buttonsToCopy = formButtons.length > 0 
-          ? formButtons 
-          : (currentDesign?.buttonPanel?.buttons || []);
-        
-        await api.apiFormDataCreateRevisionIdPost(id);
-        
-        // Yeni revizyonu bul ve buttonPanel'i kopyala
-        const parent = currentForm.parentFormId || id;
-        const resList = await api.apiFormDataVersionsParentIdGet(parent);
-        const list = (resList?.data || []) as any[];
-        const drafts = list.filter((x: any) => x.publicationStatus === 1);
-        const latestDraft = drafts.sort((a: any, b: any) => (b.revision || 0) - (a.revision || 0))[0];
-        
-        if (latestDraft?.id) {
-          const latestFormRes = await api.apiFormDataIdGet(latestDraft.id);
-          const latestFormData = latestFormRes?.data as any;
-          const latestDesign = latestFormData?.formDesign ? JSON.parse(latestFormData.formDesign) : { schema: {} };
+    // Kullanıcıya onay sor
+    Modal.confirm({
+      title: "Revizyon Oluştur",
+      icon: <InfoCircleOutlined />,
+      content: "Mevcut formdan yeni bir revizyon oluşturmak istediğinizden emin misiniz? Yaptığınız tüm değişiklikler yeni revizyona kopyalanacaktır.",
+      okText: "Evet, Oluştur",
+      cancelText: "İptal",
+      onOk: async () => {
+        try {
+          if (!id) {
+            message.warning("Önce formu taslak olarak kaydedin");
+            return;
+          }
+          setIsBusy(true);
           
-          const latestDesignWithButtons = {
-            ...latestDesign,
+          const conf = getConfiguration();
+          const api = new FormDataApi(conf);
+          
+          // ✅ Kullanıcının güncel tree'sinden schema'yı al
+          const workspace = engine.workbench?.activeWorkspace;
+          const tree = workspace?.operation?.tree;
+          const result = tree ? transformToSchema(tree) : { schema: {} };
+          
+          // Mevcut form bilgilerini al
+          const currentFormRes = await api.apiFormDataIdGet(id);
+          const currentForm = currentFormRes?.data as any;
+          
+          // ✅ Kullanıcının tüm değişikliklerini içeren tam design
+          const designWithAllChanges = {
+            ...result,
             buttonPanel: {
-              buttons: buttonsToCopy,
+              buttons: formButtons || [],
             },
+            entities: entities || [],
           };
           
-          await api.apiFormDataPut({
-            id: latestDraft.id,
-            concurrencyToken: 0,
-            formName: latestFormData.formName,
-            formDescription: latestFormData.formDescription || "",
-            formDesign: JSON.stringify(latestDesignWithButtons),
-            javaScriptCode: latestFormData.javaScriptCode || "",
-            isActive: latestFormData.isActive as any,
-            canEdit: latestFormData.canEdit !== undefined ? latestFormData.canEdit : true,
-            publicationStatus: 1 as any,
-            showInMenu: latestFormData.showInMenu || false,
-          } as any);
-          
-          // ButtonPanel'in kaydedildiğinden emin olmak için tekrar kontrol et
-          const verifyRes = await api.apiFormDataIdGet(latestDraft.id);
-          const verifyData = verifyRes?.data as any;
-          const verifyDesign = verifyData?.formDesign ? JSON.parse(verifyData.formDesign) : {};
-          
-          // Eğer buttonPanel kaydedilmemişse tekrar kaydet
-          if (!verifyDesign.buttonPanel || !verifyDesign.buttonPanel.buttons || verifyDesign.buttonPanel.buttons.length === 0) {
-            await api.apiFormDataPut({
-              id: latestDraft.id,
-              concurrencyToken: verifyData.concurrencyToken || 0,
-              formName: verifyData.formName,
-              formDescription: verifyData.formDescription || "",
-              formDesign: JSON.stringify(latestDesignWithButtons),
-              javaScriptCode: verifyData.javaScriptCode || "",
-              isActive: verifyData.isActive as any,
-              canEdit: verifyData.canEdit !== undefined ? verifyData.canEdit : true,
-              publicationStatus: 1 as any,
-              showInMenu: verifyData.showInMenu || false,
-            } as any);
+          // ✅ KONTROL: Form durumunu kontrol et
+          if (currentForm.publicationStatus === 2) {
+            // ✅ YAYINLANMIŞ FORM: Direkt revizyon oluştur (güncelleme yapma!)
+            const hide = message.loading("Yayınlanmış formdan revizyon oluşturuluyor...", 0);
+            
+            try {
+              // Revizyon oluştur
+              await api.apiFormDataCreateRevisionIdPost(id);
+              
+              // Yeni revizyonu bul
+              const parent = currentForm.parentFormId || id;
+              const resList = await api.apiFormDataVersionsParentIdGet(parent);
+              const list = (resList?.data || []) as any[];
+              const drafts = list.filter((x: any) => x.publicationStatus === 1);
+              const latestDraft = drafts.sort((a: any, b: any) => (b.revision || 0) - (a.revision || 0))[0];
+              
+              if (latestDraft?.id) {
+                // ✅ Kullanıcının tüm değişikliklerini yeni revizyona kopyala
+                const latestFormRes = await api.apiFormDataIdGet(latestDraft.id);
+                const latestFormData = latestFormRes?.data as any;
+                
+                // ⚠️ ÖNEMLİ: Kullanıcının tree'sindeki değişiklikleri kullan (API'den gelen değil!)
+                await api.apiFormDataPut({
+                  id: latestDraft.id,
+                  concurrencyToken: 0,
+                  formName: latestFormData.formName,
+                  formDescription: latestFormData.formDescription || "",
+                  formDesign: JSON.stringify(designWithAllChanges), // ✅ Kullanıcının değişiklikleri
+                  javaScriptCode: latestFormData.javaScriptCode || "",
+                  isActive: latestFormData.isActive as any,
+                  canEdit: latestFormData.canEdit !== undefined ? latestFormData.canEdit : true,
+                  publicationStatus: 1 as any,
+                  showInMenu: latestFormData.showInMenu || false,
+                } as any);
+                
+                hide();
+                Modal.success({
+                  title: "Revizyon Başarıyla Oluşturuldu!",
+                  icon: <CheckCircleOutlined style={{ color: "#52c41a" }} />,
+                  content: (
+                    <div>
+                      <p>✅ Revizyon #{latestDraft.revision} oluşturuldu</p>
+                      <p>✅ Tüm değişiklikleriniz yeni revizyona kopyalandı</p>
+                      <p>✅ Form artık düzenlenebilir durumda</p>
+                    </div>
+                  ),
+                  onOk: () => {
+                    navigate(`/forms/designer/${latestDraft.id}`);
+                  },
+                });
+                return;
+              } else {
+                hide();
+                message.warning("Revizyon oluşturuldu ancak yeni revizyon bulunamadı. Lütfen sayfayı yenileyin.");
+                await openRevisions(true);
+                return;
+              }
+            } catch (err: any) {
+              hide();
+              throw err;
+            }
+          } else {
+            // ✅ TASLAK FORM: Önce formu güncelle, sonra revizyon oluştur
+            const hide = message.loading("Taslak form kaydediliyor...", 0);
+            
+            try {
+              // ADIM 1: Mevcut taslak formu son değişikliklerle güncelle
+              await api.apiFormDataPut({
+                id,
+                concurrencyToken: 0,
+                formName: currentForm.formName || formName,
+                formDescription: currentForm.formDescription || "",
+                formDesign: JSON.stringify(designWithAllChanges), // ✅ Tüm değişiklikler
+                javaScriptCode: currentForm.javaScriptCode || "",
+                isActive: currentForm.isActive as any,
+                canEdit: currentForm.canEdit !== undefined ? currentForm.canEdit : true,
+                publicationStatus: currentForm.publicationStatus || 1,
+                showInMenu: currentForm.showInMenu || false,
+              } as any);
+              
+              hide();
+              const hide2 = message.loading("Revizyon oluşturuluyor...", 0);
+              
+              // ADIM 2: Revizyon oluştur
+              await api.apiFormDataCreateRevisionIdPost(id);
+              
+              // ✅ ADIM 3: Yeni revizyonu bul ve tüm verileri kopyala
+              const parent = currentForm.parentFormId || id;
+              const resList = await api.apiFormDataVersionsParentIdGet(parent);
+              const list = (resList?.data || []) as any[];
+              const drafts = list.filter((x: any) => x.publicationStatus === 1);
+              const latestDraft = drafts.sort((a: any, b: any) => (b.revision || 0) - (a.revision || 0))[0];
+              
+              if (latestDraft?.id) {
+                // Yeni revizyona tüm verileri kopyala
+                const latestFormRes = await api.apiFormDataIdGet(latestDraft.id);
+                const latestFormData = latestFormRes?.data as any;
+                
+                // ⚠️ ÖNEMLİ: Kullanıcının tree'sindeki değişiklikleri kullan
+                await api.apiFormDataPut({
+                  id: latestDraft.id,
+                  concurrencyToken: 0,
+                  formName: latestFormData.formName,
+                  formDescription: latestFormData.formDescription || "",
+                  formDesign: JSON.stringify(designWithAllChanges), // ✅ Kullanıcının değişiklikleri
+                  javaScriptCode: latestFormData.javaScriptCode || "",
+                  isActive: latestFormData.isActive as any,
+                  canEdit: latestFormData.canEdit !== undefined ? latestFormData.canEdit : true,
+                  publicationStatus: 1 as any,
+                  showInMenu: latestFormData.showInMenu || false,
+                } as any);
+                
+                hide2();
+                Modal.success({
+                  title: "Revizyon Başarıyla Oluşturuldu!",
+                  icon: <CheckCircleOutlined style={{ color: "#52c41a" }} />,
+                  content: (
+                    <div>
+                      <p>✅ Mevcut form kaydedildi</p>
+                      <p>✅ Revizyon #{latestDraft.revision} oluşturuldu</p>
+                      <p>✅ Tüm değişiklikleriniz yeni revizyona kopyalandı</p>
+                    </div>
+                  ),
+                  onOk: () => {
+                    navigate(`/forms/designer/${latestDraft.id}`);
+                  },
+                });
+              } else {
+                hide2();
+                message.success("Revizyon oluşturuldu");
+                await openRevisions(true);
+              }
+            } catch (err: any) {
+              hide();
+              throw err;
+            }
           }
-          
-          message.success(`Revision #${latestDraft.revision} created`);
-          // Navigate etmeden önce kısa bir bekleme ekle ki API güncellemesi tamamlansın
-          setTimeout(() => {
-            navigate(`/forms/designer/${latestDraft.id}`);
-          }, 300);
-          return;
-        } else {
-          message.warning("Revizyon oluşturuldu ancak yeni revizyon bulunamadı. Lütfen sayfayı yenileyin.");
-          await openRevisions(true);
-          return;
+        } catch (e: any) {
+          message.error(e?.response?.data?.message || "Revizyon oluşturma başarısız oldu");
+        } finally {
+          setIsBusy(false);
         }
-      } else {
-        // Taslak formdan revizyon oluştur - önce mevcut formu güncelle (yeni butonlar dahil)
-        // ✅ ÖNEMLİ: designWithButtons zaten state'teki formButtons'ı içeriyor
-        await api.apiFormDataPut({
-          id,
-          concurrencyToken: 0,
-          formName: currentForm.formName || formName,
-          formDescription: currentForm.formDescription || "",
-          formDesign: JSON.stringify(designWithButtons), // ✅ State'teki butonlar dahil
-          javaScriptCode: currentForm.javaScriptCode || "",
-          isActive: currentForm.isActive as any,
-          canEdit: currentForm.canEdit !== undefined ? currentForm.canEdit : true,
-          publicationStatus: currentForm.publicationStatus || 1,
-          showInMenu: currentForm.showInMenu || false,
-        } as any);
-        
-        // Sonra revizyon oluştur
-        await api.apiFormDataCreateRevisionIdPost(id);
-      }
-      
-      // Yeni revizyonu bul
-      const parent = currentForm.parentFormId || id;
-      const resList = await api.apiFormDataVersionsParentIdGet(parent);
-      const list = (resList?.data || []) as any[];
-      const drafts = list.filter((x: any) => x.publicationStatus === 1);
-      const latestDraft = drafts.sort((a: any, b: any) => (b.revision || 0) - (a.revision || 0))[0];
-      
-      if (latestDraft?.id) {
-        // Yeni revizyona buttonPanel'i kopyala
-        // ✅ ÖNEMLİ: buttonsToUse zaten state'teki formButtons'ı içeriyor (yeni eklenenler dahil)
-        const latestFormRes = await api.apiFormDataIdGet(latestDraft.id);
-        const latestFormData = latestFormRes?.data as any;
-        const latestDesign = latestFormData?.formDesign ? JSON.parse(latestFormData.formDesign) : { schema: {} };
-        
-        const latestDesignWithButtons = {
-          ...latestDesign,
-          buttonPanel: {
-            buttons: buttonsToUse, // ✅ State'teki butonlar (yeni eklenenler dahil)
-          },
-        };
-        
-        await api.apiFormDataPut({
-          id: latestDraft.id,
-          concurrencyToken: 0,
-          formName: latestFormData.formName,
-          formDescription: latestFormData.formDescription || "",
-          formDesign: JSON.stringify(latestDesignWithButtons),
-          javaScriptCode: latestFormData.javaScriptCode || "",
-          isActive: latestFormData.isActive as any,
-          canEdit: latestFormData.canEdit !== undefined ? latestFormData.canEdit : true,
-          publicationStatus: 1 as any,
-          showInMenu: latestFormData.showInMenu || false,
-        } as any);
-        
-        // ButtonPanel'in kaydedildiğinden emin olmak için tekrar kontrol et
-        const verifyRes = await api.apiFormDataIdGet(latestDraft.id);
-        const verifyData = verifyRes?.data as any;
-        const verifyDesign = verifyData?.formDesign ? JSON.parse(verifyData.formDesign) : {};
-        
-        // Eğer buttonPanel kaydedilmemişse tekrar kaydet
-        if (!verifyDesign.buttonPanel || !verifyDesign.buttonPanel.buttons || verifyDesign.buttonPanel.buttons.length === 0) {
-          await api.apiFormDataPut({
-            id: latestDraft.id,
-            concurrencyToken: verifyData.concurrencyToken || 0,
-            formName: verifyData.formName,
-            formDescription: verifyData.formDescription || "",
-            formDesign: JSON.stringify(latestDesignWithButtons),
-            javaScriptCode: verifyData.javaScriptCode || "",
-            isActive: verifyData.isActive as any,
-            canEdit: verifyData.canEdit !== undefined ? verifyData.canEdit : true,
-            publicationStatus: 1 as any,
-            showInMenu: verifyData.showInMenu || false,
-          } as any);
-        }
-        
-        message.success(`Revision #${latestDraft.revision} created`);
-        // Navigate etmeden önce kısa bir bekleme ekle ki API güncellemesi tamamlansın
-        setTimeout(() => {
-          navigate(`/forms/designer/${latestDraft.id}`);
-        }, 300);
-      } else {
-        message.success("Revision created");
-        await openRevisions(true);
-      }
-    } catch (e: any) {
-      message.error(e?.response?.data?.message || "Failed to create revision");
-    } finally {
-      setIsBusy(false);
-    }
+      },
+    });
   };
 
   const renderPreview = (tree: any) => {

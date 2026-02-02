@@ -522,6 +522,8 @@ function WorkflowMyTasks() {
       // ✅ InitScript'i direkt API'den al (parse etmeye gerek yok)
       let initScript: string | null = workflowData?.initScript || null;
 
+ 
+
       console.log("✅ WorkFlowDefinationApi'den initScript alındı:", {
         hasInitScript: !!initScript,
         initScriptLength: initScript?.length || 0,
@@ -566,6 +568,8 @@ function WorkflowMyTasks() {
         return;
       }
 
+
+    alert(formId);
       // ✅ Form sayfasına yönlendir
     navigate(`/workflows/runtime/new`, {
       state: {

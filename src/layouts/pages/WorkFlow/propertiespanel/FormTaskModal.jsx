@@ -61,6 +61,10 @@ import {
   SupervisorAccount as SupervisorAccountIcon,
   Business as BusinessIcon,
   ChevronRight as ChevronRightIcon,
+  Add as AddIcon,
+  Delete as DeleteIcon,
+  Edit as EditIcon,
+  Rule as RuleIcon,
 } from "@mui/icons-material";
 import { Editor } from "@monaco-editor/react";
 import * as monaco from "monaco-editor";
@@ -69,6 +73,12 @@ import MDInput from "components/MDInput";
 import { UserApi, FormDataApi, OrgUnitsApi, PositionsApi, EmployeeAssignmentsApi } from "api/generated";
 import getConfiguration from "confiuration";
 import { useBusy } from "layouts/pages/hooks/useBusy";
+import { createForm } from "@formily/core";
+import { FormProvider, createSchemaField } from "@formily/react";
+import * as AntdFormily from "@formily/antd";
+import { Card as AntdCard, Slider as AntdSlider, Rate as AntdRate, message as antdMessage } from "antd";
+import CurrencyInput from "../../FormEditor/custom/CurrencyInput";
+import "antd/dist/antd.css";
 
 /**
  * ✅ FormTask Modal Component
@@ -126,6 +136,26 @@ const FormTaskModal = ({ open, onClose, initialValues, node, onSave, workflowFor
         .filter(Boolean)
         .join(" "),
   });
+
+  // ===== Form Başlangıç Ayarları için state'ler =====
+  const [initRules, setInitRules] = useState([]);
+  const [conditionalRules, setConditionalRules] = useState([]);
+  const [visibilitySettings, setVisibilitySettings] = useState({});
+  const [formSchema, setFormSchema] = useState(null);
+  const [testPreviewOpen, setTestPreviewOpen] = useState(false);
+  const [initSettingsTab, setInitSettingsTab] = useState(0); // 0: Değer Atama, 1: Koşullar, 2: Görünürlük
+  
+  // Test form instance
+  const testForm = React.useMemo(() => createForm(), []);
+  const SchemaField = React.useMemo(() => createSchemaField({ 
+    components: { 
+      ...AntdFormily, 
+      CurrencyInput, 
+      Card: AntdCard, 
+      Slider: AntdSlider, 
+      Rate: AntdRate 
+    } 
+  }), []);
 
   // Script şablonları
   const scriptTemplates = {
@@ -798,6 +828,391 @@ declare var formValues: Record<string, any>;
     }));
   };
 
+  // ===== FORM BAŞLANGIÇ AYARLARI - Helper Fonksiyonlar =====
+  
+  // InitScript'ten mevcut ayarları parse et
+  React.useEffect(() => {
+    if (open && initialValues?.initScript) {
+      const parsed = parseScriptToSettings(initialValues.initScript);
+      setInitRules(parsed.initRules);
+      setConditionalRules(parsed.conditionalRules);
+      setVisibilitySettings(parsed.visibilitySettings);
+    } else if (open) {
+      setInitRules([]);
+      setConditionalRules([]);
+      setVisibilitySettings({});
+    }
+  }, [open, initialValues?.initScript]);
+
+  // Form schema'yı yükle (Form Başlangıç Ayarları için)
+  React.useEffect(() => {
+    const loadFormSchema = async () => {
+      const formId = initialValues?.formId || node?.data?.formId || workflowFormId;
+      
+      if (!formId) {
+        return;
+      }
+      
+      try {
+        const conf = getConfiguration();
+        const api = new FormDataApi(conf);
+        const res = await api.apiFormDataIdGet(formId);
+        const formData = res?.data;
+        
+        if (formData?.formDesign) {
+          const design = JSON.parse(formData.formDesign);
+          const schema = design?.schema;
+          
+          setFormSchema(schema);
+          
+          if (schema?.properties && formFields.length > 0) {
+            // Varsayılan görünürlük ayarları
+            const defaultVisibility = {};
+            formFields.forEach(field => {
+              defaultVisibility[field.key] = initialValues?.visibilitySettings?.[field.key] ?? "visible";
+            });
+            setVisibilitySettings(defaultVisibility);
+          }
+        }
+      } catch (error) {
+        console.error("❌ Form schema yüklenirken hata:", error);
+      }
+    };
+
+    if (open && formFields.length > 0) {
+      loadFormSchema();
+    }
+  }, [open, workflowFormId, initialValues, node, formFields]);
+
+  // Script'i parse edip UI ayarlarına çevir
+  const parseScriptToSettings = (script) => {
+    const result = {
+      initRules: [],
+      conditionalRules: [],
+      visibilitySettings: {},
+    };
+    
+    const lines = script.split("\n").filter(line => line.trim() && !line.trim().startsWith("//"));
+    
+    lines.forEach(line => {
+      // setFieldVisible parse
+      const visMatch = line.match(/setFieldVisible\("([^"]+)",\s*(true|false)\)/);
+      if (visMatch) {
+        result.visibilitySettings[visMatch[1]] = visMatch[2] === "true" ? "visible" : "hidden";
+        return;
+      }
+      
+      // setFieldReadonly parse
+      const readonlyMatch = line.match(/setFieldReadonly\("([^"]+)",\s*(true|false)\)/);
+      if (readonlyMatch) {
+        if (readonlyMatch[2] === "true") {
+          result.visibilitySettings[readonlyMatch[1]] = "readonly";
+        }
+        return;
+      }
+      
+      // setFieldValue parse
+      const valMatch = line.match(/setFieldValue\("([^"]+)",\s*(.+)\)/);
+      if (valMatch) {
+        const fieldName = valMatch[1];
+        const valueExpr = valMatch[2].trim().replace(/;$/, "");
+        
+        let valueType = "static";
+        let value = "";
+        let expression = "";
+        let userProperty = "fullName";
+        
+        if (valueExpr.includes("new Date()")) {
+          valueType = "currentDate";
+        } else if (valueExpr.includes("currentUser")) {
+          valueType = "currentUser";
+          const userPropMatch = valueExpr.match(/currentUser\.(\w+)/);
+          if (userPropMatch) {
+            userProperty = userPropMatch[1];
+          }
+        } else if (valueExpr.includes("randomUUID")) {
+          valueType = "uuid";
+        } else if (valueExpr.match(/^["'].*["']$/)) {
+          valueType = "static";
+          value = valueExpr.replace(/^["']|["']$/g, "");
+        } else if (!isNaN(valueExpr)) {
+          valueType = "static";
+          value = valueExpr;
+        } else {
+          valueType = "expression";
+          expression = valueExpr;
+        }
+        
+        result.initRules.push({ fieldName, valueType, value, expression, userProperty });
+      }
+    });
+    
+    return result;
+  };
+
+  // Script generation
+  const generateScript = () => {
+    let script = "";
+    
+    // 1. Görünürlük ve Readonly ayarları
+    const hiddenFields = Object.entries(visibilitySettings)
+      .filter(([_, state]) => state === false || state === "hidden")
+      .map(([field]) => field);
+    
+    const readonlyFields = Object.entries(visibilitySettings)
+      .filter(([_, state]) => state === "readonly")
+      .map(([field]) => field);
+    
+    if (hiddenFields.length > 0) {
+      script += "// 🙈 Gizli alanlar\n";
+      hiddenFields.forEach(field => {
+        script += `setFieldVisible("${field}", false);\n`;
+      });
+      script += "\n";
+    }
+    
+    if (readonlyFields.length > 0) {
+      script += "// 🔒 Salt okunur (readonly) alanlar\n";
+      readonlyFields.forEach(field => {
+        script += `setFieldReadonly("${field}", true);\n`;
+      });
+      script += "\n";
+    }
+    
+    // 2. Değer atama
+    if (initRules.length > 0) {
+      script += "// 📝 Otomatik değer atama\n";
+      initRules
+        .filter(rule => rule.fieldName)
+        .forEach(rule => {
+          switch (rule.valueType) {
+            case "currentDate":
+              script += `setFieldValue("${rule.fieldName}", new Date().toISOString());\n`;
+              break;
+            case "currentUser":
+              const userProp = rule.userProperty || "fullName";
+              script += `setFieldValue("${rule.fieldName}", currentUser.${userProp});\n`;
+              break;
+            case "uuid":
+              script += `setFieldValue("${rule.fieldName}", crypto.randomUUID());\n`;
+              break;
+            case "expression":
+              if (rule.expression) {
+                script += `setFieldValue("${rule.fieldName}", ${rule.expression});\n`;
+              }
+              break;
+            case "static":
+            default:
+              const isNumber = !isNaN(rule.value) && rule.value !== "";
+              const valueStr = isNumber ? rule.value : `"${rule.value}"`;
+              script += `setFieldValue("${rule.fieldName}", ${valueStr});\n`;
+              break;
+          }
+        });
+      script += "\n";
+    }
+    
+    // 3. Koşullu atama
+    if (conditionalRules.length > 0) {
+      script += "// 🔀 Koşullu değer atama\n";
+      conditionalRules
+        .filter(rule => rule.condition?.field && rule.thenAction?.fieldName)
+        .forEach(rule => {
+          const condValue = rule.condition.value || "";
+          const valueStr = isNaN(condValue) || condValue === "" ? `"${condValue}"` : condValue;
+          
+          const thenValue = rule.thenAction.value || "";
+          const thenValueStr = isNaN(thenValue) || thenValue === "" ? `"${thenValue}"` : thenValue;
+          
+          const operator = rule.condition.operator === "includes" 
+            ? `.includes(${valueStr})` 
+            : ` ${rule.condition.operator} ${valueStr}`;
+          
+          script += `if (getFieldValue("${rule.condition.field}")${operator}) {\n`;
+          script += `  setFieldValue("${rule.thenAction.fieldName}", ${thenValueStr});\n`;
+          
+          if (rule.elseAction?.enabled && rule.elseAction?.fieldName && rule.elseAction?.value) {
+            const elseValue = rule.elseAction.value;
+            const elseValueStr = isNaN(elseValue) || elseValue === "" ? `"${elseValue}"` : elseValue;
+            script += `} else {\n`;
+            script += `  setFieldValue("${rule.elseAction.fieldName}", ${elseValueStr});\n`;
+          }
+          script += `}\n`;
+        });
+    }
+    
+    return script;
+  };
+
+  // DEĞER ATAMA - Handler'lar
+  const handleAddInitRule = () => {
+    setInitRules([
+      ...initRules,
+      {
+        fieldName: "",
+        valueType: "static",
+        value: "",
+        expression: "",
+        userProperty: "fullName",
+      },
+    ]);
+  };
+
+  const handleUpdateInitRule = (index, field, value) => {
+    const newRules = [...initRules];
+    newRules[index][field] = value;
+    setInitRules(newRules);
+  };
+
+  const handleDeleteInitRule = (index) => {
+    setInitRules(initRules.filter((_, i) => i !== index));
+  };
+
+  // KOŞULLU ATAMA - Handler'lar
+  const handleAddConditionalRule = () => {
+    setConditionalRules([
+      ...conditionalRules,
+      {
+        condition: {
+          field: "",
+          operator: "==",
+          value: "",
+        },
+        thenAction: {
+          fieldName: "",
+          value: "",
+        },
+        elseAction: {
+          enabled: false,
+          fieldName: "",
+          value: "",
+        },
+      },
+    ]);
+  };
+
+  const handleToggleElseAction = (index) => {
+    const newRules = [...conditionalRules];
+    newRules[index].elseAction.enabled = !newRules[index].elseAction.enabled;
+    setConditionalRules(newRules);
+  };
+
+  const handleUpdateConditionalRule = (index, path, value) => {
+    const newRules = [...conditionalRules];
+    const keys = path.split(".");
+    let obj = newRules[index];
+    for (let i = 0; i < keys.length - 1; i++) {
+      obj = obj[keys[i]];
+    }
+    obj[keys[keys.length - 1]] = value;
+    setConditionalRules(newRules);
+  };
+
+  const handleDeleteConditionalRule = (index) => {
+    setConditionalRules(conditionalRules.filter((_, i) => i !== index));
+  };
+
+  // GÖRÜNÜRLÜK - Handler'lar
+  const handleFieldStateChange = (fieldName, newState) => {
+    setVisibilitySettings({
+      ...visibilitySettings,
+      [fieldName]: newState,
+    });
+  };
+
+  const getFieldState = (fieldName) => {
+    const state = visibilitySettings[fieldName];
+    if (state === undefined || state === true || state === "visible") return "visible";
+    if (state === false || state === "hidden") return "hidden";
+    if (state === "readonly") return "readonly";
+    return "visible";
+  };
+
+  // TEST PREVIEW
+  const handleTestPreview = () => {
+    if (!formSchema) {
+      antdMessage.warning("Form schema yüklenmedi");
+      return;
+    }
+    
+    testForm.reset();
+    const script = generateScript();
+    
+    try {
+      const setFieldValue = (fieldKey, value) => {
+        testForm.setFieldValue(fieldKey, value);
+      };
+      
+      const getFieldValue = (fieldKey) => {
+        return testForm.getFieldValue(fieldKey);
+      };
+      
+      const setFieldVisible = (fieldKey, visible) => {
+        const field = testForm.query(fieldKey).take();
+        if (field) {
+          field.setDisplay(visible ? "visible" : "hidden");
+        }
+      };
+      
+      const setFieldReadonly = (fieldKey, readonly) => {
+        const field = testForm.query(fieldKey).take();
+        if (field) {
+          field.setPattern(readonly ? "readOnly" : "editable");
+        }
+      };
+      
+      const currentUser = { 
+        userName: "testuser",
+        firstName: "Test",
+        lastName: "Kullanıcı",
+        name: "Test",
+        surname: "Kullanıcı",
+        fullName: "Test Kullanıcı",
+        email: "test@example.com"
+      };
+      const crypto = { randomUUID: () => "test-uuid-" + Date.now() };
+      
+      const scriptFunction = new Function(
+        "setFieldValue",
+        "getFieldValue",
+        "setFieldVisible",
+        "setFieldReadonly",
+        "currentUser",
+        "crypto",
+        script
+      );
+      
+      scriptFunction(setFieldValue, getFieldValue, setFieldVisible, setFieldReadonly, currentUser, crypto);
+      
+      antdMessage.success("Script başarıyla test edildi!");
+      setTestPreviewOpen(true);
+    } catch (error) {
+      console.error("Script test hatası:", error);
+      antdMessage.error("Script test edilirken hata: " + error.message);
+    }
+  };
+
+  const getValueTypeLabel = (type) => {
+    const labels = {
+      static: "Sabit Değer",
+      currentDate: "Şu Anki Tarih",
+      currentUser: "Kullanıcı Bilgisi",
+      uuid: "Benzersiz ID (UUID)",
+      expression: "Formül/İfade",
+    };
+    return labels[type] || type;
+  };
+
+  const operators = [
+    { value: "==", label: "Eşittir (==)" },
+    { value: "!=", label: "Eşit Değil (!=)" },
+    { value: ">", label: "Büyüktür (>)" },
+    { value: ">=", label: "Büyük Eşit (>=)" },
+    { value: "<", label: "Küçüktür (<)" },
+    { value: "<=", label: "Küçük Eşit (<=)" },
+    { value: "includes", label: "İçerir" },
+  ];
+
   // Kaydet
   const handleSave = () => {
     const isManualSelection = assignmentType ? assignmentType === "manual" : selectionMode === "manual";
@@ -928,6 +1343,8 @@ declare var formValues: Record<string, any>;
       totalFieldsCount,
       visibleButtonsCount,
       totalButtonsCount: allButtons.length,
+      initScript: generateScript(), // ✅ Form başlangıç scripti
+      visibilitySettings: visibilitySettings, // ✅ Form başlangıç görünürlük ayarları
     };
 
     console.log("🔍 FormTaskModal - Kaydet:", {
@@ -2340,6 +2757,574 @@ if (gunSayisi && gunlukUcret) {
     </div>
   );
 
+  const renderInitSettingsContent = () => (
+    <Box>
+      <Tabs 
+        value={initSettingsTab} 
+        onChange={(_, v) => setInitSettingsTab(v)}
+        sx={{ borderBottom: 1, borderColor: "divider", mb: 3 }}
+      >
+        <Tab 
+          label={
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+              📝 Değer Atama
+              {initRules.length > 0 && (
+                <Chip label={initRules.length} size="small" color="primary" />
+              )}
+            </Box>
+          } 
+          sx={{ textTransform: "none", fontWeight: 600 }} 
+        />
+        <Tab 
+          label={
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+              🔀 Koşullu Atama
+              {conditionalRules.length > 0 && (
+                <Chip label={conditionalRules.length} size="small" color="secondary" />
+              )}
+            </Box>
+          } 
+          sx={{ textTransform: "none", fontWeight: 600 }} 
+        />
+        <Tab 
+          label={
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+              👁️ Görünürlük
+              {Object.values(visibilitySettings).filter(v => v === "hidden" || v === "readonly").length > 0 && (
+                <Chip 
+                  label={Object.values(visibilitySettings).filter(v => v === "hidden" || v === "readonly").length} 
+                  size="small" 
+                  color="warning" 
+                />
+              )}
+            </Box>
+          } 
+          sx={{ textTransform: "none", fontWeight: 600 }} 
+        />
+      </Tabs>
+
+      {/* TAB 0: DEĞER ATAMA */}
+      {initSettingsTab === 0 && (
+        <Box>
+          <Paper sx={{ mb: 2, p: 2, bgcolor: "info.lighter" }} variant="outlined">
+            <Typography variant="body2" fontWeight={600}>
+              💡 Form açılırken otomatik değer atanacak alanları seçin
+            </Typography>
+          </Paper>
+
+          <TableContainer component={Paper} variant="outlined">
+            <Table size="small">
+              <TableHead>
+                <TableRow sx={{ backgroundColor: "#f8f9fa" }}>
+                  <TableCell width="30%" sx={{ fontWeight: 600 }}>Alan Adı</TableCell>
+                  <TableCell width="25%" sx={{ fontWeight: 600 }}>Değer Tipi</TableCell>
+                  <TableCell width="40%" sx={{ fontWeight: 600 }}>Değer</TableCell>
+                  <TableCell width="5%"></TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {initRules.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={4} align="center" sx={{ py: 4, color: "text.secondary" }}>
+                      Henüz kural eklenmedi
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  initRules.map((rule, index) => (
+                    <TableRow key={index} hover>
+                      <TableCell>
+                        <Autocomplete
+                          size="small"
+                          value={formFields.find(f => f.key === rule.fieldName) || null}
+                          onChange={(e, newValue) => handleUpdateInitRule(index, "fieldName", newValue?.key || "")}
+                          options={formFields}
+                          getOptionLabel={(option) => `${option.label} (${option.normalizedKey || option.key})`}
+                          renderInput={(params) => (
+                            <TextField {...params} placeholder="Alan seçin..." variant="outlined" />
+                          )}
+                          noOptionsText="Alan bulunamadı"
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Autocomplete
+                          size="small"
+                          value={(() => {
+                            const valueType = rule.valueType || "static";
+                            const options = [
+                              { value: "static", label: "Sabit Değer", icon: "📝" },
+                              { value: "currentDate", label: "Şu Anki Tarih", icon: "📅" },
+                              { value: "currentUser", label: "Kullanıcı Bilgisi", icon: "👤" },
+                              { value: "uuid", label: "Benzersiz ID", icon: "🔑" },
+                              { value: "expression", label: "Formül/İfade", icon: "🧮" },
+                            ];
+                            return options.find(opt => opt.value === valueType) || options[0];
+                          })()}
+                          onChange={(e, newValue) => handleUpdateInitRule(index, "valueType", newValue?.value || "static")}
+                          options={[
+                            { value: "static", label: "Sabit Değer", icon: "📝" },
+                            { value: "currentDate", label: "Şu Anki Tarih", icon: "📅" },
+                            { value: "currentUser", label: "Kullanıcı Bilgisi", icon: "👤" },
+                            { value: "uuid", label: "Benzersiz ID", icon: "🔑" },
+                            { value: "expression", label: "Formül/İfade", icon: "🧮" },
+                          ]}
+                          getOptionLabel={(option) => `${option.icon} ${option.label}`}
+                          renderInput={(params) => <TextField {...params} variant="outlined" />}
+                          isOptionEqualToValue={(option, value) => option.value === value.value}
+                        />
+                      </TableCell>
+                      <TableCell>
+                        {rule.valueType === "static" ? (
+                          <TextField
+                            fullWidth
+                            size="small"
+                            value={rule.value}
+                            onChange={(e) => handleUpdateInitRule(index, "value", e.target.value)}
+                            placeholder="Değer girin..."
+                            variant="outlined"
+                          />
+                        ) : rule.valueType === "expression" ? (
+                          <TextField
+                            fullWidth
+                            size="small"
+                            value={rule.expression}
+                            onChange={(e) => handleUpdateInitRule(index, "expression", e.target.value)}
+                            placeholder='Örn: "TR-" + new Date().getFullYear()'
+                            variant="outlined"
+                          />
+                        ) : rule.valueType === "currentUser" ? (
+                          <FormControl fullWidth size="small">
+                            <Select
+                              value={rule.userProperty || "fullName"}
+                              onChange={(e) => handleUpdateInitRule(index, "userProperty", e.target.value)}
+                              variant="outlined"
+                            >
+                              <MenuItem value="fullName">👤 Ad Soyad (fullName)</MenuItem>
+                              <MenuItem value="firstName">📝 Ad (firstName)</MenuItem>
+                              <MenuItem value="lastName">📝 Soyad (lastName)</MenuItem>
+                              <MenuItem value="userName">🔑 Kullanıcı Adı (userName)</MenuItem>
+                              <MenuItem value="email">📧 E-posta (email)</MenuItem>
+                            </Select>
+                          </FormControl>
+                        ) : (
+                          <Chip
+                            label={getValueTypeLabel(rule.valueType)}
+                            size="small"
+                            color="success"
+                            variant="filled"
+                          />
+                        )}
+                      </TableCell>
+                      <TableCell align="center">
+                        <IconButton 
+                          size="small" 
+                          onClick={() => handleDeleteInitRule(index)} 
+                          color="error"
+                        >
+                          <DeleteIcon fontSize="small" />
+                        </IconButton>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </TableContainer>
+
+          <MDButton
+            startIcon={<AddIcon />}
+            onClick={handleAddInitRule}
+            variant="contained"
+            color="primary"
+            sx={{ mt: 2 }}
+          >
+            ➕ Yeni Kural Ekle
+          </MDButton>
+        </Box>
+      )}
+
+      {/* TAB 1: KOŞULLU ATAMA */}
+      {initSettingsTab === 1 && (
+        <Box>
+          <Paper sx={{ mb: 2, p: 2, bgcolor: "info.lighter" }} variant="outlined">
+            <Typography variant="body2" fontWeight={600}>
+              🔀 Koşullu değer atama
+            </Typography>
+            <Typography variant="caption">
+              Eğer bir alan belirli bir değerse, başka bir alana otomatik değer ata.
+            </Typography>
+          </Paper>
+
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+            {conditionalRules.length === 0 ? (
+              <Paper sx={{ p: 4, textAlign: "center", color: "text.secondary" }}>
+                Henüz koşullu kural eklenmedi.
+              </Paper>
+            ) : (
+              conditionalRules.map((rule, index) => (
+                <Paper key={index} sx={{ p: 2, border: "1px solid #e0e0e0" }} elevation={0}>
+                  <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
+                    <Typography variant="subtitle2" fontWeight={600}>
+                      Kural {index + 1}
+                    </Typography>
+                    <IconButton size="small" onClick={() => handleDeleteConditionalRule(index)} color="error">
+                      <DeleteIcon fontSize="small" />
+                    </IconButton>
+                  </Box>
+
+                  {/* EĞER */}
+                  <Box sx={{ display: "flex", gap: 1, alignItems: "center", mb: 2 }}>
+                    <Typography variant="body2" sx={{ minWidth: 60 }}>Eğer:</Typography>
+                    <Autocomplete
+                      size="small"
+                      sx={{ flex: 1 }}
+                      value={formFields.find(f => f.key === rule.condition.field) || null}
+                      onChange={(e, newValue) => handleUpdateConditionalRule(index, "condition.field", newValue?.key || "")}
+                      options={formFields}
+                      getOptionLabel={(option) => option.label}
+                      renderInput={(params) => <TextField {...params} placeholder="Alan..." />}
+                    />
+                    <Select
+                      size="small"
+                      value={rule.condition.operator}
+                      onChange={(e) => handleUpdateConditionalRule(index, "condition.operator", e.target.value)}
+                      sx={{ minWidth: 120 }}
+                    >
+                      {operators.map(op => (
+                        <MenuItem key={op.value} value={op.value}>{op.label}</MenuItem>
+                      ))}
+                    </Select>
+                    <TextField
+                      size="small"
+                      value={rule.condition.value}
+                      onChange={(e) => handleUpdateConditionalRule(index, "condition.value", e.target.value)}
+                      placeholder="Değer"
+                      sx={{ width: 150 }}
+                    />
+                  </Box>
+
+                  {/* O ZAMAN */}
+                  <Box sx={{ display: "flex", gap: 1, alignItems: "center", mb: 2, ml: 2 }}>
+                    <Typography variant="body2" sx={{ minWidth: 60 }} color="success.main">
+                      → O zaman:
+                    </Typography>
+                    <Autocomplete
+                      size="small"
+                      sx={{ flex: 1 }}
+                      value={formFields.find(f => f.key === rule.thenAction.fieldName) || null}
+                      onChange={(e, newValue) => handleUpdateConditionalRule(index, "thenAction.fieldName", newValue?.key || "")}
+                      options={formFields}
+                      getOptionLabel={(option) => option.label}
+                      renderInput={(params) => <TextField {...params} placeholder="Alan..." />}
+                    />
+                    <Typography variant="body2">=</Typography>
+                    <TextField
+                      size="small"
+                      value={rule.thenAction.value}
+                      onChange={(e) => handleUpdateConditionalRule(index, "thenAction.value", e.target.value)}
+                      placeholder="Değer"
+                      sx={{ flex: 1 }}
+                    />
+                  </Box>
+
+                  {/* DEĞİLSE (Opsiyonel) */}
+                  <Divider sx={{ my: 1 }} />
+                  <FormControlLabel
+                    control={
+                      <Switch
+                        size="small"
+                        checked={rule.elseAction?.enabled === true}
+                        onChange={() => handleToggleElseAction(index)}
+                        color="warning"
+                      />
+                    }
+                    label={
+                      <Typography variant="caption" fontWeight={600}>
+                        &quot;Değilse&quot; durumu ekle
+                      </Typography>
+                    }
+                    sx={{ ml: 2 }}
+                  />
+                  
+                  {rule.elseAction?.enabled && (
+                    <Box sx={{ display: "flex", gap: 1, alignItems: "center", ml: 2, mt: 1, p: 2, backgroundColor: "#fff3e0", borderRadius: 1 }}>
+                      <Typography variant="body2" sx={{ minWidth: 60 }} color="warning.dark" fontWeight={600}>
+                        → Değilse:
+                      </Typography>
+                      <Autocomplete
+                        size="small"
+                        sx={{ flex: 1 }}
+                        value={formFields.find(f => f.key === rule.elseAction.fieldName) || null}
+                        onChange={(e, newValue) => handleUpdateConditionalRule(index, "elseAction.fieldName", newValue?.key || "")}
+                        options={formFields}
+                        getOptionLabel={(option) => option.label}
+                        renderInput={(params) => <TextField {...params} placeholder="Alan seçin..." />}
+                      />
+                      <Typography variant="body2" fontWeight={600}>=</Typography>
+                      <TextField
+                        size="small"
+                        value={rule.elseAction.value}
+                        onChange={(e) => handleUpdateConditionalRule(index, "elseAction.value", e.target.value)}
+                        placeholder="Değer girin"
+                        sx={{ flex: 1 }}
+                      />
+                    </Box>
+                  )}
+                </Paper>
+              ))
+            )}
+          </Box>
+
+          <MDButton
+            startIcon={<AddIcon />}
+            onClick={handleAddConditionalRule}
+            variant="contained"
+            color="secondary"
+            sx={{ mt: 2 }}
+          >
+            ➕ Yeni Koşul Ekle
+          </MDButton>
+        </Box>
+      )}
+
+      {/* TAB 2: GÖRÜNÜRLÜK */}
+      {initSettingsTab === 2 && (
+        <Box>
+          <Paper sx={{ mb: 2, p: 2, bgcolor: "info.lighter" }} variant="outlined">
+            <Typography variant="body2" fontWeight={600}>
+              👁️ Form açılırken hangi alanlar görünür/gizli olacak?
+            </Typography>
+          </Paper>
+          
+          <Box sx={{ display: "flex", gap: 1, mb: 2 }}>
+            <MDButton
+              size="small"
+              variant="outlined"
+              color="success"
+              startIcon={<EditIcon />}
+              onClick={() => {
+                const allVisible = {};
+                formFields.forEach(f => allVisible[f.key] = "visible");
+                setVisibilitySettings(allVisible);
+              }}
+            >
+              Tümü Düzenlenebilir
+            </MDButton>
+            <MDButton
+              size="small"
+              variant="outlined"
+              color="warning"
+              startIcon={<LockIcon />}
+              onClick={() => {
+                const allReadonly = {};
+                formFields.forEach(f => allReadonly[f.key] = "readonly");
+                setVisibilitySettings(allReadonly);
+              }}
+            >
+              Tümü Readonly
+            </MDButton>
+            <MDButton
+              size="small"
+              variant="outlined"
+              color="error"
+              startIcon={<VisibilityOffIcon />}
+              onClick={() => {
+                const allHidden = {};
+                formFields.forEach(f => allHidden[f.key] = "hidden");
+                setVisibilitySettings(allHidden);
+              }}
+            >
+              Tümü Gizli
+            </MDButton>
+          </Box>
+
+          <Paper sx={{ p: 2 }} elevation={0}>
+            {formFields.length === 0 ? (
+              <Box sx={{ textAlign: "center", py: 6 }}>
+                <Typography color="text.secondary">
+                  Form alanları yükleniyor...
+                </Typography>
+              </Box>
+            ) : (
+              <>
+                <Box sx={{ mb: 2, display: "flex", gap: 1 }}>
+                  <Chip 
+                    icon={<EditIcon />}
+                    label={`Düzenlenebilir: ${Object.values(visibilitySettings).filter(v => v === "visible" || v === true || v === undefined).length}`}
+                    color="success"
+                    size="small"
+                  />
+                  <Chip 
+                    icon={<LockIcon />}
+                    label={`Readonly: ${Object.values(visibilitySettings).filter(v => v === "readonly").length}`}
+                    color="warning"
+                    size="small"
+                  />
+                  <Chip 
+                    icon={<VisibilityOffIcon />}
+                    label={`Gizli: ${Object.values(visibilitySettings).filter(v => v === false || v === "hidden").length}`}
+                    color="error"
+                    size="small"
+                  />
+                </Box>
+                <Box sx={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(350px, 1fr))", gap: 2 }}>
+                  {formFields.map(field => {
+                    const state = getFieldState(field.key);
+                    const bgColor = state === "hidden" ? "#ffebee" : state === "readonly" ? "#fff3e0" : "#e8f5e9";
+                    const borderColor = state === "hidden" ? "#ef5350" : state === "readonly" ? "#ff9800" : "#66bb6a";
+                    
+                    return (
+                      <Paper
+                        key={field.key} 
+                        variant="outlined"
+                        sx={{ 
+                          p: 2,
+                          backgroundColor: bgColor,
+                          borderColor: borderColor,
+                          borderWidth: 2,
+                        }}
+                      >
+                        <Box sx={{ mb: 1.5 }}>
+                          <Typography variant="body2" fontWeight={700}>
+                            {field.label}
+                          </Typography>
+                          <Typography variant="caption" color="textSecondary">
+                            {field.normalizedKey || field.key} • {field.component}
+                          </Typography>
+                        </Box>
+                        
+                        <ToggleButtonGroup
+                          value={state}
+                          exclusive
+                          onChange={(e, newState) => {
+                            if (newState !== null) {
+                              handleFieldStateChange(field.key, newState);
+                            }
+                          }}
+                          size="small"
+                          fullWidth
+                        >
+                          <ToggleButton value="visible">
+                            <EditIcon sx={{ fontSize: 16, mr: 0.5 }} />
+                            Düzenlenebilir
+                          </ToggleButton>
+                          <ToggleButton value="readonly">
+                            <LockIcon sx={{ fontSize: 16, mr: 0.5 }} />
+                            Readonly
+                          </ToggleButton>
+                          <ToggleButton value="hidden">
+                            <VisibilityOffIcon sx={{ fontSize: 16, mr: 0.5 }} />
+                            Gizli
+                          </ToggleButton>
+                        </ToggleButtonGroup>
+                      </Paper>
+                    );
+                  })}
+                </Box>
+              </>
+            )}
+          </Paper>
+        </Box>
+      )}
+
+      {/* SCRIPT ÖNİZLEME */}
+      <Divider sx={{ my: 3 }} />
+      
+      {(initRules.length > 0 || conditionalRules.length > 0 || Object.values(visibilitySettings).some(v => v === "hidden" || v === "readonly")) && (
+        <Box 
+          sx={{ 
+            p: 2.5, 
+            backgroundColor: "#f8f9fa",
+            borderRadius: 2,
+            border: "1px solid #e0e0e0",
+          }}
+        >
+          <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1.5 }}>
+            📝 Oluşturulan Script (Önizleme)
+          </Typography>
+          <Box
+            sx={{
+              p: 2,
+              backgroundColor: "#ffffff",
+              borderRadius: 1,
+              border: "1px solid #e0e0e0",
+              fontFamily: "'Fira Code', 'Monaco', 'Courier New', monospace",
+              fontSize: "12px",
+              lineHeight: 1.6,
+              whiteSpace: "pre-wrap",
+              maxHeight: "200px",
+              overflowY: "auto",
+            }}
+          >
+            {generateScript() || "// Henüz kural eklenmedi"}
+          </Box>
+          
+          <MDButton
+            startIcon={<PlayArrowIcon />}
+            onClick={handleTestPreview}
+            variant="contained"
+            color="success"
+            disabled={!formSchema}
+            sx={{ mt: 2 }}
+          >
+            🧪 Script Test Et
+          </MDButton>
+        </Box>
+      )}
+
+      {/* TEST PREVIEW DIALOG */}
+      <Dialog open={testPreviewOpen} onClose={() => setTestPreviewOpen(false)} maxWidth="md" fullWidth>
+        <Box 
+          sx={{ 
+            display: "flex", 
+            justifyContent: "space-between", 
+            alignItems: "center", 
+            p: 2.5,
+            background: "linear-gradient(135deg, #4caf50 0%, #388e3c 100%)",
+            color: "white"
+          }}
+        >
+          <Typography variant="h6" fontWeight={700}>
+            🧪 Script Test - Form Önizleme
+          </Typography>
+          <IconButton 
+            onClick={() => setTestPreviewOpen(false)} 
+            size="small"
+            sx={{ color: "white" }}
+          >
+            <CloseIcon />
+          </IconButton>
+        </Box>
+        <DialogContent sx={{ p: 3 }}>
+          <Paper sx={{ mb: 3, p: 2, bgcolor: "success.lighter" }}>
+            <Typography variant="body2" fontWeight={600}>
+              ✅ Script başarıyla çalıştırıldı! Aşağıda formun son halini görebilirsiniz.
+            </Typography>
+          </Paper>
+          
+          <Paper sx={{ p: 2, mb: 3, backgroundColor: "#f5f5f5" }} variant="outlined">
+            <Typography variant="subtitle2" fontWeight={600} gutterBottom>
+              📊 Test Bilgileri:
+            </Typography>
+            <Typography variant="body2">
+              <strong>👤 Kullanıcı:</strong> Test Kullanıcı
+            </Typography>
+            <Typography variant="body2">
+              <strong>📅 Tarih:</strong> {new Date().toLocaleString("tr-TR")}
+            </Typography>
+          </Paper>
+
+          {formSchema && (
+            <Box sx={{ border: "2px solid #4caf50", borderRadius: 2, p: 3 }}>
+              <FormProvider form={testForm}>
+                <SchemaField schema={formSchema} />
+              </FormProvider>
+            </Box>
+          )}
+        </DialogContent>
+      </Dialog>
+    </Box>
+  );
+
   const renderScriptContent = () => (
     <Box mb={2}>
       <Typography variant="subtitle2" fontWeight={600} mb={2}>
@@ -2560,7 +3545,7 @@ if (gunSayisi && gunlukUcret) {
             {[
               { id: "assignment", label: "Atama Mantığı", icon: LayersIcon, color: "primary" },
               { id: "timing", label: "Zamanlama", icon: AccessTimeIcon, color: "warning" },
-              { id: "script", label: "Script Tabı", icon: CodeIcon, color: "success" },
+              { id: "initSettings", label: "Form Başlangıç Ayarları", icon: RuleIcon, color: "secondary" },
               { id: "buttons", label: "Buton Ayarları", icon: SettingsIcon, color: "info" },
             ].map((item) => {
               const Icon = item.icon;
@@ -2629,8 +3614,8 @@ if (gunSayisi && gunlukUcret) {
                   ? "Atama Mantığı"
                   : activeTab === "timing"
                   ? "Zamanlama & SLA"
-                  : activeTab === "script"
-                  ? "Form Script"
+                  : activeTab === "initSettings"
+                  ? "Form Başlangıç Ayarları"
                   : "Buton Yönetimi"}
               </Typography>
               <Typography variant="caption" color="text.secondary">
@@ -2646,7 +3631,7 @@ if (gunSayisi && gunlukUcret) {
           <Box sx={{ flex: 1, overflowY: "auto", p: 3 }}>
             {activeTab === "assignment" && renderAssignmentContent()}
             {activeTab === "timing" && renderTimingContent()}
-            {activeTab === "script" && renderScriptContent()}
+            {activeTab === "initSettings" && renderInitSettingsContent()}
             {activeTab === "buttons" && renderButtonsContent()}
           </Box>
 

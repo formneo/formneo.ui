@@ -5,7 +5,7 @@ import getConfiguration from "confiuration";
 
 // Antd + Formily render
 import "antd/dist/antd.css";
-import { Spin, Alert, Button as AntButton, message, Card as AntdCard, Slider as AntdSlider, Rate as AntdRate } from "antd";
+import { Spin, Alert, Button as AntButton, message, Card as AntdCard, Slider as AntdSlider, Rate as AntdRate, Tag } from "antd";
 import { createForm } from "@formily/core";
 import { FormProvider, createSchemaField } from "@formily/react";
 import * as AntdFormily from "@formily/antd";
@@ -48,6 +48,9 @@ export default function FormilyPreviewPage(): JSX.Element {
   const [error, setError] = useState<string | null>(null);
   const [schema, setSchema] = useState<any>(null);
   const [formButtons, setFormButtons] = useState<FormButton[]>([]);
+  const [formName, setFormName] = useState<string>("");
+  const [revision, setRevision] = useState<number | undefined>(undefined);
+  const [publicationStatus, setPublicationStatus] = useState<number>(1);
 
   const form = useMemo(() => createForm(), []);
   const SchemaField = useMemo(
@@ -84,6 +87,12 @@ export default function FormilyPreviewPage(): JSX.Element {
         const api = new FormDataApi(conf);
         const res = await api.apiFormDataIdGet(id);
         const data = res?.data as any;
+        
+        // Form bilgilerini kaydet
+        setFormName(data?.formName || "Form");
+        if (typeof data?.revision === "number") setRevision(data.revision);
+        if (typeof data?.publicationStatus === "number") setPublicationStatus(data.publicationStatus);
+        
         const designStr = data?.formDesign;
         let parsed: any = null;
         try { parsed = designStr ? JSON.parse(designStr) : null; } catch {}
@@ -110,10 +119,33 @@ export default function FormilyPreviewPage(): JSX.Element {
     <DashboardLayout>
       <DashboardNavbar />
       <MDBox px={2} py={2}>
-        <MDBox mb={2}>
+        <MDBox mb={2} display="flex" alignItems="center" gap={2}>
           <Typography variant="h5" component="h1" sx={{ fontWeight: 600, color: "#344767" }}>
             Form Önizleme
           </Typography>
+          {formName && (
+            <Typography variant="body1" sx={{ color: "#7b809a", fontWeight: 500 }}>
+              - {formName}
+            </Typography>
+          )}
+          {typeof revision === "number" && (
+            <Tag color="blue" style={{ fontSize: "13px", padding: "2px 8px" }}>
+              Revizyon #{revision}
+            </Tag>
+          )}
+          {publicationStatus === 2 ? (
+            <Tag color="green" style={{ fontSize: "13px", padding: "2px 8px" }}>
+              Yayınlanmış
+            </Tag>
+          ) : publicationStatus === 3 ? (
+            <Tag style={{ fontSize: "13px", padding: "2px 8px" }}>
+              Arşivlenmiş
+            </Tag>
+          ) : (
+            <Tag color="default" style={{ fontSize: "13px", padding: "2px 8px" }}>
+              Taslak
+            </Tag>
+          )}
         </MDBox>
         {loading && (
           <MDBox p={2}><Spin /></MDBox>

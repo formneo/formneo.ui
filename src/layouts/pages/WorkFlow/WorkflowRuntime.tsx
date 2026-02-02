@@ -66,6 +66,8 @@ export default function WorkflowRuntime(): JSX.Element {
   const [submitting, setSubmitting] = useState<boolean>(false);
   const [currentUser, setCurrentUser] = useState<any>(null); // Tüm kullanıcı bilgisini sakla
   const scriptExecutedRef = useRef<boolean>(false); // Script'in çalıştırılıp çalıştırılmadığını takip et
+  const [revision, setRevision] = useState<number | undefined>(undefined);
+  const [publicationStatus, setPublicationStatus] = useState<number>(1);
 
   // Timeline state
   const [timelineOpen, setTimelineOpen] = useState<boolean>(false);
@@ -558,6 +560,8 @@ export default function WorkflowRuntime(): JSX.Element {
         }
 
         setFormName(form.formName || "İsimsiz Form");
+        if (typeof form.revision === "number") setRevision(form.revision);
+        if (typeof form.publicationStatus === "number") setPublicationStatus(form.publicationStatus);
 
         // Form design'ı parse et
         const parsed = typeof form.formDesign === "string"
@@ -588,8 +592,11 @@ export default function WorkflowRuntime(): JSX.Element {
         });
 
         const initScript = isNewInstance ? (workflowInstance as any)?.initScript : null;
-        const fieldScript = !isNewInstance ? taskDetail?.fieldScript : null;
+        const fieldScript = !isNewInstance ? taskDetail?.nodeScript : null;
         const activeScript = initScript || fieldScript;
+
+
+        alert(activeScript);
 
         console.log("🔍 Script kontrolü:", {
           isNewInstance,
@@ -1294,10 +1301,39 @@ export default function WorkflowRuntime(): JSX.Element {
           >
             {/* Header */}
             <Box sx={{ mb: 1, px: 2, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <Box sx={{ display: "flex", alignItems: "center", gap: 2, flex: 1 }}>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 2, flex: 1, flexWrap: "wrap" }}>
                 <MDTypography variant="h6" fontWeight={600} sx={{ mb: 0 }}>
                   {formName}
                 </MDTypography>
+                {typeof revision === "number" && (
+                  <Chip 
+                    label={`Rev #${revision}`} 
+                    size="small" 
+                    color="primary"
+                    sx={{ height: "22px", fontSize: "11px" }}
+                  />
+                )}
+                {publicationStatus === 2 ? (
+                  <Chip 
+                    label="Yayınlanmış" 
+                    size="small" 
+                    color="success"
+                    sx={{ height: "22px", fontSize: "11px" }}
+                  />
+                ) : publicationStatus === 3 ? (
+                  <Chip 
+                    label="Arşivlenmiş" 
+                    size="small"
+                    sx={{ height: "22px", fontSize: "11px" }}
+                  />
+                ) : (
+                  <Chip 
+                    label="Taslak" 
+                    size="small" 
+                    color="default"
+                    sx={{ height: "22px", fontSize: "11px" }}
+                  />
+                )}
                 {workflowInstance?.workflowName && (
                   <Typography variant="caption" color="textSecondary" sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
                     <Description sx={{ fontSize: "12px" }} />
