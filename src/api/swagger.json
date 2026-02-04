@@ -11151,6 +11151,71 @@
         }
       }
     },
+    "/api/process-hub/data": {
+      "get": {
+        "tags": [
+          "ProcessHub"
+        ],
+        "parameters": [
+          {
+            "name": "workflowId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "viewType",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "default": "my"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 1
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 20
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProcessHubDataResponseDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProcessHubDataResponseDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProcessHubDataResponseDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/ProjectCategories": {
       "get": {
         "tags": [
@@ -25748,6 +25813,107 @@
               "$ref": "#/components/schemas/UserApp"
             },
             "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "ProcessHubDataResponseDto": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProcessHubItemDto"
+            },
+            "nullable": true
+          },
+          "totalCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageSize": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ProcessHubItemDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "workflowDefinationId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "workflowName": {
+            "type": "string",
+            "nullable": true
+          },
+          "currentNodeId": {
+            "type": "string",
+            "nullable": true
+          },
+          "currentNodeName": {
+            "type": "string",
+            "nullable": true
+          },
+          "workFlowStatus": {
+            "type": "string",
+            "nullable": true
+          },
+          "workFlowStatusText": {
+            "type": "string",
+            "nullable": true
+          },
+          "workFlowInfo": {
+            "type": "string",
+            "nullable": true
+          },
+          "createUser": {
+            "type": "string",
+            "nullable": true
+          },
+          "createdDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedDate": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "formId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "formName": {
+            "type": "string",
+            "nullable": true
+          },
+          "formData": {
+            "type": "string",
+            "nullable": true
+          },
+          "pendingApprovalCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pendingFormCount": {
+            "type": "integer",
+            "format": "int32"
           }
         },
         "additionalProperties": false

@@ -2715,6 +2715,31 @@ export interface Positions {
     'subPositions'?: Array<Positions> | null;
     'userApps'?: Array<UserApp> | null;
 }
+export interface ProcessHubDataResponseDto {
+    'data'?: Array<ProcessHubItemDto> | null;
+    'totalCount'?: number;
+    'page'?: number;
+    'pageSize'?: number;
+    'totalPages'?: number;
+}
+export interface ProcessHubItemDto {
+    'id'?: string;
+    'workflowDefinationId'?: string;
+    'workflowName'?: string | null;
+    'currentNodeId'?: string | null;
+    'currentNodeName'?: string | null;
+    'workFlowStatus'?: string | null;
+    'workFlowStatusText'?: string | null;
+    'workFlowInfo'?: string | null;
+    'createUser'?: string | null;
+    'createdDate'?: string;
+    'updatedDate'?: string | null;
+    'formId'?: string | null;
+    'formName'?: string | null;
+    'formData'?: string | null;
+    'pendingApprovalCount'?: number;
+    'pendingFormCount'?: number;
+}
 
 export const ProcessType = {
     NUMBER_1: 1,
@@ -28837,6 +28862,132 @@ export class PositionsApi extends BaseAPI {
      */
     public apiPositionsPut(updatePositionDto?: UpdatePositionDto, options?: RawAxiosRequestConfig) {
         return PositionsApiFp(this.configuration).apiPositionsPut(updatePositionDto, options).then((request) => request(this.axios, this.basePath));
+    }
+}
+
+
+
+/**
+ * ProcessHubApi - axios parameter creator
+ */
+export const ProcessHubApiAxiosParamCreator = function (configuration?: Configuration) {
+    return {
+        /**
+         * 
+         * @param {string} [workflowId] 
+         * @param {string} [viewType] 
+         * @param {number} [page] 
+         * @param {number} [pageSize] 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        apiProcessHubDataGet: async (workflowId?: string, viewType?: string, page?: number, pageSize?: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            const localVarPath = `/api/process-hub/data`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication Bearer required
+            // http bearer authentication required
+            await setBearerAuthToObject(localVarHeaderParameter, configuration)
+
+            if (workflowId !== undefined) {
+                localVarQueryParameter['workflowId'] = workflowId;
+            }
+
+            if (viewType !== undefined) {
+                localVarQueryParameter['viewType'] = viewType;
+            }
+
+            if (page !== undefined) {
+                localVarQueryParameter['page'] = page;
+            }
+
+            if (pageSize !== undefined) {
+                localVarQueryParameter['pageSize'] = pageSize;
+            }
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+    }
+};
+
+/**
+ * ProcessHubApi - functional programming interface
+ */
+export const ProcessHubApiFp = function(configuration?: Configuration) {
+    const localVarAxiosParamCreator = ProcessHubApiAxiosParamCreator(configuration)
+    return {
+        /**
+         * 
+         * @param {string} [workflowId] 
+         * @param {string} [viewType] 
+         * @param {number} [page] 
+         * @param {number} [pageSize] 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async apiProcessHubDataGet(workflowId?: string, viewType?: string, page?: number, pageSize?: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<ProcessHubDataResponseDto>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.apiProcessHubDataGet(workflowId, viewType, page, pageSize, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['ProcessHubApi.apiProcessHubDataGet']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+    }
+};
+
+/**
+ * ProcessHubApi - factory interface
+ */
+export const ProcessHubApiFactory = function (configuration?: Configuration, basePath?: string, axios?: AxiosInstance) {
+    const localVarFp = ProcessHubApiFp(configuration)
+    return {
+        /**
+         * 
+         * @param {string} [workflowId] 
+         * @param {string} [viewType] 
+         * @param {number} [page] 
+         * @param {number} [pageSize] 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        apiProcessHubDataGet(workflowId?: string, viewType?: string, page?: number, pageSize?: number, options?: RawAxiosRequestConfig): AxiosPromise<ProcessHubDataResponseDto> {
+            return localVarFp.apiProcessHubDataGet(workflowId, viewType, page, pageSize, options).then((request) => request(axios, basePath));
+        },
+    };
+};
+
+/**
+ * ProcessHubApi - object-oriented interface
+ */
+export class ProcessHubApi extends BaseAPI {
+    /**
+     * 
+     * @param {string} [workflowId] 
+     * @param {string} [viewType] 
+     * @param {number} [page] 
+     * @param {number} [pageSize] 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    public apiProcessHubDataGet(workflowId?: string, viewType?: string, page?: number, pageSize?: number, options?: RawAxiosRequestConfig) {
+        return ProcessHubApiFp(this.configuration).apiProcessHubDataGet(workflowId, viewType, page, pageSize, options).then((request) => request(this.axios, this.basePath));
     }
 }
 

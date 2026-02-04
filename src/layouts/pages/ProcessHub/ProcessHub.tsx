@@ -20,7 +20,9 @@ import {
   Divider,
   Tooltip,
   CircularProgress,
+  Chip,
 } from "@mui/material";
+import { DataGrid, GridColDef, GridRenderCellParams } from "@mui/x-data-grid";
 import * as MuiIcons from "@mui/icons-material";
 import DashboardLayout from "examples/LayoutContainers/DashboardLayout";
 import DashboardNavbar from "examples/Navbars/DashboardNavbar";
@@ -28,7 +30,8 @@ import MDBox from "components/MDBox";
 import MDButton from "components/MDButton";
 import MDTypography from "components/MDTypography";
 import { 
-  WorkFlowDefinationApi, 
+  WorkFlowDefinationApi,
+  ProcessHubApi,
   WorkFlowMenuResponseDto,
   WorkFlowMenuGroupDto,
   WorkFlowMenuItemDto,
@@ -86,6 +89,9 @@ export default function ProcessHub(): JSX.Element {
   const [expandedCategories, setExpandedCategories] = useState<Record<string, boolean>>({});
   const [expandedWorkflows, setExpandedWorkflows] = useState<Record<string, boolean>>({});
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [gridData, setGridData] = useState<any[]>([]);
+  const [gridLoading, setGridLoading] = useState(false);
+  const [pageInfo, setPageInfo] = useState({ total: 0, page: 0, pageSize: 25 });
 
   // API'den menü yapısını yükle
   useEffect(() => {
@@ -130,10 +136,58 @@ export default function ProcessHub(): JSX.Element {
     loadMenuStructure();
   }, []);
 
-  // URL parametrelerini güncelle
+  // Grid verilerini yükle (workflowId ve viewType varsa)
   useEffect(() => {
-    setSearchParams({ category: selectedCategory, subCategory: selectedSubCategory });
-  }, [selectedCategory, selectedSubCategory]);
+    const workflowIdParam = searchParams.get("workflowId");
+    const viewTypeParam = searchParams.get("viewType");
+
+    if (!workflowIdParam || !viewTypeParam) {
+      // Parametreler yoksa grid'i temizle
+      setGridData([]);
+      return;
+    }
+
+    const fetchGridData = async () => {
+      try {
+        setGridLoading(true);
+        
+        console.log("🚀 Grid API çağrısı başlatılıyor:", {
+          workflowId: workflowIdParam,
+          viewType: viewTypeParam,
+          page: pageInfo.page + 1,
+          pageSize: pageInfo.pageSize,
+        });
+        
+        // ProcessHubApi kullanarak veri çekme
+        const conf = getConfiguration();
+        const api = new ProcessHubApi(conf);
+        const response = await api.apiProcessHubDataGet(
+          workflowIdParam || undefined,
+          viewTypeParam || undefined,
+          pageInfo.page + 1, // Backend 1-based pagination
+          pageInfo.pageSize
+        );
+        
+        console.log("✅ Grid API yanıtı alındı:", response.data);
+        
+        const data = response.data;
+        setGridData(data.data || []);
+        setPageInfo({
+          total: data.totalCount || 0,
+          page: (data.page || 1) - 1, // MUI DataGrid 0-based
+          pageSize: data.pageSize || pageInfo.pageSize,
+        });
+        
+      } catch (error: any) {
+        console.error("❌ Grid verisi yüklenirken hata:", error);
+        setGridData([]);
+      } finally {
+        setGridLoading(false);
+      }
+    };
+
+    fetchGridData();
+  }, [searchParams.get("workflowId"), searchParams.get("viewType"), pageInfo.page, pageInfo.pageSize]);
 
   // Kategori genişlet/daralt
   const handleToggleCategory = (categoryId: string) => {
@@ -151,16 +205,22 @@ export default function ProcessHub(): JSX.Element {
     }));
   };
 
-  // View seç ve route'a git
+  // View seç - URL parametreleri otomatik güncellenecek (useEffect ile)
   const handleSelectView = (categoryId: string, workflowViewId: string, workflowGuid?: string, viewId?: string) => {
     setSelectedCategory(categoryId);
     setSelectedSubCategory(workflowViewId);
-    setMobileOpen(false); // Mobilde drawer'ı kapat
+    setMobileOpen(false);
     
-    // Backend için route: workflowId ve viewType ile
-    if (workflowGuid && viewId) {
-      navigate(`/process-hub/view?workflowId=${workflowGuid}&viewType=${viewId}`);
-    }
+    // URL parametrelerini güncelle (aynı sayfada kal)
+    const params: any = {
+      category: categoryId,
+      subCategory: workflowViewId,
+    };
+    
+    if (workflowGuid) params.workflowId = workflowGuid;
+    if (viewId) params.viewType = viewId;
+    
+    setSearchParams(params);
   };
 
   // Yeni talep oluştur
@@ -186,6 +246,58 @@ export default function ProcessHub(): JSX.Element {
   const getCategoryColor = (index: number) => categoryColors[index % categoryColors.length];
   const currentCategoryIndex = menuData.findIndex((c) => c.id === selectedCategory);
   const currentColor = currentCategoryIndex >= 0 ? getCategoryColor(currentCategoryIndex) : categoryColors[0];
+
+  // DataGrid kolonları
+  const gridColumns: GridColDef[] = [
+    {
+      field: "id",
+      headerName: "ID",
+      width: 100,
+    },
+    {
+      field: "title",
+      headerName: "Başlık",
+      flex: 1,
+      minWidth: 250,
+    },
+    {
+      field: "status",
+      headerName: "Durum",
+      width: 150,
+      renderCell: (params: GridRenderCellParams) => (
+        <Chip
+          label={params.value || "Beklemede"}
+          size="small"
+          color={params.value === "Onaylandı" ? "success" : "warning"}
+        />
+      ),
+    },
+    {
+      field: "createdAt",
+      headerName: "Oluşturma Tarihi",
+      width: 180,
+    },
+    {
+      field: "actions",
+      headerName: "İşlemler",
+      width: 120,
+      sortable: false,
+      renderCell: (params: GridRenderCellParams) => (
+        <Box sx={{ display: "flex", gap: 0.5 }}>
+          <Tooltip title="Görüntüle">
+            <IconButton size="small" onClick={() => console.log("View:", params.row)}>
+              <MuiIcons.Visibility fontSize="small" />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="Düzenle">
+            <IconButton size="small" onClick={() => console.log("Edit:", params.row)}>
+              <MuiIcons.Edit fontSize="small" />
+            </IconButton>
+          </Tooltip>
+        </Box>
+      ),
+    },
+  ];
 
 
   // Sidebar içeriği
@@ -405,8 +517,17 @@ export default function ProcessHub(): JSX.Element {
   return (
     <DashboardLayout>
       <DashboardNavbar />
-      <MDBox sx={{ height: "calc(100vh - 74px)", overflow: "hidden", pt: 2 }}>
-        <Box sx={{ display: "flex", gap: 3, height: "100%", px: 3, pb: 3 }}>
+      <MDBox 
+        sx={{ 
+          position: "fixed",
+          top: 74, // navbar height
+          left: 0,
+          right: 0,
+          bottom: 0,
+          overflow: "hidden",
+        }}
+      >
+        <Box sx={{ display: "flex", gap: 3, height: "100%", p: 3 }}>
           {/* Mobile Menu Button */}
           <IconButton
             sx={{
@@ -473,23 +594,10 @@ export default function ProcessHub(): JSX.Element {
             sx={{
               flexGrow: 1,
               minWidth: 0,
+              minHeight: 0,
               px: { xs: 2, sm: 0 },
-              height: "100%",
-              overflow: "auto",
-              "&::-webkit-scrollbar": {
-                width: "8px",
-              },
-              "&::-webkit-scrollbar-track": {
-                backgroundColor: "#f1f1f1",
-                borderRadius: "10px",
-              },
-              "&::-webkit-scrollbar-thumb": {
-                backgroundColor: "#c1c1c1",
-                borderRadius: "10px",
-                "&:hover": {
-                  backgroundColor: "#a8a8a8",
-                },
-              },
+              display: "flex",
+              flexDirection: "column",
             }}
           >
             {/* Header */}
@@ -539,51 +647,104 @@ export default function ProcessHub(): JSX.Element {
               </Box>
             </Paper>
 
-            {/* İçerik Alanı - Backend entegrasyonu için hazır */}
-            <Paper
-              sx={{
-                p: 8,
-                textAlign: "center",
-                borderRadius: "16px",
-                border: "2px dashed #e0e0e0",
-                minHeight: 400,
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              <Box sx={{ color: currentColor, mb: 3, fontSize: 64 }}>
-                <MuiIcons.Construction />
-              </Box>
-              <Typography variant="h5" gutterBottom fontWeight={700}>
-                Bu Alan Backend Entegrasyonu İçin Hazır
-              </Typography>
-              <Typography variant="body1" color="text.secondary" sx={{ mb: 2, maxWidth: 500 }}>
-                {currentWorkflow?.label && currentView?.label && (
-                  <>
-                    <strong>Workflow:</strong> {currentWorkflow.label}
-                    <br />
-                    <strong>View:</strong> {currentView.label}
-                    <br />
-                    <strong>Workflow ID:</strong> {currentWorkflow.workflowGuid}
-                    <br />
-                    <strong>View Type:</strong> {viewId}
-                  </>
-                )}
-              </Typography>
-              <Typography variant="caption" color="text.secondary" sx={{ mb: 4 }}>
-                URL: /process-hub/view?workflowId={currentWorkflow?.workflowGuid}&viewType={viewId}
-              </Typography>
-              <MDButton
-                variant="gradient"
-                color="info"
-                startIcon={<MuiIcons.Add />}
-                onClick={handleNewRequest}
+            {/* DataGrid - Workflow verilerini göster */}
+            {searchParams.get("workflowId") && searchParams.get("viewType") ? (
+              <Paper
+                sx={{
+                  flex: 1,
+                  minHeight: 0,
+                  borderRadius: "16px",
+                  overflow: "hidden",
+                  display: "flex",
+                  flexDirection: "column",
+                }}
               >
-                Yeni Talep Oluştur
-              </MDButton>
-            </Paper>
+                <DataGrid
+                  rows={gridData}
+                  columns={gridColumns}
+                  loading={gridLoading}
+                  pageSizeOptions={[10, 25, 50, 100]}
+                  paginationModel={{
+                    page: pageInfo.page,
+                    pageSize: pageInfo.pageSize,
+                  }}
+                  onPaginationModelChange={(model) => {
+                    setPageInfo((prev) => ({ ...prev, page: model.page, pageSize: model.pageSize }));
+                  }}
+                  rowCount={pageInfo.total}
+                  paginationMode="server"
+                  checkboxSelection
+                  disableRowSelectionOnClick
+                  sx={{
+                    flex: 1,
+                    border: "none",
+                    "& .MuiDataGrid-cell": {
+                      borderBottom: "1px solid #f0f0f0",
+                    },
+                    "& .MuiDataGrid-columnHeaders": {
+                      backgroundColor: "#f8f9fa",
+                      borderBottom: "2px solid #e0e0e0",
+                      fontWeight: 700,
+                    },
+                    "& .MuiDataGrid-row:hover": {
+                      backgroundColor: `${currentColor}11`,
+                    },
+                    "& .MuiDataGrid-cell:focus": {
+                      outline: "none",
+                    },
+                    "& .MuiDataGrid-row": {
+                      cursor: "pointer",
+                    },
+                  }}
+                  onRowClick={(params) => {
+                    console.log("Satıra tıklandı:", params.row);
+                  }}
+                  localeText={{
+                    noRowsLabel: "Kayıt bulunamadı",
+                    noResultsOverlayLabel: "Sonuç bulunamadı",
+                    toolbarColumns: "Sütunlar",
+                    toolbarFilters: "Filtreler",
+                    columnMenuLabel: "Menü",
+                    columnMenuShowColumns: "Sütunları göster",
+                    columnMenuFilter: "Filtrele",
+                    columnMenuHideColumn: "Gizle",
+                    columnMenuSortAsc: "Artan sırala",
+                    columnMenuSortDesc: "Azalan sırala",
+                    footerRowSelected: (count) => `${count} satır seçildi`,
+                    MuiTablePagination: {
+                      labelRowsPerPage: "Sayfa başına:",
+                      labelDisplayedRows: ({ from, to, count }) =>
+                        `${from}-${to} / ${count !== -1 ? count : `${to}+`}`,
+                    },
+                  }}
+                />
+              </Paper>
+            ) : (
+              // Boş durum - Henüz view seçilmemiş
+              <Paper
+                sx={{
+                  p: 6,
+                  textAlign: "center",
+                  borderRadius: "16px",
+                  border: "2px dashed #e0e0e0",
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  flex: 1,
+                }}
+              >
+                <Box sx={{ color: currentColor, mb: 3, fontSize: 64 }}>
+                  <MuiIcons.TouchApp />
+                </Box>
+                <Typography variant="h5" gutterBottom fontWeight={700}>
+                  Sol Menüden Bir View Seçin
+                </Typography>
+                <Typography variant="body1" color="text.secondary" sx={{ mb: 2 }}>
+                  Verileri görüntülemek için sol taraftaki menüden bir kategori seçin
+                </Typography>
+              </Paper>
+            )}
           </Box>
         </Box>
       </MDBox>
