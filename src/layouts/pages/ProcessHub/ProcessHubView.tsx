@@ -87,23 +87,18 @@ export default function ProcessHubView(): JSX.Element {
     fetchData();
   }, [workflowId, viewType, pageInfo.page, pageInfo.pageSize]);
 
-  // DataGrid kolonları - Backend'den gelen dataya göre dinamik ayarlanabilir
+  // DataGrid kolonları - Minimal tasarım: Sadece gerekli bilgiler (detaylar zaten tıklayınca görünecek)
   const columns: GridColDef[] = [
-    {
-      field: "id",
-      headerName: "ID",
-      width: 100,
-    },
     {
       field: "title",
       headerName: "Başlık",
       flex: 1,
-      minWidth: 200,
+      minWidth: 300,
     },
     {
       field: "status",
       headerName: "Durum",
-      width: 150,
+      width: 140,
       renderCell: (params: GridRenderCellParams) => (
         <Chip
           label={params.value || "Beklemede"}
@@ -115,23 +110,18 @@ export default function ProcessHubView(): JSX.Element {
     {
       field: "createdAt",
       headerName: "Oluşturma Tarihi",
-      width: 150,
+      width: 160,
     },
     {
       field: "actions",
       headerName: "İşlemler",
-      width: 120,
+      width: 100,
       sortable: false,
       renderCell: (params: GridRenderCellParams) => (
         <Box sx={{ display: "flex", gap: 0.5 }}>
           <Tooltip title="Görüntüle">
             <IconButton size="small" onClick={() => console.log("View:", params.row.id)}>
               <MuiIcons.Visibility fontSize="small" />
-            </IconButton>
-          </Tooltip>
-          <Tooltip title="Düzenle">
-            <IconButton size="small" onClick={() => console.log("Edit:", params.row.id)}>
-              <MuiIcons.Edit fontSize="small" />
             </IconButton>
           </Tooltip>
         </Box>

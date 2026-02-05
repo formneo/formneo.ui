@@ -574,7 +574,7 @@ export default function WorkflowRuntime(): JSX.Element {
 
       try {
 
-        alert("girdi");
+
         setLoading(true);
         const conf = getConfiguration();
         const formApi = new FormDataApi(conf);

@@ -21,6 +21,16 @@ import {
   Tooltip,
   CircularProgress,
   Chip,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Button,
+  Stepper,
+  Step,
+  StepLabel,
+  StepContent,
+  Alert,
 } from "@mui/material";
 import { DataGrid, GridColDef, GridRenderCellParams } from "@mui/x-data-grid";
 import * as MuiIcons from "@mui/icons-material";
@@ -31,6 +41,7 @@ import MDButton from "components/MDButton";
 import MDTypography from "components/MDTypography";
 import { 
   WorkFlowDefinationApi,
+  FormDataApi,
   ProcessHubApi,
   WorkFlowMenuResponseDto,
   WorkFlowMenuGroupDto,
@@ -92,6 +103,12 @@ export default function ProcessHub(): JSX.Element {
   const [gridData, setGridData] = useState<any[]>([]);
   const [gridLoading, setGridLoading] = useState(false);
   const [pageInfo, setPageInfo] = useState({ total: 0, page: 0, pageSize: 25 });
+  
+  // History Dialog State
+  const [historyDialogOpen, setHistoryDialogOpen] = useState(false);
+  const [selectedWorkflowForHistory, setSelectedWorkflowForHistory] = useState<any>(null);
+  const [historyLoading, setHistoryLoading] = useState(false);
+  const [historyData, setHistoryData] = useState<any>(null);
 
   // API'den menü yapısını yükle
   useEffect(() => {
@@ -223,75 +240,285 @@ export default function ProcessHub(): JSX.Element {
     setSearchParams(params);
   };
 
-  // Yeni talep oluştur
-  const handleNewRequest = () => {
-    // selectedSubCategory format: "workflowId_viewId"
-    const [workflowId] = selectedSubCategory.split('_');
-    const category = menuData.find((c) => c.id === selectedCategory);
-    const workflow = category?.children?.find((item) => item.id === workflowId);
-    if (workflow?.workflowGuid) {
-      navigate(`/workflows/runtime/new?workflowId=${workflow.workflowGuid}`);
-    }
-  };
+  // Yeni talep oluştur - currentWorkflow state'inden sonra tanımlanacak
 
   // Seçili kategori ve view'ı bul
   const currentCategory = menuData.find((c) => c.id === selectedCategory);
   
   // selectedSubCategory format: "workflowId_viewId"
   const [workflowId, viewId] = selectedSubCategory.split('_');
-  const currentWorkflow = currentCategory?.children?.find((w) => w.id === workflowId);
+  
+  // ✅ Workflow'u bul - searchParams'tan gelen workflowGuid kullanarak da deneyebiliriz
+  const workflowGuidFromParams = searchParams.get("workflowId");
+  let currentWorkflow = currentCategory?.children?.find((w) => w.id === workflowId);
+  
+  // Eğer workflowId ile bulunamadıysa, workflowGuid ile dene
+  if (!currentWorkflow && workflowGuidFromParams) {
+    currentWorkflow = currentCategory?.children?.find((w) => w.workflowGuid === workflowGuidFromParams);
+  }
+  
   const currentView = currentWorkflow?.views?.find((v) => v.id === viewId);
+  
+  // Debug: Buton disabled durumu için kontrol
+  console.log("🔍 Buton Disabled Durumu Kontrolü:", {
+    selectedCategory,
+    selectedSubCategory,
+    workflowId,
+    viewId,
+    workflowGuidFromParams,
+    hasCategoryChildren: !!currentCategory?.children,
+    childrenCount: currentCategory?.children?.length || 0,
+    childrenIds: currentCategory?.children?.map(c => c.id),
+    childrenWorkflowGuids: currentCategory?.children?.map(c => c.workflowGuid),
+    currentWorkflow: currentWorkflow?.label,
+    hasWorkflowGuid: !!currentWorkflow?.workflowGuid,
+    workflowGuid: currentWorkflow?.workflowGuid,
+    buttonDisabled: !currentWorkflow?.workflowGuid,
+  });
+
+  // History Dialog Aç
+  const handleOpenHistory = async (workflowHeadId: string) => {
+    setHistoryDialogOpen(true);
+    setHistoryLoading(true);
+    
+    try {
+      const conf = getConfiguration();
+      // History bilgilerini çek
+      const response = await fetch(
+        `${conf.basePath}/api/WorkFlow/GetWorkflowHistory/${workflowHeadId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
+      
+      if (response.ok) {
+        const data = await response.json();
+        setHistoryData(data);
+      } else {
+        console.error("History verisi alınamadı");
+        setHistoryData(null);
+      }
+    } catch (error) {
+      console.error("History yüklenirken hata:", error);
+      setHistoryData(null);
+    } finally {
+      setHistoryLoading(false);
+    }
+  };
+
+  // History Dialog Kapat
+  const handleCloseHistory = () => {
+    setHistoryDialogOpen(false);
+    setSelectedWorkflowForHistory(null);
+    setHistoryData(null);
+  };
+
+  // Yeni talep oluştur - currentWorkflow'u kullan
+  const handleNewRequest = async () => {
+    console.log("🔵 Yeni Talep butonuna basıldı", {
+      currentWorkflow: currentWorkflow?.label,
+      hasWorkflowGuid: !!currentWorkflow?.workflowGuid,
+      hasFormId: !!currentWorkflow?.formId,
+    });
+
+    if (!currentWorkflow) {
+      console.error("❌ Workflow bulunamadı");
+      alert("Workflow bulunamadı. Lütfen bir view seçin.");
+      return;
+    }
+
+    if (!currentWorkflow.workflowGuid) {
+      console.error("❌ Workflow GUID eksik");
+      alert("Bu workflow için GUID tanımlanmamış");
+      return;
+    }
+
+    try {
+      const conf = getConfiguration();
+      const workflowApi = new WorkFlowDefinationApi(conf);
+      const formApi = new FormDataApi(conf);
+
+      // ✅ Workflow detayını çek (initScript API'den dönüyor)
+      const workflowDetail = await workflowApi.apiWorkFlowDefinationIdGet(currentWorkflow.workflowGuid);
+      const workflowData = workflowDetail.data as any;
+
+      let formId: string | null = workflowData?.formId || currentWorkflow.formId || null;
+      let formName: string = "";
+      
+      // ✅ InitScript'i direkt API'den al (parse etmeye gerek yok)
+      let initScript: string | null = workflowData?.initScript || null;
+
+      console.log("✅ WorkFlowDefinationApi'den initScript alındı:", {
+        hasInitScript: !!initScript,
+        initScriptLength: initScript?.length || 0,
+        initScriptPreview: initScript ? initScript.substring(0, 100) + "..." : "YOK",
+      });
+
+      // Eğer workflow'da formId yoksa, defination'dan bul
+      if (!formId && workflowData?.defination) {
+        try {
+          const parsedDefination = JSON.parse(workflowData.defination);
+          const formNode = parsedDefination.nodes?.find(
+            (n: any) =>
+              n.type === "formNode" &&
+              (n.data?.selectedFormId || n.data?.formId)
+          );
+          
+          if (formNode && (formNode.data?.selectedFormId || formNode.data?.formId)) {
+            formId = formNode.data.selectedFormId || formNode.data.formId;
+            formName =
+              formNode.data.selectedFormName ||
+              formNode.data.formName ||
+              formNode.data.name ||
+              "";
+          }
+        } catch (error) {
+          console.warn("Defination parse edilemedi:", error);
+        }
+      }
+
+      // Form bilgisini çek
+      if (formId) {
+        try {
+          const formResponse = await formApi.apiFormDataIdGet(formId);
+          formName = formResponse.data?.formName || formName;
+        } catch (error) {
+          console.warn(`Form ${formId} çekilemedi:`, error);
+        }
+      }
+
+      if (!formId) {
+        alert("Bu workflow için form tanımlanmamış!");
+        return;
+      }
+
+      // ✅ Form sayfasına yönlendir
+      navigate(`/workflows/runtime/new`, {
+        state: {
+          workflowInstance: {
+            workflowId: currentWorkflow.workflowGuid,
+            workflowName: currentWorkflow.label || "İş Akışı",
+            formId: formId,
+            formName: formName,
+            defination: workflowData?.defination || null,
+            initScript: initScript, // ✅ API'den gelen initScript (yeni workflow için)
+          },
+          isNewInstance: true,
+        },
+      });
+      
+      console.log("🚀 Yeni workflow başlatılıyor:", {
+        workflowId: currentWorkflow.workflowGuid,
+        workflowName: currentWorkflow.label,
+        formId,
+        formName,
+        hasInitScript: !!initScript,
+        initScriptLength: initScript?.length || 0,
+      });
+    } catch (error) {
+      console.error("Workflow başlatılırken hata:", error);
+      alert("Workflow başlatılırken bir hata oluştu. Lütfen tekrar deneyin.");
+    }
+  };
   
   // Renk ve icon helper'ları
   const getCategoryColor = (index: number) => categoryColors[index % categoryColors.length];
   const currentCategoryIndex = menuData.findIndex((c) => c.id === selectedCategory);
   const currentColor = currentCategoryIndex >= 0 ? getCategoryColor(currentCategoryIndex) : categoryColors[0];
 
-  // DataGrid kolonları
+  // DataGrid kolonları - Minimal tasarım: Sadece gerekli bilgiler (detaylar zaten history'de görünüyor)
   const gridColumns: GridColDef[] = [
     {
-      field: "id",
-      headerName: "ID",
-      width: 100,
-    },
-    {
-      field: "title",
-      headerName: "Başlık",
+      field: "formName",
+      headerName: "Form Adı",
       flex: 1,
       minWidth: 250,
+      renderCell: (params: GridRenderCellParams) => (
+        <Typography variant="body2" fontWeight={500}>
+          {params.value || "Form Adı Yok"}
+        </Typography>
+      ),
     },
     {
-      field: "status",
-      headerName: "Durum",
-      width: 150,
+      field: "currentNodeName",
+      headerName: "Güncel Adım",
+      width: 160,
       renderCell: (params: GridRenderCellParams) => (
         <Chip
-          label={params.value || "Beklemede"}
+          label={params.value || "Başlangıç"}
           size="small"
-          color={params.value === "Onaylandı" ? "success" : "warning"}
+          variant="outlined"
+          color="primary"
         />
       ),
     },
     {
-      field: "createdAt",
+      field: "workFlowStatusText",
+      headerName: "Durum",
+      width: 140,
+      renderCell: (params: GridRenderCellParams) => {
+        const status = params.value || "Beklemede";
+        const color = 
+          status.includes("Tamamlan") || status.includes("Onaylan") ? "success" :
+          status.includes("Red") || status.includes("İptal") ? "error" :
+          status.includes("Bekl") ? "warning" : "default";
+        
+        return (
+          <Chip
+            label={status}
+            size="small"
+            color={color}
+          />
+        );
+      },
+    },
+    {
+      field: "createdDate",
       headerName: "Oluşturma Tarihi",
-      width: 180,
+      width: 150,
+      renderCell: (params: GridRenderCellParams) => (
+        <Typography variant="caption">
+          {params.value ? new Date(params.value).toLocaleDateString("tr-TR") : "-"}
+        </Typography>
+      ),
     },
     {
       field: "actions",
       headerName: "İşlemler",
-      width: 120,
+      width: 100,
       sortable: false,
       renderCell: (params: GridRenderCellParams) => (
         <Box sx={{ display: "flex", gap: 0.5 }}>
           <Tooltip title="Görüntüle">
-            <IconButton size="small" onClick={() => console.log("View:", params.row)}>
+            <IconButton 
+              size="small" 
+              onClick={(e) => {
+                e.stopPropagation();
+                // Workflow runtime sayfasına yönlendir
+                if (params.row.workflowDefinationId && params.row.id) {
+                  navigate(`/workflows/runtime/${params.row.workflowDefinationId}/${params.row.id}`);
+                }
+              }}
+            >
               <MuiIcons.Visibility fontSize="small" />
             </IconButton>
           </Tooltip>
-          <Tooltip title="Düzenle">
-            <IconButton size="small" onClick={() => console.log("Edit:", params.row)}>
-              <MuiIcons.Edit fontSize="small" />
+          <Tooltip title="Süreç Geçmişi">
+            <IconButton 
+              size="small"
+              color="primary"
+              onClick={(e) => {
+                e.stopPropagation();
+                // History dialog'unu aç
+                if (params.row.id) {
+                  setSelectedWorkflowForHistory(params.row);
+                  handleOpenHistory(params.row.id);
+                }
+              }}
+            >
+              <MuiIcons.History fontSize="small" />
             </IconButton>
           </Tooltip>
         </Box>
@@ -635,14 +862,19 @@ export default function ProcessHub(): JSX.Element {
                       <MuiIcons.Search />
                     </IconButton>
                   </Tooltip>
-                  <MDButton
-                    variant="gradient"
-                    color="info"
-                    startIcon={<MuiIcons.Add />}
-                    onClick={handleNewRequest}
-                  >
-                    Yeni Talep
-                  </MDButton>
+                  <Tooltip title={!currentWorkflow?.workflowGuid ? "Lütfen önce bir workflow seçin" : "Yeni talep oluştur"}>
+                    <span>
+                      <MDButton
+                        variant="gradient"
+                        color="info"
+                        startIcon={<MuiIcons.Add />}
+                        onClick={handleNewRequest}
+                        disabled={!currentWorkflow?.workflowGuid}
+                      >
+                        Yeni Talep
+                      </MDButton>
+                    </span>
+                  </Tooltip>
                 </Box>
               </Box>
             </Paper>
@@ -747,6 +979,206 @@ export default function ProcessHub(): JSX.Element {
             )}
           </Box>
         </Box>
+
+        {/* History Dialog */}
+        <Dialog
+          open={historyDialogOpen}
+          onClose={handleCloseHistory}
+          maxWidth="md"
+          fullWidth
+          PaperProps={{
+            sx: {
+              borderRadius: 3,
+              maxHeight: "80vh",
+            },
+          }}
+        >
+          <DialogTitle
+            sx={{
+              background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+              color: "white",
+              display: "flex",
+              alignItems: "center",
+              gap: 1,
+              py: 2,
+            }}
+          >
+            <MuiIcons.History />
+            <Box>
+              <Typography variant="h6" fontWeight={700}>
+                Süreç Geçmişi
+              </Typography>
+              {selectedWorkflowForHistory && (
+                <Typography variant="caption" sx={{ opacity: 0.9 }}>
+                  {selectedWorkflowForHistory.workflowName || selectedWorkflowForHistory.formName || "İş Akışı"}
+                </Typography>
+              )}
+            </Box>
+            <Box sx={{ flex: 1 }} />
+            <IconButton
+              onClick={handleCloseHistory}
+              sx={{ color: "white" }}
+              size="small"
+            >
+              <MuiIcons.Close />
+            </IconButton>
+          </DialogTitle>
+
+          <DialogContent sx={{ p: 3, mt: 2 }}>
+            {historyLoading ? (
+              <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", py: 8 }}>
+                <CircularProgress />
+              </Box>
+            ) : !historyData ? (
+              <Alert severity="info" sx={{ borderRadius: 2 }}>
+                Süreç geçmişi bulunamadı.
+              </Alert>
+            ) : (
+              <Box>
+                {/* Süreç Bilgileri */}
+                <Paper sx={{ p: 2, mb: 3, bgcolor: "#f8f9fa", borderRadius: 2 }}>
+                  <Box sx={{ display: "flex", gap: 3, flexWrap: "wrap" }}>
+                    <Box>
+                      <Typography variant="caption" color="text.secondary" fontWeight={600}>
+                        Talep No
+                      </Typography>
+                      <Typography variant="body2" fontWeight={700}>
+                        #{historyData.uniqNumber || selectedWorkflowForHistory?.id?.substring(0, 8)}
+                      </Typography>
+                    </Box>
+                    <Box>
+                      <Typography variant="caption" color="text.secondary" fontWeight={600}>
+                        Durum
+                      </Typography>
+                      <Chip
+                        label={historyData.workFlowStatusText || "Devam Ediyor"}
+                        size="small"
+                        color={
+                          historyData.workFlowStatusText?.includes("Tamamlan") ? "success" :
+                          historyData.workFlowStatusText?.includes("Red") ? "error" :
+                          "warning"
+                        }
+                        sx={{ mt: 0.5 }}
+                      />
+                    </Box>
+                    <Box>
+                      <Typography variant="caption" color="text.secondary" fontWeight={600}>
+                        Oluşturan
+                      </Typography>
+                      <Typography variant="body2" fontWeight={700}>
+                        {historyData.createUser || "Bilinmiyor"}
+                      </Typography>
+                    </Box>
+                    <Box>
+                      <Typography variant="caption" color="text.secondary" fontWeight={600}>
+                        Oluşturma Tarihi
+                      </Typography>
+                      <Typography variant="body2" fontWeight={700}>
+                        {historyData.createdDate 
+                          ? new Date(historyData.createdDate).toLocaleDateString("tr-TR", {
+                              day: "2-digit",
+                              month: "long",
+                              year: "numeric",
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })
+                          : "-"
+                        }
+                      </Typography>
+                    </Box>
+                  </Box>
+                </Paper>
+
+                {/* Süreç Adımları Timeline */}
+                {historyData.workflowItems && historyData.workflowItems.length > 0 ? (
+                  <Box>
+                    <Typography variant="h6" fontWeight={700} sx={{ mb: 2, display: "flex", alignItems: "center", gap: 1 }}>
+                      <MuiIcons.Timeline />
+                      Süreç Adımları
+                    </Typography>
+                    
+                    <Stepper orientation="vertical" activeStep={-1}>
+                      {historyData.workflowItems.map((item: any, index: number) => {
+                        const isCompleted = item.itemStatus === 2 || item.itemStatus === "Completed";
+                        const isPending = item.itemStatus === 0 || item.itemStatus === "Pending";
+                        const isInProgress = item.itemStatus === 1 || item.itemStatus === "InProgress";
+                        
+                        return (
+                          <Step key={index} completed={isCompleted}>
+                            <StepLabel
+                              StepIconProps={{
+                                sx: {
+                                  color: isCompleted ? "#10b981" : isInProgress ? "#3b82f6" : "#94a3b8",
+                                  "& .MuiStepIcon-text": {
+                                    fill: "white",
+                                  },
+                                },
+                              }}
+                            >
+                              <Box>
+                                <Typography variant="body2" fontWeight={700}>
+                                  {item.nodeName || item.nodeType || `Adım ${index + 1}`}
+                                </Typography>
+                                <Typography variant="caption" color="text.secondary">
+                                  {item.nodeType === "FormTaskNode" ? "📝 Form Görevi" : 
+                                   item.nodeType === "UserTaskNode" ? "👤 Onay Görevi" : 
+                                   item.nodeType}
+                                </Typography>
+                              </Box>
+                            </StepLabel>
+                            <StepContent>
+                              <Box sx={{ ml: 2, pb: 2 }}>
+                                {item.message && (
+                                  <Typography variant="body2" sx={{ mb: 1 }}>
+                                    💬 {item.message}
+                                  </Typography>
+                                )}
+                                {item.approveUser && (
+                                  <Typography variant="caption" display="block" color="text.secondary">
+                                    👤 Onaylayan: {item.approveUserNameSurname || item.approveUser}
+                                  </Typography>
+                                )}
+                                {item.createdDate && (
+                                  <Typography variant="caption" display="block" color="text.secondary">
+                                    🕒 {new Date(item.createdDate).toLocaleString("tr-TR")}
+                                  </Typography>
+                                )}
+                                <Chip
+                                  label={
+                                    isCompleted ? "✅ Tamamlandı" :
+                                    isInProgress ? "▶️ Devam Ediyor" :
+                                    "⏳ Beklemede"
+                                  }
+                                  size="small"
+                                  sx={{
+                                    mt: 1,
+                                    bgcolor: isCompleted ? "#d1fae5" : isInProgress ? "#dbeafe" : "#f1f5f9",
+                                    color: isCompleted ? "#065f46" : isInProgress ? "#1e40af" : "#64748b",
+                                    fontWeight: 600,
+                                  }}
+                                />
+                              </Box>
+                            </StepContent>
+                          </Step>
+                        );
+                      })}
+                    </Stepper>
+                  </Box>
+                ) : (
+                  <Alert severity="info" sx={{ borderRadius: 2 }}>
+                    Henüz süreç adımı bulunmamaktadır.
+                  </Alert>
+                )}
+              </Box>
+            )}
+          </DialogContent>
+
+          <DialogActions sx={{ px: 3, py: 2, borderTop: "1px solid #e0e0e0" }}>
+            <Button onClick={handleCloseHistory} variant="contained" color="primary">
+              Kapat
+            </Button>
+          </DialogActions>
+        </Dialog>
       </MDBox>
     </DashboardLayout>
   );
