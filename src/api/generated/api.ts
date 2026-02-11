@@ -2674,6 +2674,14 @@ export interface OrganizationDto {
     'expanded'?: boolean;
     'children'?: Array<OrganizationDto> | null;
 }
+export interface PendingUserDto {
+    'userId'?: string | null;
+    'userName'?: string | null;
+    'department'?: string | null;
+    'departmentId'?: string | null;
+    'position'?: string | null;
+    'positionId'?: string | null;
+}
 
 export const Permission = {
     NUMBER_1: 1,
@@ -2739,6 +2747,7 @@ export interface ProcessHubItemDto {
     'formData'?: string | null;
     'pendingApprovalCount'?: number;
     'pendingFormCount'?: number;
+    'formUserIds'?: Array<string> | null;
 }
 
 export const ProcessType = {
@@ -4206,6 +4215,26 @@ export interface WorkflowHead {
 }
 
 
+export interface WorkflowHeadInfoDto {
+    'id'?: string;
+    'workflowName'?: string | null;
+    'workflowDefinationId'?: string;
+    'startedBy'?: string | null;
+    'startedDate'?: string;
+    'currentNodeId'?: string | null;
+    'currentNodeName'?: string | null;
+    'workFlowStatus'?: string | null;
+    'workFlowStatusText'?: string | null;
+    'workFlowInfo'?: string | null;
+    'formId'?: string | null;
+    'formName'?: string | null;
+    'formData'?: string | null;
+}
+export interface WorkflowHistoryResponseDto {
+    'headInfo'?: WorkflowHeadInfoDto;
+    'historyItems'?: Array<WorkflowItemHistoryDto> | null;
+    'totalItemCount'?: number;
+}
 export interface WorkflowItem {
     'id'?: string;
     'mainClientId'?: string | null;
@@ -4229,6 +4258,20 @@ export interface WorkflowItem {
 }
 
 
+export interface WorkflowItemHistoryDto {
+    'id'?: string;
+    'workflowHeadId'?: string;
+    'workflowNodeId'?: string | null;
+    'nodeName'?: string | null;
+    'nodeDescription'?: string | null;
+    'nodeType'?: string | null;
+    'nodeStatus'?: string | null;
+    'nodeStatusText'?: string | null;
+    'pendingWithUsers'?: Array<PendingUserDto> | null;
+    'pendingUserCount'?: number;
+    'createdDate'?: string;
+    'updatedDate'?: string | null;
+}
 
 export const WorkflowStatus = {
     NUMBER_0: 0,
@@ -28925,6 +28968,80 @@ export const ProcessHubApiAxiosParamCreator = function (configuration?: Configur
                 options: localVarRequestOptions,
             };
         },
+        /**
+         * 
+         * @param {string} workflowHeadId 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        apiProcessHubDetailWorkflowHeadIdGet: async (workflowHeadId: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'workflowHeadId' is not null or undefined
+            assertParamExists('apiProcessHubDetailWorkflowHeadIdGet', 'workflowHeadId', workflowHeadId)
+            const localVarPath = `/api/process-hub/detail/{workflowHeadId}`
+                .replace(`{${"workflowHeadId"}}`, encodeURIComponent(String(workflowHeadId)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication Bearer required
+            // http bearer authentication required
+            await setBearerAuthToObject(localVarHeaderParameter, configuration)
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @param {string} workflowHeadId 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        apiProcessHubHistoryWorkflowHeadIdGet: async (workflowHeadId: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'workflowHeadId' is not null or undefined
+            assertParamExists('apiProcessHubHistoryWorkflowHeadIdGet', 'workflowHeadId', workflowHeadId)
+            const localVarPath = `/api/process-hub/history/{workflowHeadId}`
+                .replace(`{${"workflowHeadId"}}`, encodeURIComponent(String(workflowHeadId)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication Bearer required
+            // http bearer authentication required
+            await setBearerAuthToObject(localVarHeaderParameter, configuration)
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
     }
 };
 
@@ -28949,6 +29066,30 @@ export const ProcessHubApiFp = function(configuration?: Configuration) {
             const localVarOperationServerBasePath = operationServerMap['ProcessHubApi.apiProcessHubDataGet']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
+        /**
+         * 
+         * @param {string} workflowHeadId 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async apiProcessHubDetailWorkflowHeadIdGet(workflowHeadId: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<ProcessHubItemDto>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.apiProcessHubDetailWorkflowHeadIdGet(workflowHeadId, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['ProcessHubApi.apiProcessHubDetailWorkflowHeadIdGet']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * 
+         * @param {string} workflowHeadId 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async apiProcessHubHistoryWorkflowHeadIdGet(workflowHeadId: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<WorkflowHistoryResponseDto>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.apiProcessHubHistoryWorkflowHeadIdGet(workflowHeadId, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['ProcessHubApi.apiProcessHubHistoryWorkflowHeadIdGet']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
     }
 };
 
@@ -28970,6 +29111,24 @@ export const ProcessHubApiFactory = function (configuration?: Configuration, bas
         apiProcessHubDataGet(workflowId?: string, viewType?: string, page?: number, pageSize?: number, options?: RawAxiosRequestConfig): AxiosPromise<ProcessHubDataResponseDto> {
             return localVarFp.apiProcessHubDataGet(workflowId, viewType, page, pageSize, options).then((request) => request(axios, basePath));
         },
+        /**
+         * 
+         * @param {string} workflowHeadId 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        apiProcessHubDetailWorkflowHeadIdGet(workflowHeadId: string, options?: RawAxiosRequestConfig): AxiosPromise<ProcessHubItemDto> {
+            return localVarFp.apiProcessHubDetailWorkflowHeadIdGet(workflowHeadId, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
+         * @param {string} workflowHeadId 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        apiProcessHubHistoryWorkflowHeadIdGet(workflowHeadId: string, options?: RawAxiosRequestConfig): AxiosPromise<WorkflowHistoryResponseDto> {
+            return localVarFp.apiProcessHubHistoryWorkflowHeadIdGet(workflowHeadId, options).then((request) => request(axios, basePath));
+        },
     };
 };
 
@@ -28988,6 +29147,26 @@ export class ProcessHubApi extends BaseAPI {
      */
     public apiProcessHubDataGet(workflowId?: string, viewType?: string, page?: number, pageSize?: number, options?: RawAxiosRequestConfig) {
         return ProcessHubApiFp(this.configuration).apiProcessHubDataGet(workflowId, viewType, page, pageSize, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @param {string} workflowHeadId 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    public apiProcessHubDetailWorkflowHeadIdGet(workflowHeadId: string, options?: RawAxiosRequestConfig) {
+        return ProcessHubApiFp(this.configuration).apiProcessHubDetailWorkflowHeadIdGet(workflowHeadId, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @param {string} workflowHeadId 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    public apiProcessHubHistoryWorkflowHeadIdGet(workflowHeadId: string, options?: RawAxiosRequestConfig) {
+        return ProcessHubApiFp(this.configuration).apiProcessHubHistoryWorkflowHeadIdGet(workflowHeadId, options).then((request) => request(this.axios, this.basePath));
     }
 }
 

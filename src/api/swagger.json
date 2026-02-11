@@ -11216,6 +11216,86 @@
         }
       }
     },
+    "/api/process-hub/detail/{workflowHeadId}": {
+      "get": {
+        "tags": [
+          "ProcessHub"
+        ],
+        "parameters": [
+          {
+            "name": "workflowHeadId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProcessHubItemDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProcessHubItemDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProcessHubItemDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/process-hub/history/{workflowHeadId}": {
+      "get": {
+        "tags": [
+          "ProcessHub"
+        ],
+        "parameters": [
+          {
+            "name": "workflowHeadId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkflowHistoryResponseDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkflowHistoryResponseDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkflowHistoryResponseDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/ProjectCategories": {
       "get": {
         "tags": [
@@ -25674,6 +25754,38 @@
         },
         "additionalProperties": false
       },
+      "PendingUserDto": {
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "string",
+            "nullable": true
+          },
+          "userName": {
+            "type": "string",
+            "nullable": true
+          },
+          "department": {
+            "type": "string",
+            "nullable": true
+          },
+          "departmentId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "position": {
+            "type": "string",
+            "nullable": true
+          },
+          "positionId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
       "Permission": {
         "enum": [
           1,
@@ -25914,6 +26026,13 @@
           "pendingFormCount": {
             "type": "integer",
             "format": "int32"
+          },
+          "formUserIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
           }
         },
         "additionalProperties": false
@@ -31231,6 +31350,85 @@
         },
         "additionalProperties": false
       },
+      "WorkflowHeadInfoDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "workflowName": {
+            "type": "string",
+            "nullable": true
+          },
+          "workflowDefinationId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "startedBy": {
+            "type": "string",
+            "nullable": true
+          },
+          "startedDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "currentNodeId": {
+            "type": "string",
+            "nullable": true
+          },
+          "currentNodeName": {
+            "type": "string",
+            "nullable": true
+          },
+          "workFlowStatus": {
+            "type": "string",
+            "nullable": true
+          },
+          "workFlowStatusText": {
+            "type": "string",
+            "nullable": true
+          },
+          "workFlowInfo": {
+            "type": "string",
+            "nullable": true
+          },
+          "formId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "formName": {
+            "type": "string",
+            "nullable": true
+          },
+          "formData": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "WorkflowHistoryResponseDto": {
+        "type": "object",
+        "properties": {
+          "headInfo": {
+            "$ref": "#/components/schemas/WorkflowHeadInfoDto"
+          },
+          "historyItems": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WorkflowItemHistoryDto"
+            },
+            "nullable": true
+          },
+          "totalItemCount": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
       "WorkflowItem": {
         "type": "object",
         "properties": {
@@ -31312,6 +31510,64 @@
             "items": {
               "$ref": "#/components/schemas/FormItems"
             },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "WorkflowItemHistoryDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "workflowHeadId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "workflowNodeId": {
+            "type": "string",
+            "nullable": true
+          },
+          "nodeName": {
+            "type": "string",
+            "nullable": true
+          },
+          "nodeDescription": {
+            "type": "string",
+            "nullable": true
+          },
+          "nodeType": {
+            "type": "string",
+            "nullable": true
+          },
+          "nodeStatus": {
+            "type": "string",
+            "nullable": true
+          },
+          "nodeStatusText": {
+            "type": "string",
+            "nullable": true
+          },
+          "pendingWithUsers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PendingUserDto"
+            },
+            "nullable": true
+          },
+          "pendingUserCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "createdDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedDate": {
+            "type": "string",
+            "format": "date-time",
             "nullable": true
           }
         },

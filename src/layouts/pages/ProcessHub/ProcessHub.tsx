@@ -26,11 +26,8 @@ import {
   DialogContent,
   DialogActions,
   Button,
-  Stepper,
-  Step,
-  StepLabel,
-  StepContent,
   Alert,
+  Grid,
 } from "@mui/material";
 import { DataGrid, GridColDef, GridRenderCellParams } from "@mui/x-data-grid";
 import * as MuiIcons from "@mui/icons-material";
@@ -276,32 +273,22 @@ export default function ProcessHub(): JSX.Element {
     buttonDisabled: !currentWorkflow?.workflowGuid,
   });
 
-  // History Dialog Aç
+  // History Dialog Aç - ProcessHubApi kullanarak
   const handleOpenHistory = async (workflowHeadId: string) => {
     setHistoryDialogOpen(true);
     setHistoryLoading(true);
     
     try {
       const conf = getConfiguration();
-      // History bilgilerini çek
-      const response = await fetch(
-        `${conf.basePath}/api/WorkFlow/GetWorkflowHistory/${workflowHeadId}`,
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-        }
-      );
+      const api = new ProcessHubApi(conf);
       
-      if (response.ok) {
-        const data = await response.json();
-        setHistoryData(data);
-      } else {
-        console.error("History verisi alınamadı");
-        setHistoryData(null);
-      }
-    } catch (error) {
-      console.error("History yüklenirken hata:", error);
+      // ✅ Yeni GetHistory metodunu kullan
+      const response = await api.apiProcessHubHistoryWorkflowHeadIdGet(workflowHeadId);
+      
+      console.log("✅ History API yanıtı:", response.data);
+      setHistoryData(response.data);
+    } catch (error: any) {
+      console.error("❌ History yüklenirken hata:", error);
       setHistoryData(null);
     } finally {
       setHistoryLoading(false);
@@ -1024,7 +1011,7 @@ export default function ProcessHub(): JSX.Element {
             </IconButton>
           </DialogTitle>
 
-          <DialogContent sx={{ p: 3, mt: 2 }}>
+          <DialogContent sx={{ p: 2.5, mt: 1 }}>
             {historyLoading ? (
               <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", py: 8 }}>
                 <CircularProgress />
@@ -1035,137 +1022,450 @@ export default function ProcessHub(): JSX.Element {
               </Alert>
             ) : (
               <Box>
-                {/* Süreç Bilgileri */}
-                <Paper sx={{ p: 2, mb: 3, bgcolor: "#f8f9fa", borderRadius: 2 }}>
-                  <Box sx={{ display: "flex", gap: 3, flexWrap: "wrap" }}>
-                    <Box>
-                      <Typography variant="caption" color="text.secondary" fontWeight={600}>
-                        Talep No
-                      </Typography>
-                      <Typography variant="body2" fontWeight={700}>
-                        #{historyData.uniqNumber || selectedWorkflowForHistory?.id?.substring(0, 8)}
-                      </Typography>
-                    </Box>
-                    <Box>
-                      <Typography variant="caption" color="text.secondary" fontWeight={600}>
-                        Durum
-                      </Typography>
-                      <Chip
-                        label={historyData.workFlowStatusText || "Devam Ediyor"}
-                        size="small"
-                        color={
-                          historyData.workFlowStatusText?.includes("Tamamlan") ? "success" :
-                          historyData.workFlowStatusText?.includes("Red") ? "error" :
-                          "warning"
-                        }
-                        sx={{ mt: 0.5 }}
-                      />
-                    </Box>
-                    <Box>
-                      <Typography variant="caption" color="text.secondary" fontWeight={600}>
-                        Oluşturan
-                      </Typography>
-                      <Typography variant="body2" fontWeight={700}>
-                        {historyData.createUser || "Bilinmiyor"}
-                      </Typography>
-                    </Box>
-                    <Box>
-                      <Typography variant="caption" color="text.secondary" fontWeight={600}>
-                        Oluşturma Tarihi
-                      </Typography>
-                      <Typography variant="body2" fontWeight={700}>
-                        {historyData.createdDate 
-                          ? new Date(historyData.createdDate).toLocaleDateString("tr-TR", {
-                              day: "2-digit",
-                              month: "long",
-                              year: "numeric",
-                              hour: "2-digit",
-                              minute: "2-digit",
-                            })
-                          : "-"
-                        }
-                      </Typography>
-                    </Box>
-                  </Box>
+                {/* Süreç Bilgileri - Compact Card */}
+                <Paper 
+                  elevation={0}
+                  sx={{ 
+                    p: 2.5, 
+                    mb: 2.5, 
+                    background: "linear-gradient(135deg, #667eea15 0%, #764ba215 100%)",
+                    border: "1px solid #e0e0e0",
+                    borderRadius: 3 
+                  }}
+                >
+                  <Grid container spacing={2}>
+                    <Grid item xs={12} md={6}>
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                        <Box 
+                          sx={{ 
+                            width: 36, 
+                            height: 36, 
+                            borderRadius: 2, 
+                            bgcolor: "#667eea",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            color: "white"
+                          }}
+                        >
+                          <MuiIcons.Work />
+                        </Box>
+                        <Box>
+                          <Typography variant="caption" color="text.secondary" fontWeight={600} sx={{ fontSize: "0.7rem" }}>
+                            Workflow Adı
+                          </Typography>
+                          <Typography variant="body2" fontWeight={600} sx={{ fontSize: "0.9rem" }}>
+                            {historyData.headInfo?.workflowName || "İş Akışı"}
+                          </Typography>
+                        </Box>
+                      </Box>
+                    </Grid>
+                    
+                    <Grid item xs={12} md={6}>
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                        <Box 
+                          sx={{ 
+                            width: 36, 
+                            height: 36, 
+                            borderRadius: 2, 
+                            bgcolor: "#10b981",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            color: "white"
+                          }}
+                        >
+                          <MuiIcons.Description />
+                        </Box>
+                        <Box>
+                          <Typography variant="caption" color="text.secondary" fontWeight={600} sx={{ fontSize: "0.7rem" }}>
+                            Form Adı
+                          </Typography>
+                          <Typography variant="body2" fontWeight={600} sx={{ fontSize: "0.9rem" }}>
+                            {historyData.headInfo?.formName || "-"}
+                          </Typography>
+                        </Box>
+                      </Box>
+                    </Grid>
+
+                    <Grid item xs={12} md={4}>
+                      <Box>
+                        <Typography variant="caption" color="text.secondary" fontWeight={600} display="flex" alignItems="center" gap={0.5} sx={{ fontSize: "0.7rem" }}>
+                          <MuiIcons.Person sx={{ fontSize: 14 }} />
+                          Başlatan
+                        </Typography>
+                        <Typography variant="body2" fontWeight={600} sx={{ mt: 0.25, fontSize: "0.8rem" }}>
+                          {historyData.headInfo?.startedBy || "Bilinmiyor"}
+                        </Typography>
+                      </Box>
+                    </Grid>
+
+                    <Grid item xs={12} md={4}>
+                      <Box>
+                        <Typography variant="caption" color="text.secondary" fontWeight={600} display="flex" alignItems="center" gap={0.5} sx={{ fontSize: "0.7rem" }}>
+                          <MuiIcons.Schedule sx={{ fontSize: 14 }} />
+                          Başlangıç Tarihi
+                        </Typography>
+                        <Typography variant="body2" fontWeight={600} sx={{ mt: 0.25, fontSize: "0.8rem" }}>
+                          {historyData.headInfo?.startedDate 
+                            ? new Date(historyData.headInfo.startedDate).toLocaleDateString("tr-TR", {
+                                day: "2-digit",
+                                month: "short",
+                                year: "numeric",
+                              })
+                            : "-"
+                          }
+                        </Typography>
+                      </Box>
+                    </Grid>
+
+                    <Grid item xs={12} md={4}>
+                      <Box>
+                        <Typography variant="caption" color="text.secondary" fontWeight={600} display="flex" alignItems="center" gap={0.5} sx={{ fontSize: "0.7rem" }}>
+                          <MuiIcons.Info sx={{ fontSize: 14 }} />
+                          Durum
+                        </Typography>
+                        {(() => {
+                          const status = (historyData.headInfo?.workFlowStatus || "")?.toLowerCase();
+                          const statusText = (historyData.headInfo?.workFlowStatusText || "")?.toLowerCase();
+                          
+                          // WorkflowStatus enum: NotStarted, InProgress, Completed, Pending, SendBack
+                          let icon, color, label;
+                          
+                          if (status === "completed" || statusText.includes("tamamlan")) {
+                            icon = <MuiIcons.CheckCircle fontSize="small" />;
+                            color = "#10b981";
+                            label = "Tamamlandı";
+                          } else if (status === "inprogress" || statusText.includes("devam")) {
+                            icon = <MuiIcons.Autorenew fontSize="small" />;
+                            color = "#3b82f6";
+                            label = "Devam Ediyor";
+                          } else if (status === "pending" || statusText.includes("bekle")) {
+                            icon = <MuiIcons.Schedule fontSize="small" />;
+                            color = "#f59e0b";
+                            label = "Bekliyor";
+                          } else if (status === "sendback" || statusText.includes("geri")) {
+                            icon = <MuiIcons.ReplyAll fontSize="small" />;
+                            color = "#ef4444";
+                            label = "Geri Gönderildi";
+                          } else {
+                            icon = <MuiIcons.Circle fontSize="small" />;
+                            color = "#9ca3af";
+                            label = "Başlamadı";
+                          }
+                          
+                          return (
+                            <Chip
+                              icon={icon}
+                              label={historyData.headInfo?.workFlowStatusText || label}
+                              size="medium"
+                              sx={{ 
+                                mt: 0.5, 
+                                fontWeight: 600,
+                                bgcolor: "white",
+                                color: color,
+                                border: `1.5px solid ${color}30`,
+                                boxShadow: `0 2px 8px ${color}15`,
+                                "& .MuiChip-icon": {
+                                  color: color
+                                }
+                              }}
+                            />
+                          );
+                        })()}
+                      </Box>
+                    </Grid>
+                  </Grid>
+
+           
                 </Paper>
 
-                {/* Süreç Adımları Timeline */}
-                {historyData.workflowItems && historyData.workflowItems.length > 0 ? (
+                {/* Süreç Adımları Timeline - Compact */}
+                {historyData.historyItems && historyData.historyItems.length > 0 ? (
                   <Box>
-                    <Typography variant="h6" fontWeight={700} sx={{ mb: 2, display: "flex", alignItems: "center", gap: 1 }}>
-                      <MuiIcons.Timeline />
-                      Süreç Adımları
-                    </Typography>
+                    <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 2 }}>
+                      <Typography variant="subtitle1" fontWeight={600} sx={{ display: "flex", alignItems: "center", gap: 1, fontSize: "0.95rem" }}>
+                        <MuiIcons.Timeline sx={{ color: "#667eea", fontSize: 20 }} />
+                        Süreç Geçmişi
+                      </Typography>
+                      <Chip 
+                        label={`${historyData.totalItemCount || historyData.historyItems.length} Adım`}
+                        size="small"
+                        sx={{
+                          height: 22,
+                          fontSize: "0.7rem",
+                          borderColor: "#667eea30",
+                          color: "#667eea"
+                        }}
+                        variant="outlined"
+                      />
+                    </Box>
                     
-                    <Stepper orientation="vertical" activeStep={-1}>
-                      {historyData.workflowItems.map((item: any, index: number) => {
-                        const isCompleted = item.itemStatus === 2 || item.itemStatus === "Completed";
-                        const isPending = item.itemStatus === 0 || item.itemStatus === "Pending";
-                        const isInProgress = item.itemStatus === 1 || item.itemStatus === "InProgress";
+                    {/* Custom Timeline - Compact & Modern */}
+                    <Box sx={{ position: "relative" }}>
+                      {/* Timeline Vertical Line - Subtle */}
+                      <Box
+                        sx={{
+                          position: "absolute",
+                          left: 17,
+                          top: 10,
+                          bottom: 10,
+                          width: 2,
+                          background: "linear-gradient(180deg, #f0f0f0 0%, #e8e8e8 100%)",
+                          zIndex: 0,
+                          borderRadius: 1,
+                        }}
+                      />
+                      
+                      {historyData.historyItems.map((item: any, index: number) => {
+                        // WorkflowStatus enum: NotStarted, InProgress, Completed, Pending, SendBack
+                        const status = item.nodeStatus?.toLowerCase() || "";
+                        const statusText = item.nodeStatusText?.toLowerCase() || "";
+                        
+                        let stepColor, stepGradient, cardBg, statusIcon, statusLabel, statusColor;
+                        
+                        if (status === "completed" || statusText.includes("tamamlan")) {
+                          // Completed - Soft Green
+                          stepColor = "#10b981";
+                          stepGradient = "linear-gradient(135deg, #10b981 0%, #059669 100%)";
+                          cardBg = "rgba(236, 253, 245, 0.6)";
+                          statusIcon = <MuiIcons.CheckCircle fontSize="small" />;
+                          statusLabel = "Tamamlandı";
+                          statusColor = "#059669";
+                        } else if (status === "inprogress" || statusText.includes("devam")) {
+                          // InProgress - Soft Blue
+                          stepColor = "#3b82f6";
+                          stepGradient = "linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%)";
+                          cardBg = "rgba(239, 246, 255, 0.6)";
+                          statusIcon = <MuiIcons.Autorenew fontSize="small" />;
+                          statusLabel = "Devam Ediyor";
+                          statusColor = "#2563eb";
+                        } else if (status === "pending" || statusText.includes("bekle")) {
+                          // Pending - Soft Amber
+                          stepColor = "#f59e0b";
+                          stepGradient = "linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)";
+                          cardBg = "rgba(254, 243, 199, 0.6)";
+                          statusIcon = <MuiIcons.Schedule fontSize="small" />;
+                          statusLabel = "Bekliyor";
+                          statusColor = "#d97706";
+                        } else if (status === "sendback" || statusText.includes("geri")) {
+                          // SendBack - Soft Red
+                          stepColor = "#ef4444";
+                          stepGradient = "linear-gradient(135deg, #f87171 0%, #ef4444 100%)";
+                          cardBg = "rgba(254, 242, 242, 0.6)";
+                          statusIcon = <MuiIcons.ReplyAll fontSize="small" />;
+                          statusLabel = "Geri Gönderildi";
+                          statusColor = "#dc2626";
+                        } else {
+                          // NotStarted - Soft Gray
+                          stepColor = "#9ca3af";
+                          stepGradient = "linear-gradient(135deg, #d1d5db 0%, #9ca3af 100%)";
+                          cardBg = "rgba(249, 250, 251, 0.6)";
+                          statusIcon = <MuiIcons.Circle fontSize="small" />;
+                          statusLabel = "Başlamadı";
+                          statusColor = "#6b7280";
+                        }
+                        
+                        const isCompleted = status === "completed" || statusText.includes("tamamlan");
+                        const isPending = status === "pending" || statusText.includes("bekle");
+                        const isLast = index === historyData.historyItems.length - 1;
                         
                         return (
-                          <Step key={index} completed={isCompleted}>
-                            <StepLabel
-                              StepIconProps={{
-                                sx: {
-                                  color: isCompleted ? "#10b981" : isInProgress ? "#3b82f6" : "#94a3b8",
-                                  "& .MuiStepIcon-text": {
-                                    fill: "white",
+                          <Box 
+                            key={item.id || index} 
+                            sx={{ 
+                              position: "relative", 
+                              pl: 6,
+                              pb: isLast ? 0 : 1.5,
+                              zIndex: 1,
+                            }}
+                          >
+                            {/* Timeline Icon Circle - Compact */}
+                            <Box
+                              sx={{
+                                position: "absolute",
+                                left: 0,
+                                top: 4,
+                                width: 36,
+                                height: 36,
+                                borderRadius: "50%",
+                                background: stepGradient,
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                color: "white",
+                                boxShadow: isPending 
+                                  ? `0 0 0 3px ${stepColor}15, 0 3px 10px ${stepColor}20`
+                                  : `0 2px 6px ${stepColor}15`,
+                                transition: "all 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
+                                zIndex: 2,
+                                backdropFilter: "blur(10px)",
+                                border: `2px solid rgba(255, 255, 255, 0.9)`,
+                                animation: isPending ? "softPulse 3s ease-in-out infinite" : "none",
+                                "@keyframes softPulse": {
+                                  "0%, 100%": {
+                                    boxShadow: `0 0 0 3px ${stepColor}15, 0 3px 10px ${stepColor}20`,
+                                    transform: "scale(1)",
+                                  },
+                                  "50%": {
+                                    boxShadow: `0 0 0 5px ${stepColor}10, 0 4px 12px ${stepColor}15`,
+                                    transform: "scale(1.05)",
                                   },
                                 },
                               }}
                             >
-                              <Box>
-                                <Typography variant="body2" fontWeight={700}>
-                                  {item.nodeName || item.nodeType || `Adım ${index + 1}`}
-                                </Typography>
-                                <Typography variant="caption" color="text.secondary">
-                                  {item.nodeType === "FormTaskNode" ? "📝 Form Görevi" : 
-                                   item.nodeType === "UserTaskNode" ? "👤 Onay Görevi" : 
-                                   item.nodeType}
-                                </Typography>
+                              <Box sx={{ fontSize: 18 }}>{statusIcon}</Box>
+                            </Box>
+
+                            {/* Content Card - Compact Glassmorphism */}
+                            <Paper 
+                              elevation={0}
+                              sx={{ 
+                                p: 2,
+                                background: cardBg,
+                                backdropFilter: "blur(20px)",
+                                border: `1px solid ${stepColor}20`,
+                                borderRadius: 2.5,
+                                position: "relative",
+                                overflow: "hidden",
+                                transition: "all 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
+                                "&:hover": {
+                                  transform: "translateX(4px)",
+                                  background: `${cardBg}`,
+                                  boxShadow: `0 4px 20px ${stepColor}12`,
+                                  borderColor: `${stepColor}30`,
+                                },
+                                "&::before": {
+                                  content: '""',
+                                  position: "absolute",
+                                  left: 0,
+                                  top: 0,
+                                  bottom: 0,
+                                  width: 3,
+                                  background: stepGradient,
+                                  opacity: isPending ? 1 : 0.6,
+                                  transition: "opacity 0.3s ease",
+                                }
+                              }}
+                            >
+                              {/* Header - Compact */}
+                              <Box sx={{ mb: 1.5 }}>
+                                <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 1.5 }}>
+                                  <Box sx={{ flex: 1, minWidth: 0 }}>
+                                    <Typography 
+                                      variant="subtitle1" 
+                                      fontWeight={600} 
+                                      sx={{ 
+                                        color: "#1a1a1a",
+                                        fontSize: "0.95rem",
+                                        letterSpacing: "-0.01em",
+                                        lineHeight: 1.3,
+                                        overflow: "hidden",
+                                        textOverflow: "ellipsis",
+                                        display: "-webkit-box",
+                                        WebkitLineClamp: 2,
+                                        WebkitBoxOrient: "vertical",
+                                      }}
+                                    >
+                                      {item.nodeName || `Adım ${index + 1}`}
+                                    </Typography>
+                                    
+                                    {/* Task Type - Inline */}
+                                    {(item.nodeType?.toLowerCase().includes("form") || 
+                                      item.nodeType?.toLowerCase().includes("user") || 
+                                      item.nodeType?.toLowerCase().includes("approval")) && (
+                                      <Typography 
+                                        variant="caption" 
+                                        sx={{ 
+                                          color: "text.disabled",
+                                          fontSize: "0.7rem",
+                                          display: "block",
+                                          mt: 0.25
+                                        }}
+                                      >
+                                        {item.nodeType?.toLowerCase().includes("form") ? "📝 Form Görevi" : "👤 Onay Görevi"}
+                                      </Typography>
+                                    )}
+                                  </Box>
+                                  
+                                  {/* Minimal Status Badge */}
+                                  <Chip
+                                    icon={statusIcon}
+                                    label={item.nodeStatusText || statusLabel}
+                                    size="small"
+                                    sx={{
+                                      bgcolor: "white",
+                                      color: statusColor,
+                                      fontWeight: 600,
+                                      fontSize: "0.7rem",
+                                      height: 24,
+                                      border: `1px solid ${stepColor}30`,
+                                      boxShadow: `0 1px 3px ${stepColor}08`,
+                                      "& .MuiChip-icon": {
+                                        color: statusColor,
+                                        fontSize: 14
+                                      }
+                                    }}
+                                  />
+                                </Box>
                               </Box>
-                            </StepLabel>
-                            <StepContent>
-                              <Box sx={{ ml: 2, pb: 2 }}>
-                                {item.message && (
-                                  <Typography variant="body2" sx={{ mb: 1 }}>
-                                    💬 {item.message}
-                                  </Typography>
-                                )}
-                                {item.approveUser && (
-                                  <Typography variant="caption" display="block" color="text.secondary">
-                                    👤 Onaylayan: {item.approveUserNameSurname || item.approveUser}
-                                  </Typography>
-                                )}
+
+                              {/* Tarih Bilgileri - Ultra Compact */}
+                              <Box 
+                                sx={{ 
+                                  display: "flex", 
+                                  alignItems: "center",
+                                  flexWrap: "wrap", 
+                                  gap: 1.5,
+                                  pt: 1.5,
+                                  mt: 1.5,
+                                  borderTop: "1px solid rgba(0,0,0,0.05)"
+                                }}
+                              >
                                 {item.createdDate && (
-                                  <Typography variant="caption" display="block" color="text.secondary">
-                                    🕒 {new Date(item.createdDate).toLocaleString("tr-TR")}
-                                  </Typography>
+                                  <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                                    <MuiIcons.Schedule sx={{ fontSize: 14, color: stepColor, opacity: 0.7 }} />
+                                    <Typography variant="caption" sx={{ color: "text.secondary", fontSize: "0.7rem" }}>
+                                      {new Date(item.createdDate).toLocaleString("tr-TR", {
+                                        day: "2-digit",
+                                        month: "short",
+                                        hour: "2-digit",
+                                        minute: "2-digit"
+                                      })}
+                                    </Typography>
+                                  </Box>
                                 )}
-                                <Chip
-                                  label={
-                                    isCompleted ? "✅ Tamamlandı" :
-                                    isInProgress ? "▶️ Devam Ediyor" :
-                                    "⏳ Beklemede"
-                                  }
-                                  size="small"
-                                  sx={{
-                                    mt: 1,
-                                    bgcolor: isCompleted ? "#d1fae5" : isInProgress ? "#dbeafe" : "#f1f5f9",
-                                    color: isCompleted ? "#065f46" : isInProgress ? "#1e40af" : "#64748b",
-                                    fontWeight: 600,
-                                  }}
-                                />
+                                {item.updatedDate && (
+                                  <>
+                                    <Typography variant="caption" sx={{ color: "text.disabled", fontSize: "0.7rem" }}>
+                                      →
+                                    </Typography>
+                                    <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                                      <MuiIcons.CheckCircleOutline sx={{ fontSize: 14, color: stepColor, opacity: 0.7 }} />
+                                      <Typography variant="caption" sx={{ color: "text.secondary", fontSize: "0.7rem" }}>
+                                        {new Date(item.updatedDate).toLocaleString("tr-TR", {
+                                          day: "2-digit",
+                                          month: "short",
+                                          hour: "2-digit",
+                                          minute: "2-digit"
+                                        })}
+                                      </Typography>
+                                    </Box>
+                                  </>
+                                )}
                               </Box>
-                            </StepContent>
-                          </Step>
+                            </Paper>
+                          </Box>
                         );
                       })}
-                    </Stepper>
+                    </Box>
                   </Box>
                 ) : (
-                  <Alert severity="info" sx={{ borderRadius: 2 }}>
+                  <Alert 
+                    severity="info" 
+                    icon={<MuiIcons.InfoOutlined />}
+                    sx={{ borderRadius: 2 }}
+                  >
                     Henüz süreç adımı bulunmamaktadır.
                   </Alert>
                 )}
