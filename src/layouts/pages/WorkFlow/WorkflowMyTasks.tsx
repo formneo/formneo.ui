@@ -394,42 +394,27 @@ function WorkflowMyTasks() {
       const conf = getConfiguration();
       const workflowApi = new WorkFlowApi(conf);
 
-      // workflowItemId'yi al (task'tan veya id'den)
       const workflowItemId = task.workflowItemId || task.id;
-      
       if (!workflowItemId) {
         console.error("WorkflowItemId bulunamadı");
         alert("Görev detayı alınamadı: WorkflowItemId bulunamadı");
         return;
       }
 
-      // ✅ API'den görev detayını çek
       const response = await workflowApi.apiWorkFlowGetTaskDetailByWorkflowItemIdWorkflowitemWorkflowItemIdTaskDetailGet(workflowItemId);
       const taskDetail: TaskFormDto = response.data;
 
-
-      // ✅ taskType veya nodeType'a göre formTask mı userTask mı belirle
       const isFormTask = taskDetail.formItemId !== null && taskDetail.formItemId !== undefined;
       const isUserTask = taskDetail.approveItemId !== null && taskDetail.approveItemId !== undefined;
-      
-      // Alternatif olarak taskType veya nodeType'a bak
       const taskType = taskDetail.taskType || taskDetail.nodeType || "";
       const isFormTaskByType = taskType?.toLowerCase().includes("form") || taskDetail.nodeType?.toLowerCase() === "formtasknode";
       const isUserTaskByType = taskType?.toLowerCase().includes("user") || taskDetail.nodeType?.toLowerCase() === "usertasknode";
-
-      // Son karar: önce itemId'lere bak, yoksa type'a bak
       const finalIsFormTask = isFormTask || (isFormTaskByType && !isUserTask);
       const finalIsUserTask = isUserTask || (isUserTaskByType && !isFormTask);
 
-      // ✅ workflowItemId kullanılmalı (workflowHeadId değil)
       const workflowInstanceId = taskDetail.workflowItemId || task.workflowItemId || workflowItemId || task.id;
 
-
-      // ✅ FormTask ise runtime sayfasına yönlendir
       if (finalIsFormTask) {
-
-        alert(taskDetail.nodeScript);
-              alert(taskDetail.fieldScript);
         navigate(`/workflows/runtime/${workflowInstanceId}`, {
           state: {
             workflowInstance: {
@@ -445,17 +430,10 @@ function WorkflowMyTasks() {
               workflowItemId: taskDetail.workflowItemId || workflowItemId,
             },
             task: task,
-            taskDetail: taskDetail, // ✅ fieldScript taskDetail içinde
+            taskDetail: taskDetail,
           },
         });
-      } 
-      // ✅ UserTask ise userTask sayfasına yönlendir (veya runtime'da userTask göster)
-      else if (finalIsUserTask) {
-        console.log("🚀 UserTask'a yönlendiriliyor:", {
-          hasFieldScript: !!taskDetail?.fieldScript,
-          fieldScriptLength: taskDetail?.fieldScript?.length || 0,
-        });
-        
+      } else if (finalIsUserTask) {
         navigate(`/workflows/runtime/${workflowInstanceId}`, {
           state: {
             workflowInstance: {
@@ -472,12 +450,10 @@ function WorkflowMyTasks() {
               approverStatus: taskDetail.approverStatus,
             },
             task: task,
-            taskDetail: taskDetail, // ✅ fieldScript taskDetail içinde
+            taskDetail: taskDetail,
           },
         });
-      } 
-      // ✅ Belirlenemezse runtime'a git (mevcut mantık)
-      else {
+      } else {
         console.warn("Görev tipi belirlenemedi, varsayılan olarak runtime'a yönlendiriliyor");
         navigate(`/workflows/runtime/${workflowInstanceId}`, {
           state: {

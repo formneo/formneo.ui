@@ -2736,6 +2736,7 @@ export interface ProcessHubItemDto {
     'workflowName'?: string | null;
     'currentNodeId'?: string | null;
     'currentNodeName'?: string | null;
+    'currentWorkflowItemId'?: string | null;
     'workFlowStatus'?: string | null;
     'workFlowStatusText'?: string | null;
     'workFlowInfo'?: string | null;

@@ -25981,6 +25981,11 @@
             "type": "string",
             "nullable": true
           },
+          "currentWorkflowItemId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
           "workFlowStatus": {
             "type": "string",
             "nullable": true

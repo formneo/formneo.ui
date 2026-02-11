@@ -40,6 +40,7 @@ import {
   WorkFlowDefinationApi,
   FormDataApi,
   ProcessHubApi,
+  WorkFlowApi,
   WorkFlowMenuResponseDto,
   WorkFlowMenuGroupDto,
   WorkFlowMenuItemDto,
@@ -302,6 +303,98 @@ export default function ProcessHub(): JSX.Element {
     setHistoryData(null);
   };
 
+  /**
+   * WorkflowMyTasks handleWorkflowClick ile birebir aynı - satırdan alır
+   */
+  const handleWorkflowClick = async (row: any) => {
+    try {
+      const conf = getConfiguration();
+      const workflowApi = new WorkFlowApi(conf);
+
+      const workflowItemId = row.currentWorkflowItemId || row.workflowItemId || row.id;
+      if (!workflowItemId) {
+        alert("Görev detayı alınamadı: WorkflowItemId bulunamadı");
+        return;
+      }
+
+      const response = await workflowApi.apiWorkFlowGetTaskDetailByWorkflowItemIdWorkflowitemWorkflowItemIdTaskDetailGet(workflowItemId);
+      const taskDetail = response.data;
+
+      const isFormTask = taskDetail.formItemId !== null && taskDetail.formItemId !== undefined;
+      const isUserTask = taskDetail.approveItemId !== null && taskDetail.approveItemId !== undefined;
+      const taskType = taskDetail.taskType || taskDetail.nodeType || "";
+      const isFormTaskByType = taskType?.toLowerCase().includes("form") || taskDetail.nodeType?.toLowerCase() === "formtasknode";
+      const isUserTaskByType = taskType?.toLowerCase().includes("user") || taskDetail.nodeType?.toLowerCase() === "usertasknode";
+      const finalIsFormTask = isFormTask || (isFormTaskByType && !isUserTask);
+      const finalIsUserTask = isUserTask || (isUserTaskByType && !isFormTask);
+
+      const workflowInstanceId = taskDetail.workflowItemId || row.currentWorkflowItemId || row.workflowItemId || workflowItemId || row.id;
+      const task = { ...row, workflowItemId, workflowHeadId: row.id };
+
+      if (finalIsFormTask) {
+        navigate(`/workflows/runtime/${workflowInstanceId}`, {
+          state: {
+            workflowInstance: {
+              id: workflowInstanceId,
+              workflowId: taskDetail.workflowHeadId || task.workflowHeadId || "",
+              workflowName: task.workflowName || "İş Akışı",
+              formId: taskDetail.formId || task.formId || "",
+              formName: task.formName || "Form",
+              taskId: taskDetail.formItemId || task.id,
+              taskType: "formTask",
+              formDesign: taskDetail.formDesign || task.formDesign,
+              formData: taskDetail.formData,
+              workflowItemId: taskDetail.workflowItemId || workflowItemId,
+            },
+            task: task,
+            taskDetail: taskDetail,
+          },
+        });
+      } else if (finalIsUserTask) {
+        navigate(`/workflows/runtime/${workflowInstanceId}`, {
+          state: {
+            workflowInstance: {
+              id: workflowInstanceId,
+              workflowId: taskDetail.workflowHeadId || task.workflowHeadId || "",
+              workflowName: task.workflowName || "İş Akışı",
+              formId: taskDetail.formId || task.formId || "",
+              formName: task.formName || "Kullanıcı Görevi",
+              taskId: taskDetail.approveItemId || task.id,
+              taskType: "userTask",
+              workflowItemId: taskDetail.workflowItemId || workflowItemId,
+              approveUser: taskDetail.approveUser,
+              approveUserNameSurname: taskDetail.approveUserNameSurname,
+              approverStatus: taskDetail.approverStatus,
+            },
+            task: task,
+            taskDetail: taskDetail,
+          },
+        });
+      } else {
+        console.warn("Görev tipi belirlenemedi, varsayılan olarak runtime'a yönlendiriliyor");
+        navigate(`/workflows/runtime/${workflowInstanceId}`, {
+          state: {
+            workflowInstance: {
+              id: workflowInstanceId,
+              workflowId: task.workflowHeadId || "",
+              workflowName: task.workflowName || "İş Akışı",
+              formId: task.formId || "",
+              formName: task.formName || "Form",
+              taskId: task.id,
+              taskType: task.type,
+              formDesign: task.formDesign,
+            },
+            task: task,
+            taskDetail: taskDetail,
+          },
+        });
+      }
+    } catch (error: any) {
+      console.error("Görev detayı çekilirken hata:", error);
+      alert("Görev detayı alınamadı. Lütfen tekrar deneyin.");
+    }
+  };
+
   // Yeni talep oluştur - currentWorkflow'u kullan
   const handleNewRequest = async () => {
     console.log("🔵 Yeni Talep butonuna basıldı", {
@@ -483,10 +576,7 @@ export default function ProcessHub(): JSX.Element {
               size="small" 
               onClick={(e) => {
                 e.stopPropagation();
-                // Workflow runtime sayfasına yönlendir
-                if (params.row.workflowDefinationId && params.row.id) {
-                  navigate(`/workflows/runtime/${params.row.workflowDefinationId}/${params.row.id}`);
-                }
+                handleWorkflowClick(params.row);
               }}
             >
               <MuiIcons.Visibility fontSize="small" />
@@ -916,7 +1006,7 @@ export default function ProcessHub(): JSX.Element {
                     },
                   }}
                   onRowClick={(params) => {
-                    console.log("Satıra tıklandı:", params.row);
+                    handleWorkflowClick(params.row);
                   }}
                   localeText={{
                     noRowsLabel: "Kayıt bulunamadı",
@@ -1409,6 +1499,60 @@ export default function ProcessHub(): JSX.Element {
                                   />
                                 </Box>
                               </Box>
+
+                              {/* Kimde Bekliyor - Pending Users (Küçük kutucuklar) */}
+                              {isPending && item.pendingWithUsers && item.pendingWithUsers.length > 0 && (
+                                <Box
+                                  sx={{
+                                    mt: 1,
+                                    p: 1,
+                                    borderRadius: 1.5,
+                                    bgcolor: "rgba(255,255,255,0.6)",
+                                    border: `1px solid ${stepColor}25`,
+                                  }}
+                                >
+                                  <Typography variant="caption" fontWeight={600} sx={{ fontSize: "0.65rem", color: statusColor, display: "flex", alignItems: "center", gap: 0.5, mb: 0.5 }}>
+                                    <MuiIcons.PersonOutline sx={{ fontSize: 12 }} />
+                                    Kimde bekliyor?
+                                  </Typography>
+                                  <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
+                                    {item.pendingWithUsers.map((u: any, idx: number) => (
+                                      <Tooltip
+                                        key={u.userId || idx}
+                                        title={`${u.userName} • ${u.position || "-"} • ${u.department || "-"}`}
+                                        arrow
+                                        placement="top"
+                                      >
+                                        <Box
+                                          sx={{
+                                            display: "inline-flex",
+                                            alignItems: "center",
+                                            gap: 0.5,
+                                            px: 1,
+                                            py: 0.35,
+                                            borderRadius: 1,
+                                            border: `1px solid ${stepColor}40`,
+                                            bgcolor: "white",
+                                            cursor: "default",
+                                            transition: "background-color 0.2s",
+                                            "&:hover": { bgcolor: `${stepColor}08` },
+                                          }}
+                                        >
+                                          <MuiIcons.Person sx={{ fontSize: 12, color: statusColor }} />
+                                          <Box sx={{ display: "flex", flexDirection: "column", lineHeight: 1.2 }}>
+                                            <Typography component="span" sx={{ fontWeight: 600, fontSize: "0.7rem" }}>
+                                              {u.userName}
+                                            </Typography>
+                                            <Typography component="span" sx={{ fontSize: "0.6rem", color: "text.secondary" }}>
+                                              {[u.position, u.department].filter(Boolean).join(" · ") || "-"}
+                                            </Typography>
+                                          </Box>
+                                        </Box>
+                                      </Tooltip>
+                                    ))}
+                                  </Box>
+                                </Box>
+                              )}
 
                               {/* Tarih Bilgileri - Ultra Compact */}
                               <Box 
