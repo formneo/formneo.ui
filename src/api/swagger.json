@@ -25754,38 +25754,6 @@
         },
         "additionalProperties": false
       },
-      "PendingUserDto": {
-        "type": "object",
-        "properties": {
-          "userId": {
-            "type": "string",
-            "nullable": true
-          },
-          "userName": {
-            "type": "string",
-            "nullable": true
-          },
-          "department": {
-            "type": "string",
-            "nullable": true
-          },
-          "departmentId": {
-            "type": "string",
-            "format": "uuid",
-            "nullable": true
-          },
-          "position": {
-            "type": "string",
-            "nullable": true
-          },
-          "positionId": {
-            "type": "string",
-            "format": "uuid",
-            "nullable": true
-          }
-        },
-        "additionalProperties": false
-      },
       "Permission": {
         "enum": [
           1,
@@ -25965,6 +25933,11 @@
             "type": "string",
             "format": "uuid"
           },
+          "workflowItemId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
           "workflowDefinationId": {
             "type": "string",
             "format": "uuid"
@@ -25979,11 +25952,6 @@
           },
           "currentNodeName": {
             "type": "string",
-            "nullable": true
-          },
-          "currentWorkflowItemId": {
-            "type": "string",
-            "format": "uuid",
             "nullable": true
           },
           "workFlowStatus": {
@@ -31555,16 +31523,14 @@
             "type": "string",
             "nullable": true
           },
-          "pendingWithUsers": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/PendingUserDto"
-            },
+          "summary": {
+            "type": "string",
             "nullable": true
           },
-          "pendingUserCount": {
-            "type": "integer",
-            "format": "int32"
+          "operationDate": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
           },
           "createdDate": {
             "type": "string",

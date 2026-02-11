@@ -7,6 +7,7 @@ import {
   Divider,
   List,
   ListItem,
+  ListSubheader,
   Dialog,
   DialogTitle,
   DialogContent,
@@ -15,11 +16,18 @@ import {
   IconButton,
   Tooltip,
   Chip,
+  Tabs,
+  Tab,
+  Alert,
+  Paper,
 } from "@mui/material";
 import {
   Close as CloseIcon,
   Code as CodeIcon,
   Info as InfoIcon,
+  CallSplit as CallSplitIcon,
+  TableChart as TableChartIcon,
+  TipsAndUpdates as TipsIcon,
 } from "@mui/icons-material";
 import { Editor } from "@monaco-editor/react";
 import { Splitter, SplitterPanel } from "primereact/splitter";
@@ -39,6 +47,7 @@ const ScriptTab = ({
   const [name, setName] = useState("Script");
   const [formInputsCache, setFormInputsCache] = useState({}); // Form input'ları cache'i (/api/Form/{id}/inputs)
   const [loadingInputs, setLoadingInputs] = useState(false); // Input'lar yükleniyor mu?
+  const [activeTab, setActiveTab] = useState(0); // 0: Process Data & Script, 1: Koşul Rehberi
 
   // ✅ Node değiştiğinde state'i güncelle
   useEffect(() => {
@@ -48,7 +57,7 @@ const ScriptTab = ({
     }
   }, [node?.id, node?.data?.script, node?.data?.name]);
 
-  // ✅ Modal açıldığında sadece 1 kez form inputs çek (/api/Form/{id}/inputs)
+  // ✅ Modal açıldığında form inputs çek - tüm form node'ları dahil
   useEffect(() => {
     if (!open || !node?.id || !edges || !nodes) return;
     
@@ -57,31 +66,22 @@ const ScriptTab = ({
       
       try {
         const incomingEdges = edges.filter((edge) => edge.target === node.id);
-        const formNodes = incomingEdges
+        const incomingNodes = incomingEdges
           .map((edge) => nodes.find((n) => n.id === edge.source))
-          .filter((n) => n && n.type === "formNode");
+          .filter(Boolean);
+        const formNodes = incomingNodes.filter((n) => n.type === "formNode" || n.type === "formTaskNode");
 
         const inputsCache = {};
         const formIdsToFetch = [];
         
-        // ✅ ScriptNode'un kendi formId'sini de kontrol et (default form)
-        const scriptNodeFormId = node.data?.formId || 
-                                 node.data?.selectedFormId || 
-                                 node.data?.workflowFormInfo?.formId;
+        // Workflow form + ScriptNode form
+        const scriptNodeFormId = node.data?.formId || node.data?.selectedFormId || node.data?.workflowFormInfo?.formId;
+        if (scriptNodeFormId && !formInputsCache[scriptNodeFormId]) formIdsToFetch.push(scriptNodeFormId);
+        if (selectedForm?.id && !formInputsCache[selectedForm.id]) formIdsToFetch.push(selectedForm.id);
         
-        if (scriptNodeFormId && !formInputsCache[scriptNodeFormId]) {
-          formIdsToFetch.push(scriptNodeFormId);
-        }
-        
-        // Önce hangi formId'lerin cache'de olmadığını belirle
         for (const formNode of formNodes) {
-          const formId = formNode.data?.formId || 
-                         formNode.data?.selectedFormId || 
-                         formNode.data?.workflowFormInfo?.formId;
-          
-          if (formId && !formInputsCache[formId]) {
-            formIdsToFetch.push(formId);
-          }
+          const formId = formNode.data?.formId || formNode.data?.selectedFormId || formNode.data?.workflowFormInfo?.formId;
+          if (formId && !formInputsCache[formId]) formIdsToFetch.push(formId);
         }
         
         // Sadece cache'de olmayan formId'ler için API çağrısı yap
@@ -211,117 +211,146 @@ const ScriptTab = ({
     };
   }, []);
 
-  // ✅ Form alanlarını düz liste olarak topla (tree yerine)
-  const formFieldsList = useMemo(() => {
-    const fields = [];
+  // ✅ Form alanlarını API + parsedFormDesign'dan birleştir (tüm componentler)
+  const getFormFieldsFromSource = useCallback((formId, source) => {
+    const items = [];
+    const seen = new Set();
+    const add = (fieldId, fieldLabel, componentType) => {
+      if (!fieldId || seen.has(fieldId)) return;
+      seen.add(fieldId);
+      items.push({ fieldId, fieldLabel, componentType });
+    };
 
-    // ✅ ScriptNode'un kendi formId'sinden gelen alanları ekle (formData olarak)
-    const scriptNodeFormId = node.data?.formId || 
-                             node.data?.selectedFormId || 
-                             node.data?.workflowFormInfo?.formId;
-    
-    if (scriptNodeFormId && formInputsCache[scriptNodeFormId]) {
+    // 1. API (formInputsCache)
+    if (formId && formInputsCache[formId]) {
       try {
-        const inputs = formInputsCache[scriptNodeFormId];
-        
-        // Input'lar array olabilir veya object olabilir
-        let inputArray = [];
-        if (Array.isArray(inputs)) {
-          inputArray = inputs;
-        } else if (inputs && typeof inputs === "object") {
-          if (inputs.inputs && Array.isArray(inputs.inputs)) {
-            inputArray = inputs.inputs;
-          } else if (inputs.fields && Array.isArray(inputs.fields)) {
-            inputArray = inputs.fields;
-          } else {
-            inputArray = Object.values(inputs);
-          }
-        }
-        
-        // Input'ları düz listeye ekle (formData olarak, previousNodes değil)
-        if (inputArray.length > 0) {
-          inputArray.forEach((input) => {
-            // ✅ Component'lerin name alanını öncelikli kullan (key yerine)
-            const fieldId = input.name || input.id || input.key || input.fieldName || "";
-            const fieldLabel = input.label || input.title || input.fieldLabel || input.name || fieldId;
-            const componentType = input.componentType || input.type || input.component || "unknown";
-            
-            if (fieldId) {
-              fields.push({
-                fieldId,
-                fieldLabel,
-                componentType,
-                nodeName: "formData", // ✅ ScriptNode'un kendi formu için formData kullan
-                path: `formData.${fieldId}` // ✅ formData.fieldId formatında
-              });
-            }
-          });
-        }
-      } catch (e) {
-        // ignore parse errors
-      }
+        const inputs = formInputsCache[formId];
+        let arr = Array.isArray(inputs) ? inputs : inputs?.inputs || inputs?.fields || Object.values(inputs || {});
+        (arr || []).forEach((i) => {
+          const id = i.name || i.id || i.key || i.fieldName || "";
+          add(id, i.label || i.title || i.fieldLabel || i.name || id, i.componentType || i.type || i.component || "unknown");
+        });
+      } catch (e) {}
     }
 
-    // Önceki node'ları bul (incoming edges)
+    // 2. parsedFormDesign (API'de eksik componentler varsa)
+    if (source?.fields) {
+      source.fields.forEach((f) => add(f.name || f.key, f.label || f.title || f.name, f.componentType || f.type || "unknown"));
+    }
+    if (source?.raw) {
+      const raw = source.raw;
+      let extracted = extractFieldsFromComponents(raw);
+      if (extracted.length === 0 && raw?.components) extracted = extractFieldsFromComponents(raw.components);
+      extracted.forEach((f) => add(f.name || f.key, f.label || f.title || f.name, f.component || f.componentType || "unknown"));
+    }
+
+    return items;
+  }, [formInputsCache, extractFieldsFromComponents]);
+
+  // ✅ Process Data: workflow + formData + previousNodes (formData, öncekiNode, global mantığı)
+  const formFieldsList = useMemo(() => {
+    const fields = [];
+    const formId = node.data?.formId || node.data?.selectedFormId || node.data?.workflowFormInfo?.formId || selectedForm?.id;
+
+    // 1. WORKFLOW (global değişkenler)
+    [
+      { fieldId: "instanceId", fieldLabel: "Workflow Instance ID", path: "workflow.instanceId" },
+      { fieldId: "startTime", fieldLabel: "Başlangıç Zamanı", path: "workflow.startTime" },
+      { fieldId: "currentStep", fieldLabel: "Mevcut Adım", path: "workflow.currentStep" },
+      { fieldId: "formId", fieldLabel: "Form ID", path: "workflow.formId" },
+      { fieldId: "formName", fieldLabel: "Form Adı", path: "workflow.formName" },
+    ].forEach(({ fieldId, fieldLabel, path }) => {
+      fields.push({
+        fieldId,
+        fieldLabel,
+        componentType: "workflow",
+        nodeName: "workflow",
+        path,
+        formId: null,
+        section: "workflow",
+      });
+    });
+
+    // 2. FORMDATA (form alanları - API + parsedFormDesign birleşik, tüm componentler)
+    let rawDesign = parsedFormDesign?.raw;
+    if (!rawDesign && selectedForm?.formDesign) {
+      try {
+        rawDesign = typeof selectedForm.formDesign === "string" ? JSON.parse(selectedForm.formDesign) : selectedForm.formDesign;
+      } catch (e) {}
+    }
+    const formDesignSource = (parsedFormDesign || rawDesign) ? { raw: rawDesign || parsedFormDesign?.raw, fields: parsedFormDesign?.fields } : null;
+    const formDataItems = getFormFieldsFromSource(formId, formDesignSource);
+    formDataItems.forEach(({ fieldId, fieldLabel, componentType }) => {
+      fields.push({
+        fieldId,
+        fieldLabel,
+        componentType,
+        nodeName: "formData",
+        path: `formData.${fieldId}`,
+        formId: formId || null,
+        section: "formData",
+      });
+    });
+
+    // 3. PREVIOUSNODES (tüm önceki node tipleri)
     if (node?.id && edges) {
-      const incomingEdges = edges.filter((edge) => edge.target === node.id);
+      const incomingEdges = edges.filter((e) => e.target === node.id);
       incomingEdges.forEach((edge) => {
         const sourceNode = nodes.find((n) => n.id === edge.source);
-        if (sourceNode && sourceNode.type === "formNode") {
-          const nodeName = sourceNode.data?.name || sourceNode.id;
-          
-          // ✅ /api/Form/{id}/inputs endpoint'inden gelen input'ları kullan
-          const formId = sourceNode.data?.formId || 
-                        sourceNode.data?.selectedFormId || 
-                        sourceNode.data?.workflowFormInfo?.formId;
-          
-          if (formId && formInputsCache[formId]) {
-            try {
-              const inputs = formInputsCache[formId];
-              
-              // Input'lar array olabilir veya object olabilir
-              let inputArray = [];
-              if (Array.isArray(inputs)) {
-                inputArray = inputs;
-              } else if (inputs && typeof inputs === "object") {
-                if (inputs.inputs && Array.isArray(inputs.inputs)) {
-                  inputArray = inputs.inputs;
-                } else if (inputs.fields && Array.isArray(inputs.fields)) {
-                  inputArray = inputs.fields;
-                } else {
-                  inputArray = Object.values(inputs);
-                }
-              }
-              
-              // Input'ları düz listeye ekle
-              if (inputArray.length > 0) {
-                inputArray.forEach((input) => {
-                  // ✅ Component'lerin name alanını öncelikli kullan (key yerine)
-                  const fieldId = input.name || input.id || input.key || input.fieldName || "";
-                  const fieldLabel = input.label || input.title || input.fieldLabel || input.name || fieldId;
-                  const componentType = input.componentType || input.type || input.component || "unknown";
-                  
-                  if (fieldId) {
-                    fields.push({
-                      fieldId,
-                      fieldLabel,
-                      componentType,
-                      nodeName,
-                      path: `previousNodes.${nodeName}.${fieldId}`
-                    });
-                  }
-                });
-              }
-            } catch (e) {
-              // ignore parse errors
-            }
-          }
+        if (!sourceNode) return;
+        const nodeName = sourceNode.data?.name || sourceNode.id;
+
+        if (sourceNode.type === "formNode" || sourceNode.type === "formTaskNode") {
+          const fid = sourceNode.data?.formId || sourceNode.data?.selectedFormId || sourceNode.data?.workflowFormInfo?.formId;
+          const source = sourceNode.data?.parsedFormDesign || parsedFormDesign;
+          const formItems = getFormFieldsFromSource(fid, source);
+          fields.push({ fieldId: "action", fieldLabel: "Buton Action", componentType: "string", nodeName, path: `previousNodes.${nodeName}.action`, formId: fid, section: "previousNodes" });
+          formItems.forEach(({ fieldId, fieldLabel, componentType }) => {
+            fields.push({
+              fieldId,
+              fieldLabel,
+              componentType,
+              nodeName,
+              path: `previousNodes.${nodeName}.formData.${fieldId}`,
+              formId: fid,
+              section: "previousNodes",
+            });
+          });
+        } else if (sourceNode.type === "userTaskNode") {
+          const outs = [
+            { fieldId: "action", fieldLabel: "Buton Action", path: `previousNodes.${nodeName}.action` },
+            { fieldId: "userId", fieldLabel: "User ID", path: `previousNodes.${nodeName}.userId` },
+            { fieldId: "userName", fieldLabel: "User Name", path: `previousNodes.${nodeName}.userName` },
+          ];
+          outs.forEach(({ fieldId, fieldLabel, path }) => {
+            fields.push({ fieldId, fieldLabel, componentType: "string", nodeName, path, formId: null, section: "previousNodes" });
+          });
+        } else if (sourceNode.type === "setFieldNode") {
+          const outs = [
+            { fieldId: "updatedFields", fieldLabel: "Güncellenen Alanlar", path: `previousNodes.${nodeName}.updatedFields` },
+            { fieldId: "summary", fieldLabel: "Özet", path: `previousNodes.${nodeName}.summary` },
+          ];
+          outs.forEach(({ fieldId, fieldLabel, path }) => {
+            fields.push({ fieldId, fieldLabel, componentType: "object", nodeName, path, formId: null, section: "previousNodes" });
+          });
+        } else if (sourceNode.type === "approverNode") {
+          const outs = [
+            { fieldId: "approvalStatus", fieldLabel: "Onay Durumu", path: `previousNodes.${nodeName}.approvalStatus` },
+            { fieldId: "approverId", fieldLabel: "Onaylayan ID", path: `previousNodes.${nodeName}.approverId` },
+          ];
+          outs.forEach(({ fieldId, fieldLabel, path }) => {
+            fields.push({ fieldId, fieldLabel, componentType: "string", nodeName, path, formId: null, section: "previousNodes" });
+          });
+        } else if (sourceNode.type === "scriptNode") {
+          fields.push({ fieldId: "result", fieldLabel: "Script Sonucu", componentType: "boolean", nodeName, path: `previousNodes.${nodeName}.result`, formId: null, section: "previousNodes" });
+        } else if (sourceNode.type === "queryConditionNode") {
+          fields.push({ fieldId: "conditionResult", fieldLabel: "Koşul Sonucu", componentType: "boolean", nodeName, path: `previousNodes.${nodeName}.conditionResult`, formId: null, section: "previousNodes" });
         }
       });
     }
 
     return fields;
-  }, [node?.id, node?.data?.formId, node?.data?.selectedFormId, node?.data?.workflowFormInfo?.formId, nodes, edges, formInputsCache]);
+  }, [node?.id, node?.data?.formId, node?.data?.selectedFormId, node?.data?.workflowFormInfo?.formId, nodes, edges, formInputsCache, parsedFormDesign, selectedForm, getFormFieldsFromSource]);
 
   // ✅ Form alanını editor'e ekle
   const handleFieldClick = (fieldId, path) => {
@@ -428,33 +457,71 @@ const ScriptTab = ({
       </DialogTitle>
 
       <DialogContent dividers sx={{ p: 0, height: "600px" }}>
-        <Splitter style={{ height: "100%", width: "100%" }} layout="horizontal">
-          {/* Sol Panel - Process Data Tree */}
-          <SplitterPanel size={30} minSize={20} style={{ overflow: "auto" }}>
-            <Box sx={{ p: 2 }}>
-              <Typography variant="subtitle2" fontWeight={600} gutterBottom>
-                Process Data
-              </Typography>
-              <Typography variant="caption" color="textSecondary" sx={{ mb: 2, display: "block" }}>
-                Değişkenleri tıklayarak script&apos;e ekleyin
-              </Typography>
-              <Divider sx={{ mb: 2 }} />
+        {/* Form Başlangıç Ayarları gibi Tab yapısı */}
+        <Tabs
+          value={activeTab}
+          onChange={(_, v) => setActiveTab(v)}
+          sx={{ borderBottom: 1, borderColor: "divider", backgroundColor: "#fafafa", px: 2 }}
+        >
+          <Tab
+            label={
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                <TableChartIcon fontSize="small" />
+                Process Data & Script
+                {formFieldsList.length > 0 && (
+                  <Chip label={formFieldsList.length} size="small" color="primary" />
+                )}
+              </Box>
+            }
+            sx={{ textTransform: "none", fontWeight: 600 }}
+          />
+          <Tab
+            label={
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                <CallSplitIcon fontSize="small" />
+                Koşul Rehberi
+              </Box>
+            }
+            sx={{ textTransform: "none", fontWeight: 600 }}
+          />
+        </Tabs>
 
-              {loadingInputs ? (
-                <Box sx={{ textAlign: "center", py: 4 }}>
-                  <Typography variant="body2" color="textSecondary">
-                    Form input&apos;ları yükleniyor...
-                  </Typography>
-                </Box>
-              ) : formFieldsList.length === 0 ? (
-                <Box sx={{ textAlign: "center", py: 4 }}>
-                  <Typography variant="body2" color="textSecondary">
-                    Form alanları bulunamadı. Lütfen önce bir FormNode ekleyin ve bağlayın.
-                  </Typography>
-                </Box>
-              ) : (
-                <List sx={{ width: "100%", maxHeight: "500px", overflowY: "auto" }}>
-                  {formFieldsList.map((field, index) => (
+        {/* Tab 0: Process Data + Form Seçimi + Script (Form Başlangıç gibi) */}
+        {activeTab === 0 && (
+          <Splitter style={{ height: "100%", width: "100%", minHeight: "500px" }} layout="horizontal">
+            <SplitterPanel size={30} minSize={20} style={{ overflow: "auto" }}>
+              <Box sx={{ p: 2 }}>
+                <Typography variant="subtitle2" fontWeight={600} gutterBottom>
+                  Process Data
+                </Typography>
+                <Typography variant="caption" color="textSecondary" sx={{ mb: 2, display: "block" }}>
+                  Değişkenleri tıklayarak script&apos;e ekleyin
+                </Typography>
+
+                {loadingInputs ? (
+                  <Box sx={{ textAlign: "center", py: 4 }}>
+                    <Typography variant="body2" color="textSecondary">
+                      Veriler yükleniyor...
+                    </Typography>
+                  </Box>
+                ) : formFieldsList.length === 0 ? (
+                  <Box sx={{ textAlign: "center", py: 4 }}>
+                    <Typography variant="body2" color="textSecondary">
+                      Process Data boş. Workflow formu seçin veya önceki node&apos;ları bağlayın.
+                    </Typography>
+                  </Box>
+                ) : (
+                  <List sx={{ width: "100%", maxHeight: "500px", overflowY: "auto" }}>
+                    {["workflow", "formData", "previousNodes"].map((section) => {
+                      const sectionItems = formFieldsList.filter((f) => f.section === section);
+                      if (sectionItems.length === 0) return null;
+                      const labels = { workflow: "Workflow (Genel)", formData: "Form Data", previousNodes: "Önceki Node'lar" };
+                      return (
+                        <React.Fragment key={section}>
+                          <ListSubheader sx={{ bgcolor: "#f0f4f8", fontWeight: 600, color: "#334155" }}>
+                            {labels[section]}
+                          </ListSubheader>
+                          {sectionItems.map((field, index) => (
                     <Tooltip
                       key={`${field.nodeName}-${field.fieldId}-${index}`}
                       title={
@@ -534,7 +601,10 @@ const ScriptTab = ({
                         <InfoIcon fontSize="small" sx={{ color: "#9ca3af", ml: 1 }} />
                       </ListItem>
                     </Tooltip>
-                  ))}
+                          ))}
+                        </React.Fragment>
+                      );
+                    })}
                 </List>
               )}
             </Box>
@@ -585,6 +655,72 @@ const ScriptTab = ({
             </Box>
           </SplitterPanel>
         </Splitter>
+        )}
+
+        {/* Tab 1: Koşul Rehberi - BPM Editor If Condition Best Practice */}
+        {activeTab === 1 && (
+          <Box sx={{ p: 3, overflowY: "auto", maxHeight: "550px" }}>
+            <Alert severity="info" icon={<TipsIcon />} sx={{ mb: 3 }}>
+              <Typography variant="subtitle2" fontWeight={700} gutterBottom>
+                🔀 BPM Editor If Condition Yönlendirme – Best Practice
+              </Typography>
+              <Typography variant="body2">
+                ScriptNode&apos;un <strong>TRUE</strong> ve <strong>FALSE</strong> handle&apos;ları, BPM editor&apos;deki
+                if condition&apos;a benzer şekilde akış yönlendirmesi yapar. Script <code>true</code> dönerse
+                TRUE dalına, <code>false</code> dönerse FALSE dalına gider.
+              </Typography>
+            </Alert>
+
+            <Paper variant="outlined" sx={{ p: 2, mb: 2, bgcolor: "#f8fafc" }}>
+              <Typography variant="subtitle2" fontWeight={600} gutterBottom>
+                ✅ TRUE / FALSE Akış Şeması
+              </Typography>
+              <Box sx={{ fontFamily: "monospace", fontSize: "0.85rem", color: "#334155" }}>
+                <Box sx={{ mb: 1 }}>ScriptNode → Script çalışır → return değeri</Box>
+                <Box sx={{ pl: 2, borderLeft: "3px solid #22c55e" }}>
+                  return true → TRUE handle&apos;a bağlı node&apos;a gider
+                </Box>
+                <Box sx={{ pl: 2, borderLeft: "3px solid #ef4444", mt: 0.5 }}>
+                  return false → FALSE handle&apos;a bağlı node&apos;a gider
+                </Box>
+              </Box>
+            </Paper>
+
+            <Typography variant="subtitle2" fontWeight={600} gutterBottom>
+              📝 Örnek Senaryolar
+            </Typography>
+            <Box sx={{ "& pre": { bgcolor: "#1e293b", color: "#e2e8f0", p: 2, borderRadius: 1, overflow: "auto", fontSize: "0.8rem" } }}>
+              <Typography variant="caption" color="textSecondary" display="block" gutterBottom>
+                Tutar kontrolü (örn. 1000 üzeri onay):
+              </Typography>
+              <pre>{`// TRUE: Onay gerekli
+// FALSE: Doğrudan devam
+return (formData.amount || 0) > 1000;`}</pre>
+
+              <Typography variant="caption" color="textSecondary" display="block" gutterBottom sx={{ mt: 2 }}>
+                Buton action&apos;a göre yönlendirme:
+              </Typography>
+              <pre>{`// TRUE: Onaylandı
+// FALSE: Reddedildi
+const action = previousNodes?.FormNode?.action || "";
+return action === "approve";`}</pre>
+
+              <Typography variant="caption" color="textSecondary" display="block" gutterBottom sx={{ mt: 2 }}>
+                Koşullu ifade (formül):
+              </Typography>
+              <pre>{`// Birden fazla alan ile karar
+const val = formData.someField;
+return val !== null && val !== "" && val > 0;`}</pre>
+            </Box>
+
+            <Alert severity="warning" sx={{ mt: 3 }} icon={false}>
+              <Typography variant="body2">
+                <strong>Not:</strong> Script mutlaka <code>true</code> veya <code>false</code> döndürmelidir.
+                Başka tür döndürürseniz yönlendirme hatalı çalışabilir.
+              </Typography>
+            </Alert>
+          </Box>
+        )}
       </DialogContent>
 
       <DialogActions sx={{ p: 2, borderTop: "1px solid #e5e7eb" }}>

@@ -311,7 +311,7 @@ export default function ProcessHub(): JSX.Element {
       const conf = getConfiguration();
       const workflowApi = new WorkFlowApi(conf);
 
-      const workflowItemId = row.currentWorkflowItemId || row.workflowItemId || row.id;
+      const workflowItemId = row.workflowItemId || row.workflowItemId || row.id;
       if (!workflowItemId) {
         alert("Görev detayı alınamadı: WorkflowItemId bulunamadı");
         return;
@@ -1459,21 +1459,17 @@ export default function ProcessHub(): JSX.Element {
                                     >
                                       {item.nodeName || `Adım ${index + 1}`}
                                     </Typography>
-                                    
-                                    {/* Task Type - Inline */}
-                                    {(item.nodeType?.toLowerCase().includes("form") || 
-                                      item.nodeType?.toLowerCase().includes("user") || 
-                                      item.nodeType?.toLowerCase().includes("approval")) && (
+                                    {item.nodeDescription && (
                                       <Typography 
                                         variant="caption" 
                                         sx={{ 
-                                          color: "text.disabled",
-                                          fontSize: "0.7rem",
+                                          color: "text.secondary",
+                                          fontSize: "0.75rem",
                                           display: "block",
                                           mt: 0.25
                                         }}
                                       >
-                                        {item.nodeType?.toLowerCase().includes("form") ? "📝 Form Görevi" : "👤 Onay Görevi"}
+                                        {item.nodeDescription}
                                       </Typography>
                                     )}
                                   </Box>

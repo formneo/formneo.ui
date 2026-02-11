@@ -2674,14 +2674,6 @@ export interface OrganizationDto {
     'expanded'?: boolean;
     'children'?: Array<OrganizationDto> | null;
 }
-export interface PendingUserDto {
-    'userId'?: string | null;
-    'userName'?: string | null;
-    'department'?: string | null;
-    'departmentId'?: string | null;
-    'position'?: string | null;
-    'positionId'?: string | null;
-}
 
 export const Permission = {
     NUMBER_1: 1,
@@ -2732,11 +2724,11 @@ export interface ProcessHubDataResponseDto {
 }
 export interface ProcessHubItemDto {
     'id'?: string;
+    'workflowItemId'?: string | null;
     'workflowDefinationId'?: string;
     'workflowName'?: string | null;
     'currentNodeId'?: string | null;
     'currentNodeName'?: string | null;
-    'currentWorkflowItemId'?: string | null;
     'workFlowStatus'?: string | null;
     'workFlowStatusText'?: string | null;
     'workFlowInfo'?: string | null;
@@ -4268,8 +4260,8 @@ export interface WorkflowItemHistoryDto {
     'nodeType'?: string | null;
     'nodeStatus'?: string | null;
     'nodeStatusText'?: string | null;
-    'pendingWithUsers'?: Array<PendingUserDto> | null;
-    'pendingUserCount'?: number;
+    'summary'?: string | null;
+    'operationDate'?: string | null;
     'createdDate'?: string;
     'updatedDate'?: string | null;
 }
