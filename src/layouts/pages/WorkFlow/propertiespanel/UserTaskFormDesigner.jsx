@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import "antd/dist/antd.css";
 import "@designable/react/dist/designable.react.umd.production.css";
 import "@designable/react-settings-form/dist/designable.settings-form.umd.production.css";
+import "../../FormEditor/FormEditorReactions.css";
 
 import { Dialog, DialogTitle, DialogContent, DialogActions, Tabs, Tab, Box, Typography, IconButton, Autocomplete, TextField, Divider, Chip } from "@mui/material";
 import { Close as CloseIcon } from "@mui/icons-material";

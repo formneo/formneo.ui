@@ -13,6 +13,13 @@ Coded by www.creative-tim.com
 * The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
 */
 
+// ResizeObserver loop - yedek: Hata hâlâ görünürse console'u temizler
+const _cerr = console.error;
+console.error = (...a) => {
+  if (String(a[0] || "").includes("ResizeObserver loop")) return;
+  _cerr.apply(console, a);
+};
+
 import { createRoot } from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
 import App from "App";

@@ -126,6 +126,19 @@ Coded by www.creative-tim.com
 </head>
 
 <body>
+  <script>
+    // ResizeObserver loop fix - Form Designer Configure panel'de expression yazma sorununu çözer
+    (function() {
+      var OriginalRO = window.ResizeObserver;
+      if (OriginalRO) {
+        window.ResizeObserver = function(callback) {
+          return new OriginalRO(function(entries, observer) {
+            requestAnimationFrame(function() { callback(entries, observer); });
+          });
+        };
+      }
+    })();
+  </script>
   <noscript>You need to enable JavaScript to run this app.</noscript>
   <div id="root"></div>
 </body>

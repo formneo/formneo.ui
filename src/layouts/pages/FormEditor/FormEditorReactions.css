@@ -1,0 +1,76 @@
+/* Formily Designer - Reaction (Configure) modal CSS düzeltmeleri */
+.dn-reactions-setter {
+  width: 100%;
+  min-height: 400px;
+  overflow: auto;
+}
+
+.dn-reactions-setter ::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.dn-reactions-setter ::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.2);
+  border-radius: 3px;
+}
+
+.dn-reactions-setter .ant-collapse {
+  border: 1px solid #f0f0f0;
+}
+
+.dn-reactions-setter .ant-collapse-header {
+  padding: 8px 12px !important;
+  background-color: #fafafa !important;
+  border-bottom: 1px solid #f0f0f0 !important;
+  font-weight: 500 !important;
+}
+
+.dn-reactions-setter .ant-collapse-content-box {
+  padding: 12px !important;
+}
+
+.dn-reactions-setter .reaction-state .ant-collapse-content-box,
+.dn-reactions-setter .reaction-runner .ant-collapse-content-box {
+  padding: 12px 0 !important;
+}
+
+.dn-reactions-setter .dn-field-property-setter {
+  display: flex !important;
+  flex-direction: column !important;
+  min-height: 280px !important;
+}
+
+.dn-reactions-setter .dn-field-property-setter-coder-wrapper {
+  display: flex !important;
+  flex: 1 !important;
+  min-height: 200px !important;
+  flex-direction: column !important;
+  padding-left: 0 !important;
+}
+
+.dn-reactions-setter .ant-table {
+  font-size: 13px;
+}
+
+.dn-reactions-setter .ant-form-item {
+  margin-bottom: 12px !important;
+}
+
+.dn-reactions-setter .ant-form-item-label {
+  padding-bottom: 4px !important;
+}
+
+.dn-reactions-setter .ant-form-item-label > label {
+  font-size: 13px !important;
+}
+
+/* Monaco editor container - yükseklik sorunu */
+.dn-reactions-setter .ant-formily-item-control-content-component {
+  min-height: 200px;
+}
+
+.dn-reactions-setter [class*="monaco"],
+.dn-reactions-setter [class*="Monaco"] {
+  min-height: 200px !important;
+}

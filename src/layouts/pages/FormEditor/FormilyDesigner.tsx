@@ -4,6 +4,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import "antd/dist/antd.css";
 import "@designable/react/dist/designable.react.umd.production.css";
 import "@designable/react-settings-form/dist/designable.settings-form.umd.production.css";
+import "./FormEditorReactions.css";
 
 // Ant Design UI (üst bar için)
 import { Space as AntSpace, Button as AntButton, Typography, Input as AntdInput, Form as AntdForm, message, Tag, Drawer, List, Select as AntdSelect, InputNumber as AntdInputNumber, Switch as AntdSwitch, Divider as AntdDivider, Modal, Card as AntdCard, Slider as AntdSlider, Rate as AntdRate } from "antd";
