@@ -26,6 +26,11 @@ import { Form, ArrayTable, Input, Select, FormItem, FormCollapse, } from '@formi
 import { Modal, Card, Button, Tag, Tooltip } from 'antd';
 import { PathSelector } from './PathSelector';
 import { FieldPropertySetter } from './FieldPropertySetter';
+
+// Modal içindeki dropdown'ların tıklanabilir olması için - focus trap sorununu önler
+var getPopupContainerForModal = function (triggerNode) {
+  return (triggerNode === null || triggerNode === void 0 ? void 0 : triggerNode.closest('.ant-modal-body')) || document.body;
+};
 import { FulfillRunHelper } from './helpers';
 import { initDeclaration } from './declarations';
 import './styles.less';
@@ -168,12 +173,13 @@ export var ReactionsSetter = function (props) {
                                         } },
                                         React.createElement(SchemaField.String, { name: "source", "x-decorator": "FormItem", "x-component": "PathSelector", "x-component-props": {
                                                 placeholder: GlobalRegistry.getDesignerMessage('SettingComponents.ReactionsSetter.pleaseSelect'),
+                                                getPopupContainer: getPopupContainerForModal,
                                             } })),
                                     React.createElement(SchemaField.Void, { "x-component": "ArrayTable.Column", "x-component-props": {
                                             title: GlobalRegistry.getDesignerMessage('SettingComponents.ReactionsSetter.sourceProperty'),
                                             width: 200,
                                         } },
-                                        React.createElement(SchemaField.String, { name: "property", default: "value", "x-decorator": "FormItem", "x-component": "Select", "x-component-props": { showSearch: true }, enum: FieldStateProperties })),
+                                        React.createElement(SchemaField.String, { name: "property", default: "value", "x-decorator": "FormItem", "x-component": "Select", "x-component-props": { showSearch: true, getPopupContainer: getPopupContainerForModal }, enum: FieldStateProperties })),
                                     React.createElement(SchemaField.Void, { "x-component": "ArrayTable.Column", "x-component-props": {
                                             title: GlobalRegistry.getDesignerMessage('SettingComponents.ReactionsSetter.variableName'),
                                             width: 200,

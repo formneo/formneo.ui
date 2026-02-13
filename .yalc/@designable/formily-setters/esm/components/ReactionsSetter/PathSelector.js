@@ -97,6 +97,11 @@ var transformDataSource = function (node) {
     }
     return [];
 };
+// Modal içinde dropdown tıklanabilir olsun - focus trap sorununu önler
+// .ant-modal-content kullan - body overflow ile kesilmesin
+var getPopupContainerForModal = function (triggerNode) {
+    return (triggerNode === null || triggerNode === void 0 ? void 0 : triggerNode.closest('.ant-modal-content')) || (triggerNode === null || triggerNode === void 0 ? void 0 : triggerNode.closest('.ant-modal-body')) || document.body;
+};
 export var PathSelector = function (props) {
     var baseNode = useSelectedNode();
     var dataSource = transformDataSource(baseNode);
@@ -113,7 +118,7 @@ export var PathSelector = function (props) {
             }
         }
     };
-    return (React.createElement(TreeSelect, __assign({}, props, { onChange: function (value) {
+    return (React.createElement(TreeSelect, __assign({}, props, { getPopupContainer: props.getPopupContainer || getPopupContainerForModal, onChange: function (value) {
             props.onChange(value, findNode(dataSource, value));
         }, treeDefaultExpandAll: true, treeData: dataSource })));
 };

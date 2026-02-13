@@ -239,6 +239,24 @@ function Flow(props) {
   const [count, setCount] = useState(0);
   const { setViewport } = useReactFlow();
   const { id } = useParams();
+
+  // FormBuilderWithReactions'tan dönüş - formReactions güncelle
+  useEffect(() => {
+    try {
+      const raw = sessionStorage.getItem("formTask_reactions_result");
+      if (!raw || !nodes.length) return;
+      const { nodeId, formReactions } = JSON.parse(raw);
+      sessionStorage.removeItem("formTask_reactions_result");
+      setNodes((nds) =>
+        nds.map((n) =>
+          n.id === nodeId ? { ...n, data: { ...n.data, formReactions } } : n
+        )
+      );
+    } catch {
+      sessionStorage.removeItem("formTask_reactions_result");
+    }
+  }, [nodes.length, setNodes]);
+
   useEffect(() => {
     if (!id) {
       // ✅ Yeni workflow durumu - disabled zaten WorkFlowDetail'de ayarlanıyor

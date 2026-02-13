@@ -120,6 +120,7 @@ const ParameterViewPublic = lazy(() => import("layouts/pages/FormManagement/list
 const FormDesigner = lazy(() => import("layouts/pages/FormManagement/FormDesigner"));
 const FormEditor = lazy(() => import("layouts/pages/FormEditor/FormEditorV2"));
 const FormilyDesigner = lazy(() => import("layouts/pages/FormEditor/FormilyDesigner"));
+const FormBuilderWithReactions = lazy(() => import("layouts/pages/FormEditor/FormBuilderWithReactions"));
 const FormilyPreviewPage = lazy(() => import("pages/forms/FormilyPreviewPage"));
 const UserFormCrudPage = lazy(() => import("pages/forms/UserFormCrudPage"));
 
@@ -273,6 +274,7 @@ export default function App() {
             <Route path="/forms/detail/:id" element={<FormDesigner />} />
             <Route path="/forms/editor" element={<FormEditor />} />
             <Route path="/forms/editor/:id" element={<FormEditor />} />
+            <Route path="/forms/reactions-editor" element={<FormBuilderWithReactions />} />
 
             <Route path="/ParameterEdit/" element={<ParameterEditPublic />} />
             <Route path="/forms/view/:formId/:formRunId?/:isVisibility?" element={<ParameterViewPublic />} />

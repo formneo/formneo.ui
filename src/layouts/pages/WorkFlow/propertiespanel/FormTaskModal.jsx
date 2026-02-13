@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import {
   Dialog,
   DialogContent,
@@ -76,9 +77,10 @@ import { useBusy } from "layouts/pages/hooks/useBusy";
 import { createForm } from "@formily/core";
 import { FormProvider, createSchemaField } from "@formily/react";
 import * as AntdFormily from "@formily/antd";
-import { Card as AntdCard, Slider as AntdSlider, Rate as AntdRate, message as antdMessage } from "antd";
+import { Card as AntdCard, Slider as AntdSlider, Rate as AntdRate, message as antdMessage, Button as AntdButton } from "antd";
 import CurrencyInput from "../../FormEditor/custom/CurrencyInput";
 import "antd/dist/antd.css";
+import "../../FormEditor/FormEditorReactions.css";
 
 /**
  * ✅ FormTask Modal Component
@@ -89,7 +91,11 @@ import "antd/dist/antd.css";
  * - Workflow'dan seçili formu kullanır
  */
 
+const STORAGE_KEY_REACTIONS_PENDING = "formTask_reactions_pending";
+
 const FormTaskModal = ({ open, onClose, initialValues, node, onSave, workflowFormId, workflowFormName }) => {
+  const navigate = useNavigate();
+  const location = useLocation();
   const [name, setName] = useState(initialValues?.name || "Form Görevi");
   const [searchByName, setSearchByName] = useState([]);
   const [allUsers, setAllUsers] = useState([]);
@@ -143,8 +149,19 @@ const FormTaskModal = ({ open, onClose, initialValues, node, onSave, workflowFor
   const [visibilitySettings, setVisibilitySettings] = useState({});
   const [formSchema, setFormSchema] = useState(null);
   const [testPreviewOpen, setTestPreviewOpen] = useState(false);
-  const [initSettingsTab, setInitSettingsTab] = useState(0); // 0: Değer Atama, 1: Koşullar, 2: Görünürlük, 3: Butonlar
+  const [initSettingsTab, setInitSettingsTab] = useState(0); // 0: Değer Atama, 1: Koşullar, 2: Görünürlük, 3: Butonlar, 4: Formily Reactions
   const [buttonVisibilitySettings, setButtonVisibilitySettings] = useState({}); // { buttonId: true/false }
+  const [formReactions, setFormReactions] = useState(null); // Formily x-reactions (ReactionsSetter)
+
+  // FormTaskModal açıkken body'ye class ekle - ReactionsSetter modalı üstte görünsün
+  useEffect(() => {
+    if (open) {
+      document.body.classList.add("form-task-modal-open");
+    }
+    return () => {
+      document.body.classList.remove("form-task-modal-open");
+    };
+  }, [open]);
   
   // Test form instance
   const testForm = React.useMemo(() => createForm(), []);
@@ -157,6 +174,7 @@ const FormTaskModal = ({ open, onClose, initialValues, node, onSave, workflowFor
       Rate: AntdRate 
     } 
   }), []);
+
 
   // Script şablonları
   const scriptTemplates = {
@@ -659,8 +677,13 @@ declare var formValues: Record<string, any>;
         
         if (formData?.formDesign) {
           const design = JSON.parse(formData.formDesign);
-          const schema = design?.schema;
-          
+          let schema = design?.schema ?? design;
+          // transformToTreeNode için: { type: 'object', properties } formatı
+          if (schema && schema.properties && !schema.type) {
+            schema = { type: "object", ...schema };
+          }
+          setFormSchema(schema ? { schema, form: design?.form || {} } : null);
+
           // Form alanlarını yükle
           if (schema?.properties) {
             const fields = extractFieldsFromSchema(schema.properties);
@@ -740,6 +763,7 @@ declare var formValues: Record<string, any>;
       if (initialValues.fieldScript) {
         setFieldScript(initialValues.fieldScript);
       }
+      setFormReactions(initialValues.formReactions ?? null);
     } else if (!open) {
       // Modal kapandığında state'leri sıfırla
       setInputValue("");
@@ -1380,6 +1404,7 @@ declare var formValues: Record<string, any>;
       initScript: generateScript(), // ✅ Form başlangıç scripti
       visibilitySettings: visibilitySettings, // ✅ Form başlangıç görünürlük ayarları
       buttonVisibilitySettings: buttonVisibilitySettings, // ✅ Form başlangıç buton görünürlük ayarları
+      formReactions: formReactions, 
     };
 
     console.log("🔍 FormTaskModal - Kaydet:", {
@@ -2851,6 +2876,17 @@ if (gunSayisi && gunlukUcret) {
           } 
           sx={{ textTransform: "none", fontWeight: 600 }} 
         />
+        <Tab 
+          label={
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+              ⚡ Formily Reactions
+              {formReactions && (
+                <Chip label="✓" size="small" color="success" />
+              )}
+            </Box>
+          } 
+          sx={{ textTransform: "none", fontWeight: 600 }} 
+        />
       </Tabs>
 
       {/* TAB 0: DEĞER ATAMA */}
@@ -3396,6 +3432,105 @@ if (gunSayisi && gunlukUcret) {
         </Box>
       )}
 
+      {/* TAB 4: FORMILY REACTIONS (x-reactions) */}
+      {initSettingsTab === 4 && (
+        <Box className="form-task-reactions-wrapper">
+          <Paper
+            sx={{
+              mb: 2,
+              p: 2,
+              background: "linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%)",
+              border: "1px solid",
+              borderColor: "divider",
+              borderRadius: 2,
+            }}
+            variant="outlined"
+          >
+            <Typography variant="subtitle2" fontWeight={700} sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+              ⚡ Formily x-reactions
+            </Typography>
+            <Typography variant="caption" display="block" mt={0.5} color="text.secondary">
+              Form alanlarına bağımlılık (dependency) tanımlayarak visible, disabled, readonly, title vb. özellikleri dinamik yapın.
+            </Typography>
+          </Paper>
+
+          {formFields.length === 0 ? (
+            <Paper
+              sx={{
+                p: 4,
+                textAlign: "center",
+                color: "text.secondary",
+                borderRadius: 2,
+                border: "1px dashed",
+                borderColor: "divider",
+              }}
+            >
+              Form alanları yükleniyor veya form tanımlanmamış.
+            </Paper>
+          ) : (
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+              <Paper sx={{ p: 2, borderRadius: 2, border: "1px solid", borderColor: "divider", bgcolor: "grey.50" }} variant="outlined">
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                  Modal içinde Source dropdown tıklama sorunu var. Tam sayfa editörde düzenleyebilirsiniz.
+                </Typography>
+                <AntdButton
+                  type="primary"
+                  size="large"
+                  block
+                  onClick={() => {
+                    sessionStorage.setItem(
+                      STORAGE_KEY_REACTIONS_PENDING,
+                      JSON.stringify({
+                        formReactions,
+                        formSchema: formSchema || null,
+                        nodeId: node?.id,
+                        returnTo: location.pathname || "/WorkFlowList/detail",
+                      })
+                    );
+                    navigate("/forms/reactions-editor");
+                  }}
+                  style={{ height: 48, fontSize: 15, fontWeight: 600 }}
+                >
+                  ⚡ Formily Reactions Düzenle (Tam Sayfa)
+                </AntdButton>
+              </Paper>
+              {formReactions && (
+                <Paper
+                  sx={{
+                    p: 2,
+                    borderRadius: 2,
+                    border: "1px solid",
+                    borderColor: "divider",
+                    bgcolor: "grey.50",
+                  }}
+                  variant="outlined"
+                >
+                  <Typography variant="caption" color="text.secondary" fontWeight={600} sx={{ display: "block", mb: 1 }}>
+                    📋 Mevcut Reaction (özet)
+                  </Typography>
+                  <Box
+                    sx={{
+                      p: 1.5,
+                      borderRadius: 1,
+                      bgcolor: "background.paper",
+                      border: "1px solid",
+                      borderColor: "divider",
+                      fontFamily: "'Fira Code', 'Monaco', 'Courier New', monospace",
+                      fontSize: 11,
+                      maxHeight: 140,
+                      overflow: "auto",
+                    }}
+                    component="pre"
+                  >
+                    {JSON.stringify(formReactions, null, 2)}
+                  </Box>
+                </Paper>
+              )}
+            </Box>
+          )}
+        </Box>
+      )}
+
       {/* SCRIPT ÖNİZLEME */}
       <Divider sx={{ my: 3 }} />
       
@@ -3483,10 +3618,10 @@ if (gunSayisi && gunlukUcret) {
             </Typography>
           </Paper>
 
-          {formSchema && (
+          {formSchema?.schema && (
             <Box sx={{ border: "2px solid #4caf50", borderRadius: 2, p: 3 }}>
               <FormProvider form={testForm}>
-                <SchemaField schema={formSchema} />
+                <SchemaField schema={formSchema.schema} />
               </FormProvider>
             </Box>
           )}

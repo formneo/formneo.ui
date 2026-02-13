@@ -31,7 +31,7 @@
     "import/extensions": [
       "error",
       "ignorePackages",
-      { "ts": "never", "tsx": "never", "js": "never" }
+      { "ts": "never", "tsx": "never", "js": "never", "jsx": "never" }
     ],
    "react/jsx-filename-extension": ["warn", { "extensions": [".tsx", ".jsx"] }]
   },

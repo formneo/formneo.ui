@@ -1,4 +1,31 @@
 /* Formily Designer - Reaction (Configure) modal CSS düzeltmeleri */
+
+/* FormTaskModal açıkken: ReactionsSetter modalı FormTaskModal (MUI Dialog ~1300) üstünde görünsün */
+body.form-task-modal-open .ant-modal-wrap,
+body.form-task-modal-open .ant-modal-mask {
+  z-index: 9999 !important;
+}
+body.form-task-modal-open .ant-modal {
+  z-index: 10000 !important;
+}
+
+/* PathSelector (TreeSelect) ve Select dropdown'ları modal üstünde - tıklanabilir olsun */
+body.form-task-modal-open .ant-select-dropdown,
+body.form-task-modal-open .ant-tree-select-dropdown,
+body.form-task-modal-open .rc-select-dropdown {
+  z-index: 10001 !important;
+  pointer-events: auto !important;
+}
+
+/* Modal içinde render edilen dropdown'lar - kesin tıklanabilir */
+.ant-modal-body .ant-select-dropdown,
+.ant-modal-body .ant-tree-select-dropdown,
+.ant-modal-content .ant-select-dropdown,
+.ant-modal-content .ant-tree-select-dropdown {
+  z-index: 9999 !important;
+  pointer-events: auto !important;
+}
+
 .dn-reactions-setter {
   width: 100%;
   min-height: 400px;
