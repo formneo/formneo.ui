@@ -1216,7 +1216,7 @@ export default function FormilyDesigner(): JSX.Element {
               </AntdForm>
             </div>
             {/* CRUD Ayarları (seçili alan için) */}
-            <CrudSettingsPanel />
+            {/* <CrudSettingsPanel /> */}
             {/* Button Panel Yönetimi */}
             <ButtonPanelSettings />
             <SettingsForm

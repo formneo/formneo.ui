@@ -70,8 +70,8 @@ var transformDataSource = function (node) {
             var _a;
             if (node === currentNode)
                 return buf;
-            if (node.props.type === 'array' && !node.contains(currentNode))
-                return buf;
+            // Array alanları (ArrayTable, ArrayCards) Source Field listesinde göster - reactions için seçilebilsin
+            // if (node.props.type === 'array' && !node.contains(currentNode)) return buf; // KALDIRILDI
             if (node.props.type === 'void' && !hasNoVoidChildren(node))
                 return buf;
             var currentPath = path.concat(node.props.name || node.id);
