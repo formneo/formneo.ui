@@ -2,7 +2,8 @@ import React, { useEffect, useState } from "react";
 import { Select, Spin } from "antd";
 import { connect, mapProps, mapReadPretty } from "@formily/react";
 import { createResource, createBehavior } from "@designable/core";
-import { DepartmentsApi, PositionsApi } from "api/generated";
+import { createFieldSchema } from "@designable/formily-antd/esm/components/Field/shared";
+import { DepartmentsApi, LookupApi, PositionsApi } from "api/generated";
 import getConfiguration from "confiuration";
 
 // ==================== DATA SOURCES ====================
@@ -231,6 +232,97 @@ const loadPositions = async (): Promise<{ label: string; value: string }[]> => {
   }
 };
 
+// ==================== LOOKUP / PARAMETRE LOADER ====================
+
+const loadLookupItems = async (categoryKey: string): Promise<{ label: string; value: string }[]> => {
+  if (!categoryKey?.trim()) return [];
+  try {
+    const api = new LookupApi(getConfiguration());
+    const res: any = await api.apiLookupItemsKeyGet(categoryKey.trim());
+    const items = Array.isArray(res?.data) ? res.data : [];
+    return items
+      .filter((p: any) => p.isActive !== false)
+      .sort((a: any, b: any) => (a.orderNo || 0) - (b.orderNo || 0))
+      .map((p: any) => ({
+        label: p.name || p.code || "İsimsiz",
+        value: p.code || p.id || "",
+      }));
+  } catch {
+    return [];
+  }
+};
+
+// ==================== PARAMETRE COMBOBOX (Lookup API) ====================
+
+type ParametreComboboxProps = ComboboxProps & {
+  categoryKey?: string;
+};
+
+const getCategoryKeyFromProps = (props: any): string => {
+  const cc = props["x-component-props"];
+  const lookup = props.lookupSource ?? cc?.lookupSource;
+  return (
+    props.categoryKey ??
+    lookup?.categoryKey ??
+    cc?.categoryKey ??
+    ""
+  );
+};
+
+const ParametreComboboxComponent: React.FC<ParametreComboboxProps> = (props) => {
+  const { categoryKey, value, onChange, placeholder, disabled, readOnly, mode } = props;
+  const key = categoryKey ?? getCategoryKeyFromProps(props);
+
+  const [loading, setLoading] = useState(false);
+  const [dataSource, setDataSource] = useState<{ label: string; value: string }[]>([]);
+
+  useEffect(() => {
+    if (!key?.trim()) {
+      setDataSource([]);
+      return;
+    }
+    let cancelled = false;
+    setLoading(true);
+    loadLookupItems(key)
+      .then((data) => {
+        if (!cancelled) setDataSource(data);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => { cancelled = true; };
+  }, [key]);
+
+  if (!key?.trim()) {
+    return (
+      <Select
+        placeholder={placeholder || "Önce sağ panelden Modül ve Kategori seçin"}
+        disabled
+        style={{ width: "100%" }}
+        notFoundContent="Parametre kaynağı seçilmedi"
+      />
+    );
+  }
+
+  return (
+    <Select
+      value={value}
+      onChange={onChange}
+      placeholder={placeholder}
+      disabled={disabled || readOnly}
+      mode={mode}
+      showSearch
+      loading={loading}
+      filterOption={(input, option) =>
+        (option?.label ?? "").toLowerCase().includes(input.toLowerCase())
+      }
+      options={dataSource}
+      style={{ width: "100%" }}
+      notFoundContent={loading ? <Spin size="small" /> : "Veri bulunamadı"}
+    />
+  );
+};
+
 // ==================== CREATE COMBOBOX ====================
 
 const createCombobox = (name: string, title: string, dataSource: any[]) => {
@@ -380,10 +472,87 @@ const createApiCombobox = (name: string, title: string, loadData: () => Promise<
   return Component;
 };
 
+// ==================== PARAMETRE SELECT (Lookup) ====================
+
+const ParametreSelect: any = connect(
+  (props: any) => <ParametreComboboxComponent {...props} categoryKey={getCategoryKeyFromProps(props)} />,
+  mapProps((props: any) => ({
+    ...props,
+    placeholder: props["x-component-props"]?.placeholder || props.placeholder || "Parametre seçiniz...",
+    disabled: props["x-component-props"]?.disabled || props.disabled,
+    readOnly: props["x-component-props"]?.readOnly || props.readOnly,
+    mode: props["x-component-props"]?.mode || props.mode,
+  })),
+  mapReadPretty((props: any) => {
+    const v = props.value;
+    if (!v) return <span style={{ color: "#999" }}>-</span>;
+    if (Array.isArray(v)) return <span style={{ padding: "4px 8px", backgroundColor: "#f0f0f0", borderRadius: "4px" }}>{v.join(", ")}</span>;
+    return <span style={{ padding: "4px 8px", backgroundColor: "#f0f0f0", borderRadius: "4px" }}>{v}</span>;
+  })
+);
+
+ParametreSelect.Resource = createResource({
+  icon: "SelectSource",
+  title: "Parametre",
+  elements: [
+    {
+      componentName: "Field",
+      props: {
+        type: "string",
+        title: "Parametre",
+        "x-decorator": "FormItem",
+        "x-component": "ParametreSelect",
+        "x-component-props": {
+          lookupSource: { moduleKey: "", categoryKey: "" },
+        },
+      },
+    },
+  ],
+});
+
+const ParametreSelectComponentSchema = {
+  type: "object",
+  properties: {
+    lookupSource: {
+      type: "object",
+      title: "Parametre Kaynağı",
+      "x-decorator": "FormItem",
+      "x-component": "LookupParametreSetter",
+    },
+    mode: {
+      type: "string",
+      title: "Seçim Modu",
+      enum: [
+        { label: "Tekli", value: undefined },
+        { label: "Çoklu", value: "multiple" },
+        { label: "Tags", value: "tags" },
+      ],
+      "x-decorator": "FormItem",
+      "x-component": "Select",
+    },
+    placeholder: {
+      type: "string",
+      title: "Placeholder",
+      "x-decorator": "FormItem",
+      "x-component": "Input",
+    },
+  },
+};
+
+ParametreSelect.Behavior = createBehavior({
+  name: "ParametreSelect",
+  extends: ["Field"],
+  selector: (node: any) => node.props?.["x-component"] === "ParametreSelect",
+  designerProps: {
+    propsSchema: createFieldSchema(ParametreSelectComponentSchema as any),
+  },
+});
+
 // ==================== EXPORT COMPONENTS ====================
 
 export const DepartmentSelect = createApiCombobox("DepartmentSelect", "Departman", loadDepartments);
 export const PositionSelect = createApiCombobox("PositionSelect", "Pozisyon", loadPositions);
+export const ParametreSelectExport = ParametreSelect;
 export const CompanySelect = createCombobox("CompanySelect", "Şirket", companyData);
 export const LocationSelect = createCombobox("LocationSelect", "Lokasyon", locationData);
 export const ProjectSelect = createCombobox("ProjectSelect", "Proje", projectData);
@@ -398,6 +567,7 @@ export const ApproverSelect = createCombobox("ApproverSelect", "Onaylayıcı", a
 export default {
   DepartmentSelect,
   PositionSelect,
+  ParametreSelect: ParametreSelectExport,
   CompanySelect,
   LocationSelect,
   ProjectSelect,

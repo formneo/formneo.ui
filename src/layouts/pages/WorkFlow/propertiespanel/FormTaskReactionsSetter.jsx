@@ -10,7 +10,7 @@ import { ReactionsSetter } from "@designable/formily-setters";
 import { Spin, Alert } from "antd";
 import "@designable/react/dist/designable.react.umd.production.css";
 
-const    = ({ formDesign, value, onChange }) => {
+const FormTaskReactionsSetter = ({ formDesign, value, onChange }) => {
   const [status, setStatus] = useState('loading');
   const [error, setError] = useState('');
 

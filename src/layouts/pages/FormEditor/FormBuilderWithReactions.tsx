@@ -10,7 +10,8 @@ import { createForm } from "@formily/core";
 import { FormProvider, createSchemaField } from "@formily/react";
 import { Form, FormItem, Input, Select, NumberPicker } from "@formily/antd";
 import { Card, Button, Space, Divider, message } from "antd";
-import FormTaskReactionsSetter from "../WorkFlow/propertiespanel/FormTaskReactionsSetter.jsx";
+import FormTaskReactionsSetter from "../WorkFlow/propertiespanel/FormTaskReactionsSetter";
+import { useFormWorkflowScope } from "utils/formWorkflowScope";
 
 import "antd/dist/antd.css";
 import "./FormEditorReactions.css";
@@ -106,6 +107,7 @@ const FormBuilderWithReactions = () => {
 
   // Form instance
   const form = useMemo(() => createForm(), []);
+  const workflowScope = useFormWorkflowScope(form);
 
   // formDesign: ReactionsSetter Designer için - FormTask modunda formSchema kullan
   const formDesign = useMemo(
@@ -211,7 +213,7 @@ const FormBuilderWithReactions = () => {
         >
           <FormProvider form={form}>
             <Form layout="vertical">
-              <SchemaField schema={schema} />
+              <SchemaField schema={schema} scope={workflowScope} />
             </Form>
           </FormProvider>
 

@@ -21,6 +21,7 @@ import { Typography } from "@mui/material";
 import {
   DepartmentSelect,
   PositionSelect,
+  ParametreSelectExport as ParametreSelect,
   CompanySelect,
   LocationSelect,
   ProjectSelect,
@@ -64,6 +65,7 @@ export default function FormilyPreviewPage(): JSX.Element {
         CurrencyInput,
         DepartmentSelect,
         PositionSelect,
+        ParametreSelect,
         CompanySelect,
         LocationSelect,
         ProjectSelect,

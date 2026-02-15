@@ -21,11 +21,13 @@ import { Button as AntButton, message, Card as AntdCard, Slider as AntdSlider, R
 import * as Icons from "@ant-design/icons";
 import { WorkFlowContiuneApiDto } from "api/generated";
 import CurrencyInput from "../FormEditor/custom/CurrencyInput";
+import { useFormWorkflowScope } from "utils/formWorkflowScope";
 
 // Custom combobox components
 import {
   DepartmentSelect,
   PositionSelect,
+  ParametreSelectExport as ParametreSelect,
   CompanySelect,
   LocationSelect,
   ProjectSelect,
@@ -81,6 +83,7 @@ export default function WorkflowRuntime(): JSX.Element {
   const taskDetail = location.state?.taskDetail;
 
   const form = useMemo(() => createForm(), []);
+  const workflowScope = useFormWorkflowScope(form);
   const SchemaField = useMemo(
     () => createSchemaField({
       components: {
@@ -91,6 +94,7 @@ export default function WorkflowRuntime(): JSX.Element {
         Rate: AntdRate,
         DepartmentSelect,
         PositionSelect,
+        ParametreSelect,
         CompanySelect,
         LocationSelect,
         ProjectSelect,
@@ -625,9 +629,6 @@ export default function WorkflowRuntime(): JSX.Element {
         const fieldScript = !isNewInstance ? taskDetail?.nodeScript : null;
         const activeScript = initScript || fieldScript;
 
-
-        alert(activeScript);
-
         console.log("🔍 Script kontrolü:", {
           isNewInstance,
           hasInitScript: !!initScript,
@@ -658,6 +659,14 @@ export default function WorkflowRuntime(): JSX.Element {
             // FormData parse edilemezse boş obje kullan
             console.warn("⚠️ FormData parse edilemedi, boş obje kullanılıyor");
           }
+
+          // ✅ __system.workflowStep ekle (script'te erişilebilir olsun)
+          const currentStepForScript =
+            taskDetail?.nodeId || taskDetail?.nodeName || taskDetail?.nodeType || (isNewInstance ? "start" : "currentStep");
+          initialFormValues = {
+            ...initialFormValues,
+            __system: { workflowStep: currentStepForScript },
+          };
 
           try {
             console.log("🔧 Script schema'ya uygulanıyor...", {
@@ -731,65 +740,75 @@ export default function WorkflowRuntime(): JSX.Element {
     // FormData kaynakları: workflowInstance.formData veya taskDetail.formData
     const incomingFormData = workflowInstance?.formData || taskDetail?.formData;
 
+    // ✅ Mevcut workflow adımı (şimdilik placeholder; ileride taskDetail.nodeId/nodeName vb. kullanılabilir)
+    const currentStep =
+      taskDetail?.nodeId ||
+      taskDetail?.nodeName ||
+      taskDetail?.nodeType ||
+      (isNewInstance ? "start" : "currentStep");
+
     console.log("🔍 FormData kontrolü:", {
       hasIncomingFormData: !!incomingFormData,
       hasForm: !!form,
       hasSchema: !!schema,
       loading,
       incomingFormData,
+      currentStep,
     });
 
-    // Schema yüklenmiş ve formData varsa form'a yükle
-    if (incomingFormData && form && schema && !loading) {
+    // Schema yüklenmiş ve form hazırsa initial values set et
+    if (form && schema && !loading) {
       try {
-        // Eğer formData string ise parse et, değilse direkt kullan
-        const parsedFormData = typeof incomingFormData === "string"
-          ? JSON.parse(incomingFormData)
-          : incomingFormData;
+        let actualFormData: any = {};
 
-        console.log("📦 Parsed FormData:", parsedFormData);
+        if (incomingFormData) {
+          // Eğer formData string ise parse et, değilse direkt kullan
+          const parsedFormData = typeof incomingFormData === "string"
+            ? JSON.parse(incomingFormData)
+            : incomingFormData;
 
-        if (parsedFormData && typeof parsedFormData === "object") {
-          // ✅ FormData nested yapıda olabilir (formData.formData içinde asıl veriler)
-          // Eğer formData içinde formData property'si varsa, onu kullan
-          let actualFormData = parsedFormData;
+          console.log("📦 Parsed FormData:", parsedFormData);
 
-          if (parsedFormData.formData && typeof parsedFormData.formData === "object") {
-            // Nested yapı: formData.formData içindeki verileri kullan
-            actualFormData = parsedFormData.formData;
-            console.log("📦 Nested FormData bulundu, içindeki veriler kullanılıyor:", actualFormData);
-          } else if (parsedFormData.formData && typeof parsedFormData.formData === "string") {
-            // Eğer formData.formData string ise parse et
-            try {
-              actualFormData = JSON.parse(parsedFormData.formData);
-              console.log("📦 FormData.formData string parse edildi:", actualFormData);
-            } catch (e) {
-              console.warn("⚠️ FormData.formData parse edilemedi, orijinal kullanılıyor");
+          if (parsedFormData && typeof parsedFormData === "object") {
+            // ✅ FormData nested yapıda olabilir (formData.formData içinde asıl veriler)
+            if (parsedFormData.formData && typeof parsedFormData.formData === "object") {
+              actualFormData = parsedFormData.formData;
+              console.log("📦 Nested FormData bulundu, içindeki veriler kullanılıyor:", actualFormData);
+            } else if (parsedFormData.formData && typeof parsedFormData.formData === "string") {
+              try {
+                actualFormData = JSON.parse(parsedFormData.formData);
+                console.log("📦 FormData.formData string parse edildi:", actualFormData);
+              } catch (e) {
+                console.warn("⚠️ FormData.formData parse edilemedi, orijinal kullanılıyor");
+                actualFormData = parsedFormData;
+              }
+            } else {
+              actualFormData = parsedFormData;
             }
           }
-
-          // Formily form'una initial values olarak set et
-          // Formily'de form values'ları set etmek için setValues kullanılır
-          if (actualFormData && typeof actualFormData === "object") {
-            form.setInitialValues(actualFormData);
-            form.setValues(actualFormData);
-
-            setFormData(actualFormData);
-            console.log("✅ FormData form'a yüklendi:", actualFormData);
-            console.log("✅ Form values kontrolü:", form.values);
-            console.log("✅ Form initialValues kontrolü:", form.initialValues);
-
-            // Form'un güncellendiğinden emin olmak için bir sonraki render'da kontrol et
-            setTimeout(() => {
-              console.log("⏰ 100ms sonra form values:", form.values);
-              console.log("⏰ Form'un tüm field'ları:", Object.keys(form.values || {}));
-            }, 100);
-          } else {
-            console.warn("⚠️ ActualFormData geçerli bir obje değil:", actualFormData);
-          }
-        } else {
-          console.warn("⚠️ FormData geçerli bir obje değil:", parsedFormData);
         }
+
+        // ✅ initialValues: formData + __system.workflowStep (createForm aşamasında)
+        const initialValues = {
+          ...(actualFormData && typeof actualFormData === "object" ? actualFormData : {}),
+          __system: {
+            workflowStep: currentStep,
+          },
+        };
+
+        form.setInitialValues(initialValues);
+        form.setValues(initialValues);
+
+        setFormData(initialValues);
+        console.log("✅ FormData form'a yüklendi (__system dahil):", initialValues);
+            console.log("✅ Form values kontrolü:", form.values);
+        console.log("✅ Form initialValues kontrolü:", form.initialValues);
+
+        // Form'un güncellendiğinden emin olmak için bir sonraki render'da kontrol et
+        setTimeout(() => {
+          console.log("⏰ 100ms sonra form values:", form.values);
+          console.log("⏰ Form'un tüm field'ları:", Object.keys(form.values || {}));
+        }, 100);
       } catch (error) {
         console.error("❌ FormData parse edilirken hata:", error);
         console.error("❌ FormData içeriği:", incomingFormData);
@@ -797,7 +816,7 @@ export default function WorkflowRuntime(): JSX.Element {
     } else if (incomingFormData && (!schema || loading)) {
       console.log("⏳ FormData var ama schema henüz yüklenmedi, bekleniyor...");
     }
-  }, [workflowInstance?.formData, taskDetail?.formData, form, schema, loading]);
+  }, [workflowInstance?.formData, taskDetail?.formData, taskDetail?.nodeId, taskDetail?.nodeName, taskDetail?.nodeType, isNewInstance, form, schema, loading]);
 
   // ✅ Script'i çalıştır - FormData yüklendikten sonra (değer atamaları için)
   // Not: Visibility kontrolleri schema yüklenirken yapıldı (flash önleme)
@@ -1434,7 +1453,7 @@ export default function WorkflowRuntime(): JSX.Element {
                     size="large"
                     colon={false}
                   >
-                    <SchemaField schema={schema} />
+                    <SchemaField schema={schema} scope={workflowScope} />
                   </AntdFormily.FormLayout>
                 </AntdFormily.Form>
               </FormProvider>

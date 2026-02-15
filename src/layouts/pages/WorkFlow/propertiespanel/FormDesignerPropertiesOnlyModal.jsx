@@ -74,6 +74,7 @@ import CurrencyInput from "../../FormEditor/custom/CurrencyInput";
 import {
   DepartmentSelect,
   PositionSelect,
+  ParametreSelectExport as ParametreSelect,
   CompanySelect,
   LocationSelect,
   ProjectSelect,
@@ -85,6 +86,7 @@ import {
   CitySelect,
   ApproverSelect,
 } from "../../FormEditor/custom/StandardComboboxes";
+import LookupParametreSetter from "../../FormEditor/custom/LookupParametreSetter";
 
 const DesignerAny = Designer;
 const StudioPanelAny = StudioPanel;
@@ -132,6 +134,7 @@ const FORM_COMPONENTS = {
   CurrencyInput,
   DepartmentSelect,
   PositionSelect,
+  ParametreSelect,
   CompanySelect,
   LocationSelect,
   ProjectSelect,
@@ -160,6 +163,7 @@ export default function FormDesignerPropertiesOnlyModal({ open, onClose, formId,
       CurrencyInput,
       DepartmentSelect,
       PositionSelect,
+      ParametreSelect,
       CompanySelect,
       LocationSelect,
       ProjectSelect,
@@ -392,7 +396,10 @@ export default function FormDesignerPropertiesOnlyModal({ open, onClose, formId,
               </WorkspaceAny>
 
               <SettingsPanelAny title="Özellikler">
-                <SettingsForm uploadAction="https://www.mocky.io/v2/5cc8019d300000980a055e76" />
+                <SettingsForm
+                  uploadAction="https://www.mocky.io/v2/5cc8019d300000980a055e76"
+                  components={{ LookupParametreSetter }}
+                />
               </SettingsPanelAny>
             </StudioPanelAny>
           </DesignerAny>

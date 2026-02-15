@@ -96,6 +96,7 @@ import AIAssistant from "./AIAssistant";
 import {
   DepartmentSelect,
   PositionSelect,
+  ParametreSelectExport as ParametreSelect,
   CompanySelect,
   LocationSelect,
   ProjectSelect,
@@ -107,8 +108,10 @@ import {
   CitySelect,
   ApproverSelect,
 } from "./custom/StandardComboboxes";
+import LookupParametreSetter from "./custom/LookupParametreSetter";
 import { createResource } from "@designable/core";
 import { Editor } from "@monaco-editor/react";
+import { useFormWorkflowScope } from "utils/formWorkflowScope";
 
 interface FormButton {
   id: string;
@@ -144,6 +147,7 @@ export default function FormilyDesigner(): JSX.Element {
       CurrencyInput as any,
       DepartmentSelect as any,
       PositionSelect as any,
+      ParametreSelect as any,
       CompanySelect as any,
       LocationSelect as any,
       ProjectSelect as any,
@@ -208,6 +212,7 @@ export default function FormilyDesigner(): JSX.Element {
   } as any);
 
   const previewForm = useMemo(() => createForm(), []);
+  const workflowScope = useFormWorkflowScope(previewForm);
   const SchemaField = useMemo(
     () => createSchemaField({ 
       components: { 
@@ -221,6 +226,7 @@ export default function FormilyDesigner(): JSX.Element {
         Rate: AntdRate,
         DepartmentSelect,
         PositionSelect,
+        ParametreSelect,
         CompanySelect,
         LocationSelect,
         ProjectSelect,
@@ -629,7 +635,7 @@ export default function FormilyDesigner(): JSX.Element {
         <FormProvider form={previewForm}>
           <AntdFormily.Form>
             <AntdFormily.FormLayout layout="horizontal" labelAlign="left" labelCol={6} wrapperCol={18} size="default">
-              <SchemaField schema={result.schema || {}} />
+              <SchemaField schema={result.schema || {}} scope={workflowScope} />
             </AntdFormily.FormLayout>
           </AntdFormily.Form>
         </FormProvider>
@@ -1011,6 +1017,7 @@ export default function FormilyDesigner(): JSX.Element {
                   Switch,
                   DepartmentSelect,
                   PositionSelect,
+                  ParametreSelect,
                   CompanySelect,
                   LocationSelect,
                   ProjectSelect,
@@ -1117,6 +1124,7 @@ export default function FormilyDesigner(): JSX.Element {
                         CurrencyInput,
                         DepartmentSelect,
                         PositionSelect,
+                        ParametreSelect,
                         CompanySelect,
                         LocationSelect,
                         ProjectSelect,
@@ -1211,7 +1219,10 @@ export default function FormilyDesigner(): JSX.Element {
             <CrudSettingsPanel />
             {/* Button Panel Yönetimi */}
             <ButtonPanelSettings />
-            <SettingsForm uploadAction="https://www.mocky.io/v2/5cc8019d300000980a055e76" />
+            <SettingsForm
+              uploadAction="https://www.mocky.io/v2/5cc8019d300000980a055e76"
+              components={{ LookupParametreSetter }}
+            />
           </SettingsPanelAny>
 
           {/* Button Paneli - En Alta Sabitlenmiş */}

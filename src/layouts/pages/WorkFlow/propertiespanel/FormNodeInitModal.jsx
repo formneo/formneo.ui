@@ -51,6 +51,7 @@ import { FormProvider, createSchemaField } from "@formily/react";
 import * as AntdFormily from "@formily/antd";
 import { Card as AntdCard, Slider as AntdSlider, Rate as AntdRate, message } from "antd";
 import CurrencyInput from "../../FormEditor/custom/CurrencyInput";
+import { ParametreSelectExport as ParametreSelect, DepartmentSelect, PositionSelect, CompanySelect, LocationSelect, ProjectSelect, SupplierSelect, ProductSelect, CategorySelect, CurrencySelect, CountrySelect, CitySelect, ApproverSelect } from "../../FormEditor/custom/StandardComboboxes";
 import "antd/dist/antd.css";
 
 /**
@@ -82,7 +83,20 @@ const FormNodeInitModal = ({ open, onClose, initialValues, node, workflowFormId,
       CurrencyInput, 
       Card: AntdCard, 
       Slider: AntdSlider, 
-      Rate: AntdRate 
+      Rate: AntdRate,
+      ParametreSelect,
+      DepartmentSelect,
+      PositionSelect,
+      CompanySelect,
+      LocationSelect,
+      ProjectSelect,
+      SupplierSelect,
+      ProductSelect,
+      CategorySelect,
+      CurrencySelect,
+      CountrySelect,
+      CitySelect,
+      ApproverSelect,
     } 
   }), []);
 
