@@ -16,6 +16,7 @@ import {
 import { Save as SaveIcon } from "@mui/icons-material";
 import { formatQuery } from "react-querybuilder";
 import MDButton from "components/MDButton";
+import FormConditionBuilder from "../components/FormConditionBuilder";
 import { Icon } from "@mui/material";
 import { FormDataApi } from "api/generated";
 import getConfiguration from "confiuration";
@@ -290,8 +291,8 @@ const FormConditionTab = ({
       alert("Lütfen bir form node seçin");
       return;
     }
-    if (!field || value === "") {
-      alert("Lütfen field ve value girin");
+    if (!query?.rules?.length) {
+      alert("Lütfen en az bir koşul kuralı ekleyin");
       return;
     }
 
@@ -303,6 +304,8 @@ const FormConditionTab = ({
       operator,
       value,
       condition,
+      query,
+      jsonLogicRule: formatQuery(query, "jsonlogic"),
     };
 
     if (onButtonClick) {
@@ -377,7 +380,7 @@ const FormConditionTab = ({
             Koşul Oluştur
           </Typography>
 
-          {/* Query Builder */}
+          {/* Query Builder - Form design'a uyumlu koşul builder */}
           <Box
             sx={{
               border: "1px solid #e5e7eb",
@@ -387,7 +390,14 @@ const FormConditionTab = ({
               mb: 2,
             }}
           >
-
+            <FormConditionBuilder
+              formDesign={{
+                fields: formFields,
+                raw: selectedFormNode?.data?.parsedFormDesign?.raw,
+              }}
+              query={query}
+              onQueryChange={setQuery}
+            />
           </Box>
 
           {/* Condition Preview */}

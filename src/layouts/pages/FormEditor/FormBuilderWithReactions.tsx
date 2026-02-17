@@ -109,6 +109,12 @@ const FormBuilderWithReactions = () => {
   const form = useMemo(() => createForm(), []);
   const workflowScope = useFormWorkflowScope(form);
 
+  // $step erişilebilir olsun (varsayılan: designer)
+  useEffect(() => {
+    form.setValues({ __system: { workflowStep: "designer" } }, "merge");
+    form.setInitialValues({ __system: { workflowStep: "designer" } }, "merge");
+  }, [form]);
+
   // formDesign: ReactionsSetter Designer için - FormTask modunda formSchema kullan
   const formDesign = useMemo(
     () =>

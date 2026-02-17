@@ -6,6 +6,7 @@ import {
   FaFile,
   FaFileWord,
   FaCode,
+  FaCodeBranch,
   FaVolumeUp,
   FaArrowRight,
   FaChevronRight,
@@ -76,6 +77,12 @@ const CustomMenuList = () => {
             <FaStop style={{ color: "#f44336" }} />
           </ListItemIcon>
           <ListItemText inset>Form Bitişi</ListItemText>
+        </MenuItem>
+        <MenuItem onDragStart={(event) => onDragStart(event, "evetHayirConditionNode")} draggable>
+          <ListItemIcon>
+            <FaCodeBranch style={{ color: "#6366f1" }} />
+          </ListItemIcon>
+          <ListItemText inset>Koşul (Evet/Hayır)</ListItemText>
         </MenuItem>
       </Collapse>
 

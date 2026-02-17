@@ -213,6 +213,13 @@ export default function FormilyDesigner(): JSX.Element {
 
   const previewForm = useMemo(() => createForm(), []);
   const workflowScope = useFormWorkflowScope(previewForm);
+
+  // $step simülasyonu: form tasarımında x-reactions'ta {{ $step }} erişilebilir olsun
+  const [previewStep, setPreviewStep] = useState<string>("designer");
+  useEffect(() => {
+    previewForm.setValues({ __system: { workflowStep: previewStep } }, "merge");
+    previewForm.setInitialValues({ __system: { workflowStep: previewStep } }, "merge");
+  }, [previewForm, previewStep]);
   const SchemaField = useMemo(
     () => createSchemaField({ 
       components: { 
@@ -632,6 +639,22 @@ export default function FormilyDesigner(): JSX.Element {
     const result = transformToSchema(tree);
     return (
       <div style={{ padding: 16 }}>
+        <div style={{ marginBottom: 12, display: "flex", alignItems: "center", gap: 8 }}>
+          <Typography.Text type="secondary">$step:</Typography.Text>
+          <AntdSelect
+            size="small"
+            style={{ width: 180 }}
+            value={previewStep}
+            onChange={setPreviewStep}
+            options={[
+              { label: "designer (varsayılan)", value: "designer" },
+              { label: "start", value: "start" },
+              { label: "currentStep", value: "currentStep" },
+              { label: "form_step_1", value: "form_step_1" },
+              { label: "approval_step", value: "approval_step" },
+            ]}
+          />
+        </div>
         <FormProvider form={previewForm}>
           <AntdFormily.Form>
             <AntdFormily.FormLayout layout="horizontal" labelAlign="left" labelCol={6} wrapperCol={18} size="default">

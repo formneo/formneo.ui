@@ -51,9 +51,12 @@ import FormTaskNode from "./components/FormTaskNode";
 import FormTaskModal from "./propertiespanel/FormTaskModal";
 import FormConditionNode from "./components/FormConditionNode";
 import FormConditionTab from "./propertiespanel/FormConditionTab";
+import EvetHayirConditionNode from "./components/EvetHayirConditionNode";
+import EvetHayirConditionTab from "./propertiespanel/EvetHayirConditionTab";
 import ScriptNode from "./components/ScriptNode";
 import ScriptTab from "./propertiespanel/ScriptTab";
 import FormNodeInitModal from "./propertiespanel/FormNodeInitModal";
+import ConditionModalDialog from "./propertiespanel/ConditionModalDialog";
 
 import {
   AnalyticalTable,
@@ -152,6 +155,7 @@ const nodeTypes = {
   userTaskNode: UserTaskNode, // Kullanıcı görevi node'u (basit alanlar + butonlar)
   formTaskNode: FormTaskNode, // Form görevi node'u (kullanıcı atama + alan kontrolü)
   formConditionNode: FormConditionNode, // Form field'larına göre koşul node'u
+  evetHayirConditionNode: EvetHayirConditionNode, // Evet/Hayır çıkışlı koşul node'u
   scriptNode: ScriptNode, // JavaScript script node'u
 };
 
@@ -220,6 +224,8 @@ function Flow(props) {
   const [formTaskModalNode, setFormTaskModalNode] = useState(null);
   const [formNodeModalOpen, setFormNodeModalOpen] = useState(false);
   const [formNodeModalNode, setFormNodeModalNode] = useState(null);
+  const [conditionModalOpen, setConditionModalOpen] = useState(false);
+  const [conditionModalNode, setConditionModalNode] = useState(null);
 
   const [workflowData, setWorkflowData] = useState({
     metadata: {
@@ -654,6 +660,17 @@ function Flow(props) {
             operator: "==",
             value: "",
             condition: "",
+            ...baseFormInfo,
+          };
+          break;
+
+        case "evetHayirConditionNode":
+          nodeData = {
+            formNodeId: "",
+            formId: null,
+            formName: "",
+            query: { combinator: "and", rules: [] },
+            summary: "",
             ...baseFormInfo,
           };
           break;
@@ -1148,6 +1165,20 @@ function Flow(props) {
       return;
     }
 
+    // ✅ Koşul node'ları ise modal aç (Query, Form, EvetHayır)
+    if (
+      node.type === "queryConditionNode" ||
+      node.type === "formConditionNode" ||
+      node.type === "evetHayirConditionNode"
+    ) {
+      setConditionModalNode(node);
+      setConditionModalOpen(true);
+      setselecteNodeType(null);
+      setselecteNodeData(null);
+      setselectedNode(null);
+      return;
+    }
+
     setisLoadingProperties(true);
     setselecteNodeType(node.type);
     setselecteNodeData(node.data);
@@ -1438,6 +1469,68 @@ function Flow(props) {
               }}
             />
           )}
+
+          {/* Koşul Modal (Query, Form, EvetHayır) */}
+          {conditionModalOpen && conditionModalNode && (
+            <ConditionModalDialog
+              open={conditionModalOpen}
+              onClose={() => {
+                setConditionModalOpen(false);
+                setConditionModalNode(null);
+              }}
+              title={
+                conditionModalNode.type === "evetHayirConditionNode"
+                  ? "Koşul (Evet/Hayır)"
+                  : conditionModalNode.type === "queryConditionNode"
+                  ? "Query Koşulu"
+                  : "Form Koşulu"
+              }
+              subtitle="Form alanlarına göre koşul tanımlayın"
+            >
+              {conditionModalNode.type === "evetHayirConditionNode" && (
+                <EvetHayirConditionTab
+                  node={conditionModalNode}
+                  nodes={nodes}
+                  edges={edges}
+                  parsedFormDesign={parsedFormDesign}
+                  selectedForm={selectedForm}
+                  onButtonClick={(data) => {
+                    handlePropertiesChange(data);
+                    setConditionModalOpen(false);
+                    setConditionModalNode(null);
+                  }}
+                />
+              )}
+              {conditionModalNode.type === "queryConditionNode" && (
+                <QueryConditionTab
+                  node={conditionModalNode}
+                  parsedFormDesign={conditionModalNode.data?.parsedFormDesign || parsedFormDesign}
+                  selectedForm={selectedForm}
+                  nodes={nodes}
+                  edges={edges}
+                  onButtonClick={(data) => {
+                    handlePropertiesChange(data);
+                    setConditionModalOpen(false);
+                    setConditionModalNode(null);
+                  }}
+                />
+              )}
+              {conditionModalNode.type === "formConditionNode" && (
+                <FormConditionTab
+                  node={conditionModalNode}
+                  nodes={nodes}
+                  edges={edges}
+                  parsedFormDesign={parsedFormDesign}
+                  selectedForm={selectedForm}
+                  onButtonClick={(data) => {
+                    handlePropertiesChange(data);
+                    setConditionModalOpen(false);
+                    setConditionModalNode(null);
+                  }}
+                />
+              )}
+            </ConditionModalDialog>
+          )}
         </div>
       </SplitterPanel>
 
@@ -1638,6 +1731,19 @@ const renderComponent = (
     case "formConditionNode":
       return data ? (
         <FormConditionTab
+          key={node.id}
+          node={node}
+          nodes={nodes}
+          edges={edges}
+          parsedFormDesign={parsedFormDesign}
+          selectedForm={selectedForm}
+          onButtonClick={handlePropertiesChange}
+        />
+      ) : null;
+
+    case "evetHayirConditionNode":
+      return data ? (
+        <EvetHayirConditionTab
           key={node.id}
           node={node}
           nodes={nodes}

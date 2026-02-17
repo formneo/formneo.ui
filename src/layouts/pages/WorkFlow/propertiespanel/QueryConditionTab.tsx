@@ -3,6 +3,7 @@ import { Icon, Select, MenuItem, FormControl, InputLabel, Typography, Divider, B
 import MDButton from "components/MDButton";
 import { RuleGroupType } from "react-querybuilder";
 import { formatQuery } from "react-querybuilder";
+import FormConditionBuilder from "../components/FormConditionBuilder";
 
 interface QueryConditionTabProps {
   node: any;
@@ -13,6 +14,12 @@ interface QueryConditionTabProps {
   workflowData?: any; // Workflow execution data
   nodes?: any[]; // All workflow nodes
   edges?: any[]; // All workflow edges
+}
+
+interface AvailableField {
+  name: string;
+  label: string;
+  type?: string;
 }
 
 const QueryConditionTab: React.FC<QueryConditionTabProps> = ({
@@ -238,7 +245,7 @@ const QueryConditionTab: React.FC<QueryConditionTabProps> = ({
   }, [selectedPreviousNodeId, nodes]);
 
   // ✅ Data source'a göre field'ları hazırla
-  const availableFields = useMemo(() => {
+  const availableFields = useMemo((): AvailableField[] => {
     
     
     
@@ -246,8 +253,7 @@ const QueryConditionTab: React.FC<QueryConditionTabProps> = ({
     
     if (dataSource === "formData") {
       // Form field'ları
-      const fields = currentFormDesign?.fields || [];
-      
+      const fields = (currentFormDesign?.fields || []) as AvailableField[];
       return fields;
     } else if (dataSource === "previousNode" && selectedPreviousNode) {
       // Previous node'un output field'ları
@@ -278,7 +284,7 @@ const QueryConditionTab: React.FC<QueryConditionTabProps> = ({
         );
       }
       
-      return outputFields;
+      return outputFields as AvailableField[];
     } else if (dataSource === "workflowData") {
       // Workflow context field'ları
       return [
@@ -518,6 +524,28 @@ const QueryConditionTab: React.FC<QueryConditionTabProps> = ({
 
       <Divider sx={{ my: 2 }} />
 
+      {/* ✅ Form Condition Builder - react-querybuilder */}
+      <Box sx={{ mb: 2 }}>
+        <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 600 }}>
+          Koşul Kuralları
+        </Typography>
+        <FormConditionBuilder
+          formDesign={dataSource === "formData" ? currentFormDesign : undefined}
+          fields={
+            dataSource !== "formData"
+              ? availableFields.map((f: AvailableField) => ({
+                  name: f.name,
+                  label: f.label,
+                  type: (f.type as any) || "string",
+                  valueEditorType: f.type === "number" ? "number" : "text",
+                  operators: f.type === "number" ? ["=", "!=", "<", "<=", ">", ">="] : ["=", "!=", "contains", "beginsWith", "endsWith"],
+                }))
+              : undefined
+          }
+          query={query}
+          onQueryChange={setQuery}
+        />
+      </Box>
 
       <MDButton
         variant="gradient"
