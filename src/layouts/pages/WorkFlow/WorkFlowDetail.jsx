@@ -1320,6 +1320,8 @@ function Flow(props) {
         <div className="reactflow-wrapper" ref={reactFlowWrapper} style={{ height: "100%" }}>
           {nodes.length > 0 && (
             <ReactFlow
+              minZoom={0.1}
+              maxZoom={4}
               onMouseEnter={() => setIsHovered(true)}
               nodes={nodes}
               edges={edges}

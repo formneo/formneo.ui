@@ -108,7 +108,7 @@ import { ActionBarProvider } from "context/ActionBarContext";
 import OpportunityFormPage from "./pages/opportunities/OpportunityFormPage";
 // Publicly exposed WorkFlow & FormManagement pages
 const WorkFlowList = lazy(() => import("layouts/pages/WorkFlow/WorkFlowList"));
-const WorkFlowDetail = lazy(() => import("layouts/pages/WorkFlow/WorkFlowDetail.jsx"));
+const WorkFlowDetail = lazy(() => import("layouts/pages/WorkFlow/WorkFlowDetail"));
 const WorkflowMyTasks = lazy(() => import("layouts/pages/WorkFlow/WorkflowMyTasks"));
 const WorkflowRuntime = lazy(() => import("layouts/pages/WorkFlow/WorkflowRuntime"));
 const ProcessHub = lazy(() => import("layouts/pages/ProcessHub"));

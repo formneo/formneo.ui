@@ -37,7 +37,17 @@ const transformToMarkupSchemaCode = (tree: TreeNode): string => {
       .join(" ");
   };
 
-  const printChildren = (node: TreeNode) => {
+  const printNode = (node: TreeNode): string => {
+    if (!node) return "";
+    const tag = printTag(node);
+    const attr = printAttribute(node);
+    const hasChildren = node.children && node.children.length > 0;
+    return hasChildren
+      ? `<${tag} ${attr}>${printChildren(node)}</${tag}>`
+      : `<${tag} ${attr} />`;
+  };
+
+  const printChildren = (node: TreeNode): string => {
     if (!node || !node.children) return "";
     return node.children.map((child) => printNode(child)).join("");
   };
@@ -52,16 +62,6 @@ const transformToMarkupSchemaCode = (tree: TreeNode): string => {
     if (node.props.type === "object") return "SchemaField.Object";
     if (node.props.type === "void") return "SchemaField.Void";
     return "SchemaField.Markup";
-  };
-
-  const printNode = (node: TreeNode) => {
-    if (!node) return "";
-    const tag = printTag(node);
-    const attr = printAttribute(node);
-    const hasChildren = node.children && node.children.length > 0;
-    return hasChildren
-      ? `<${tag} ${attr}>${printChildren(node)}</${tag}>`
-      : `<${tag} ${attr} />`;
   };
 
   const root =

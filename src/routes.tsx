@@ -123,7 +123,7 @@ const DataTables = lazy(() => import("layouts/pages/users/list-user"));
 const Settings = lazy(() => import("layouts/pages/users/userDetail/settings"));
 
 const WorkFlowList = lazy(() => import("layouts/pages/WorkFlow/WorkFlowList"));
-const WorkFlowDetail = lazy(() => import("layouts/pages/WorkFlow/WorkFlowDetail.jsx"));
+const WorkFlowDetail = lazy(() => import("layouts/pages/WorkFlow/WorkFlowDetail"));
 const ApproveList = lazy(() => import("layouts/pages/WorkFlow/ApproveList"));
 const ProcessHub = lazy(() => import("layouts/pages/ProcessHub"));
 const ParameterView = lazy(() => import("layouts/pages/FormManagement/listForm/ParameterView"));
