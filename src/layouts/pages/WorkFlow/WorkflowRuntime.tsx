@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useMemo, useRef } from "react";
 import { useParams, useLocation, useNavigate } from "react-router-dom";
-import { FormDataApi, WorkFlowApi, UserApi, WorkFlowStartApiDto, AlertNodeInfo, WorkFlowItemApi, WorkFlowItemDtoWithApproveItems } from "api/generated";
+import { FormDataApi, WorkFlowApi, UserApi, WorkFlowStartApiDto, AlertNodeInfo, WorkFlowItemApi, WorkFlowItemDtoWithApproveItems, FormTaskNodeButtonDto } from "api/generated";
 import getConfiguration from "confiuration";
 import { showWorkflowAlert } from "./utils/workflowAlert";
 
@@ -48,6 +48,26 @@ interface FormButton {
   icon?: string;
   action?: string;
   visible?: boolean;
+  color?: string;
+  name?: string;
+  description?: string;
+}
+
+/** FormTaskNodeButtonDto veya legacy button objesini FormButton'a map eder */
+function mapToFormButton(btn: FormTaskNodeButtonDto | Record<string, any>, index: number): FormButton {
+  const id = btn.id ?? `button-${index}`;
+  const label = btn.label ?? btn.name ?? "Buton";
+  return {
+    id: String(id),
+    label: String(label),
+    type: (btn.type as FormButton["type"]) || "primary",
+    icon: btn.icon ?? undefined,
+    action: btn.action ?? undefined,
+    visible: btn.visible !== false,
+    color: btn.color ?? undefined,
+    name: btn.name ?? undefined,
+    description: btn.description ?? undefined,
+  };
 }
 
 /**
@@ -685,33 +705,55 @@ export default function WorkflowRuntime(): JSX.Element {
               buttonVisibilityMapSize: Object.keys(buttonVisibilityMap).length,
             });
 
-            // ✅ Button panel'i yükle VE script'ten gelen visibility'yi uygula
-            if (parsed.buttonPanel?.buttons && Array.isArray(parsed.buttonPanel.buttons)) {
-              const buttonsWithVisibility = parsed.buttonPanel.buttons.map((btn: FormButton) => ({
-                ...btn,
-                visible: buttonVisibilityMap.hasOwnProperty(btn.id)
-                  ? buttonVisibilityMap[btn.id]
-                  : btn.visible ?? true
-              }));
-              console.log("🔘 Butonlar visibility ile yükleniyor:", {
-                totalButtons: buttonsWithVisibility.length,
-                visibleButtons: buttonsWithVisibility.filter((b: FormButton) => b.visible !== false).length,
-                buttonVisibilityMap,
-              });
-              setFormButtons(buttonsWithVisibility);
-            }
+            // ✅ Standart form butonları (formDesign) her zaman korunur; DTO butonları sadece ek/güncelleme
+            const standardButtons = Array.isArray(parsed.buttonPanel?.buttons)
+              ? parsed.buttonPanel.buttons.map((btn: any, i: number) => mapToFormButton(btn, i))
+              : [];
+            const dtoButtons = (taskDetail?.buttons ?? form?.buttons ?? []) as FormTaskNodeButtonDto[];
+            const dtoMapped = dtoButtons.map((btn, i) => mapToFormButton(btn, i));
+            // Merge: standart base + DTO (aynı id varsa güncelle, yoksa ekle)
+            const mergedById = new Map<string, FormButton>();
+            standardButtons.forEach((b: FormButton) => mergedById.set(b.id, b));
+            dtoMapped.forEach((b: FormButton) => mergedById.set(b.id, b));
+            const baseButtons = Array.from(mergedById.values());
+            const buttonsWithVisibility = baseButtons.map((btn) => ({
+              ...btn,
+              visible: buttonVisibilityMap.hasOwnProperty(btn.id)
+                ? buttonVisibilityMap[btn.id]
+                : btn.visible ?? true
+            }));
+            console.log("🔘 Butonlar (standart + DTO merge) visibility ile yükleniyor:", {
+              standardCount: standardButtons.length,
+              dtoCount: dtoMapped.length,
+              totalButtons: buttonsWithVisibility.length,
+              visibleButtons: buttonsWithVisibility.filter((b) => b.visible !== false).length,
+              buttonVisibilityMap,
+            });
+            setFormButtons(buttonsWithVisibility);
           } catch (error) {
             console.warn("⚠️ Schema modifikasyonu sırasında hata, orijinal schema kullanılıyor:", error);
-            // Hata durumunda butonları normal şekilde yükle
-            if (parsed.buttonPanel?.buttons && Array.isArray(parsed.buttonPanel.buttons)) {
-              setFormButtons(parsed.buttonPanel.buttons);
-            }
+            // Hata durumunda: standart + DTO merge
+            const standardButtons = Array.isArray(parsed.buttonPanel?.buttons)
+              ? parsed.buttonPanel.buttons.map((btn: any, i: number) => mapToFormButton(btn, i))
+              : [];
+            const dtoButtons = (taskDetail?.buttons ?? form?.buttons ?? []) as FormTaskNodeButtonDto[];
+            const dtoMapped = dtoButtons.map((btn, i) => mapToFormButton(btn, i));
+            const mergedById = new Map<string, FormButton>();
+            standardButtons.forEach((b: FormButton) => mergedById.set(b.id, b));
+            dtoMapped.forEach((b: FormButton) => mergedById.set(b.id, b));
+            setFormButtons(Array.from(mergedById.values()));
           }
         } else {
-          // Script yoksa butonları direkt yükle
-          if (parsed.buttonPanel?.buttons && Array.isArray(parsed.buttonPanel.buttons)) {
-            setFormButtons(parsed.buttonPanel.buttons);
-          }
+          // Script yoksa: standart + DTO merge
+          const standardButtons = Array.isArray(parsed.buttonPanel?.buttons)
+            ? parsed.buttonPanel.buttons.map((btn: any, i: number) => mapToFormButton(btn, i))
+            : [];
+          const dtoButtons = (taskDetail?.buttons ?? form?.buttons ?? []) as FormTaskNodeButtonDto[];
+          const dtoMapped = dtoButtons.map((btn, i) => mapToFormButton(btn, i));
+          const mergedById = new Map<string, FormButton>();
+          standardButtons.forEach((b: FormButton) => mergedById.set(b.id, b));
+          dtoMapped.forEach((b: FormButton) => mergedById.set(b.id, b));
+          setFormButtons(Array.from(mergedById.values()));
         }
 
         setSchema(finalSchema);
@@ -732,7 +774,7 @@ export default function WorkflowRuntime(): JSX.Element {
     };
 
     load();
-  }, [workflowInstance?.formId, isNewInstance, (workflowInstance as any)?.initScript, taskDetail?.fieldScript]);
+  }, [workflowInstance?.formId, isNewInstance, (workflowInstance as any)?.initScript, taskDetail?.fieldScript, taskDetail?.buttons]);
 
   // ✅ FormData'yı location.state'den al ve form'a initial values olarak ver
   // Schema yüklendikten SONRA formData'yı set et (Formily için önemli)
@@ -1461,7 +1503,7 @@ export default function WorkflowRuntime(): JSX.Element {
           </MDBox>
         </DashboardLayout>
 
-        {/* Button Panel - En altta sabit */}
+        {/* Button Panel - En altta sabit, butonlar sağda (FormTaskNodeButtonDto özellikleriyle) */}
         {formButtons.length > 0 && (
           <Box
             sx={{
@@ -1477,32 +1519,45 @@ export default function WorkflowRuntime(): JSX.Element {
               zIndex: 1300,
               display: "flex",
               gap: 2,
-              justifyContent: "center",
+              justifyContent: "flex-end",
               alignItems: "center",
               minHeight: "70px",
             }}
           >
             {formButtons
-              .filter((button) => button.visible !== false) // ✅ Sadece görünür butonları göster
+              .filter((button) => button.visible !== false)
               .map((button) => {
                 const IconComponent = button.icon
                   ? (Icons as any)[button.icon] || Icons.CheckOutlined
                   : null;
 
-                // ✅ Action kod kontrolü - BMP modülü için
                 const hasAction = button.action && button.action.trim();
                 const buttonDisabled = submitting || !hasAction;
+
+                // FormTaskNodeButtonDto color -> Ant Design type/style
+                const colorMap: Record<string, "primary" | "default" | "dashed" | "link" | "text"> = {
+                  primary: "primary",
+                  default: "default",
+                  dashed: "dashed",
+                  link: "link",
+                  text: "text",
+                  success: "primary",
+                  warning: "default",
+                  danger: "primary",
+                };
+                const btnType = (button.color && colorMap[button.color]) || button.type || "primary";
 
                 return (
                   <AntButton
                     key={button.id}
-                    type={button.type || "primary"}
+                    type={btnType}
                     icon={IconComponent ? <IconComponent /> : null}
                     onClick={() => handleButtonClick(button)}
                     size="large"
                     loading={submitting}
                     disabled={buttonDisabled}
                     title={hasAction ? `Action: ${button.action}` : "Action Code tanımlanmamış!"}
+                    danger={button.color === "danger"}
                   >
                     {submitting ? "Gönderiliyor..." : button.label}
                   </AntButton>

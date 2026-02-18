@@ -21617,6 +21617,13 @@
           "publicationStatusText": {
             "type": "string",
             "nullable": true
+          },
+          "buttons": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FormTaskNodeButtonDto"
+            },
+            "nullable": true
           }
         },
         "additionalProperties": false
@@ -23365,6 +23372,52 @@
             "nullable": true
           },
           "durum": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "FormTaskNodeButtonDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "nullable": true
+          },
+          "label": {
+            "type": "string",
+            "nullable": true
+          },
+          "action": {
+            "type": "string",
+            "nullable": true
+          },
+          "type": {
+            "type": "string",
+            "nullable": true
+          },
+          "icon": {
+            "type": "string",
+            "nullable": true
+          },
+          "color": {
+            "type": "string",
+            "nullable": true
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "visible": {
+            "type": "boolean",
+            "nullable": true
+          },
+          "source": {
             "type": "string",
             "nullable": true
           }
@@ -27340,6 +27393,13 @@
           },
           "nodeScript": {
             "type": "string",
+            "nullable": true
+          },
+          "buttons": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FormTaskNodeButtonDto"
+            },
             "nullable": true
           },
           "approveItemId": {

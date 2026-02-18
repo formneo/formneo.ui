@@ -1458,6 +1458,7 @@ export interface FormDataListDto {
     'showInMenu'?: boolean;
     'publicationStatus'?: FormPublicationStatus;
     'publicationStatusText'?: string | null;
+    'buttons'?: Array<FormTaskNodeButtonDto> | null;
 }
 
 
@@ -1953,6 +1954,18 @@ export interface FormTaskItemDto {
 }
 
 
+export interface FormTaskNodeButtonDto {
+    'id'?: string | null;
+    'label'?: string | null;
+    'action'?: string | null;
+    'type'?: string | null;
+    'icon'?: string | null;
+    'color'?: string | null;
+    'name'?: string | null;
+    'description'?: string | null;
+    'visible'?: boolean | null;
+    'source'?: string | null;
+}
 export interface FormTenantRoleListDto {
     'id'?: string;
     'name'?: string | null;
@@ -3108,6 +3121,7 @@ export interface TaskFormDto {
     'formItemStatus'?: FormItemStatus;
     'fieldScript'?: string | null;
     'nodeScript'?: string | null;
+    'buttons'?: Array<FormTaskNodeButtonDto> | null;
     'approveItemId'?: string | null;
     'approveUser'?: string | null;
     'approveUserNameSurname'?: string | null;

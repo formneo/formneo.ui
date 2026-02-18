@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import {
   Dialog,
+  DialogTitle,
   DialogContent,
   Box,
   Typography,
@@ -94,6 +95,71 @@ import "../../FormEditor/FormEditorReactions.css";
 
 const STORAGE_KEY_REACTIONS_PENDING = "formTask_reactions_pending";
 
+// Sürece eklenen buton düzenleme formu
+function EditUserButtonForm({ button, onSave, onCancel }) {
+  const [label, setLabel] = useState(button?.label || "");
+  const [action, setAction] = useState(button?.action || "");
+  const [type, setType] = useState(button?.type || "default");
+  const [color, setColor] = useState(button?.color || "primary");
+  const [description, setDescription] = useState(button?.description || "");
+
+  return (
+    <Box sx={{ display: "flex", flexDirection: "column", gap: 2, pt: 1 }}>
+      <TextField
+        label="Ad"
+        value={label}
+        onChange={(e) => setLabel(e.target.value)}
+        fullWidth
+        size="small"
+      />
+      <TextField
+        label="Action (işlem kodu)"
+        value={action}
+        onChange={(e) => setAction(e.target.value)}
+        fullWidth
+        size="small"
+      />
+      <FormControl fullWidth size="small">
+        <InputLabel>Tip</InputLabel>
+        <Select value={type} label="Tip" onChange={(e) => setType(e.target.value)}>
+          <MenuItem value="primary">Primary</MenuItem>
+          <MenuItem value="default">Default</MenuItem>
+          <MenuItem value="success">Success</MenuItem>
+          <MenuItem value="warning">Warning</MenuItem>
+          <MenuItem value="danger">Danger</MenuItem>
+          <MenuItem value="info">Info</MenuItem>
+        </Select>
+      </FormControl>
+      <FormControl fullWidth size="small">
+        <InputLabel>Renk</InputLabel>
+        <Select value={color} label="Renk" onChange={(e) => setColor(e.target.value)}>
+          <MenuItem value="primary">Primary</MenuItem>
+          <MenuItem value="success">Success</MenuItem>
+          <MenuItem value="warning">Warning</MenuItem>
+          <MenuItem value="error">Error</MenuItem>
+          <MenuItem value="info">Info</MenuItem>
+          <MenuItem value="default">Default</MenuItem>
+        </Select>
+      </FormControl>
+      <TextField
+        label="Açıklama"
+        value={description}
+        onChange={(e) => setDescription(e.target.value)}
+        fullWidth
+        size="small"
+        multiline
+        rows={2}
+      />
+      <Box sx={{ display: "flex", gap: 2, justifyContent: "flex-end", mt: 2 }}>
+        <MDButton variant="outlined" onClick={onCancel}>Vazgeç</MDButton>
+        <MDButton variant="gradient" color="info" onClick={() => onSave({ label, action, type, color, description })} disabled={!label?.trim()}>
+          Kaydet
+        </MDButton>
+      </Box>
+    </Box>
+  );
+}
+
 const FormTaskModal = ({ open, onClose, initialValues, node, onSave, workflowFormId, workflowFormName }) => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -153,6 +219,7 @@ const FormTaskModal = ({ open, onClose, initialValues, node, onSave, workflowFor
   const [initSettingsTab, setInitSettingsTab] = useState(0); // 0: Değer Atama, 1: Koşullar, 2: Görünürlük, 3: Butonlar, 4: Formily Reactions
   const [buttonVisibilitySettings, setButtonVisibilitySettings] = useState({}); // { buttonId: true/false }
   const [formReactions, setFormReactions] = useState(null); // Formily x-reactions (ReactionsSetter)
+  const [editingUserButton, setEditingUserButton] = useState(null); // Düzenlenen sürece eklenen buton
 
   // FormTaskModal açıkken body'ye class ekle - ReactionsSetter modalı üstte görünsün
   useEffect(() => {
@@ -715,8 +782,10 @@ declare var formValues: Record<string, any>;
             setFieldSettings(settings);
           }
 
-          // Form butonlarını yükle
-          const buttons = design?.buttonPanel?.buttons || [];
+          // Form butonlarını yükle + sürece eklenen (source: user) butonları birleştir
+          const formDesignButtons = (design?.buttonPanel?.buttons || []).map(b => ({ ...b, source: "form" }));
+          const userAddedButtons = (node?.data?.allButtons || initialValues?.allButtons || []).filter(b => b.source === "user");
+          const buttons = [...formDesignButtons, ...userAddedButtons];
           setFormButtons(buttons);
           
           // Mevcut button settings'i yükle veya varsayılan olarak tüm butonları görünür yap
@@ -743,6 +812,22 @@ declare var formValues: Record<string, any>;
       }
     }
   }, [open, workflowFormId, initialValues, node]);
+
+  // Form yoksa (formId yok) ama sürece eklenen butonlar varsa onları yükle
+  useEffect(() => {
+    const formId = initialValues?.formId || node?.data?.formId || workflowFormId;
+    if (open && !formId && node?.data?.allButtons?.length) {
+      const userBtns = node.data.allButtons.filter(b => b.source === "user");
+      if (userBtns.length > 0) {
+        setFormButtons(userBtns);
+        const btnSettings = {};
+        userBtns.forEach(b => {
+          btnSettings[b.id] = initialValues?.buttonSettings?.[b.id] ?? { visible: true };
+        });
+        setButtonSettings(btnSettings);
+      }
+    }
+  }, [open, workflowFormId, initialValues?.formId, initialValues?.buttonSettings, node?.data?.formId, node?.data?.allButtons]);
 
   // Initial values değiştiğinde state'i güncelle
   useEffect(() => {
@@ -865,6 +950,22 @@ declare var formValues: Record<string, any>;
         visible,
       },
     }));
+  };
+
+  // Sürece eklenen butonu düzenle
+  const handleUpdateUserButton = (updatedButton) => {
+    setFormButtons(prev => prev.map(b => b.id === updatedButton.id ? { ...b, ...updatedButton, source: "user" } : b));
+    setEditingUserButton(null);
+  };
+
+  // Sürece eklenen butonu sil
+  const handleDeleteUserButton = (buttonId) => {
+    setFormButtons(prev => prev.filter(b => b.id !== buttonId));
+    setButtonSettings(prev => {
+      const next = { ...prev };
+      delete next[buttonId];
+      return next;
+    });
   };
 
   // ===== FORM BAŞLANGIÇ AYARLARI - Helper Fonksiyonlar =====
@@ -2754,27 +2855,29 @@ if (gunSayisi && gunlukUcret) {
                   </div>
   );
 
+  const formButtonsList = formButtons.filter(b => b.source !== "user");
+  const userButtonsList = formButtons.filter(b => b.source === "user");
+
   const renderButtonsContent = () => (
     <div className="space-y-6">
       <div className="flex items-center gap-3 text-indigo-600 mb-4 px-2">
         <FormatListBulletedIcon fontSize="small" />
         <h4 className="text-sm font-black tracking-tight uppercase">Buton Görünürlüğü ve Aksiyonlar</h4>
       </div>
-      {formButtons.length === 0 ? (
-        <Paper sx={{ p: 2, textAlign: "center", bgcolor: "grey.100" }}>
-          <Typography variant="body2" color="textSecondary">
-            Bu formda buton bulunmuyor.
+
+      {/* Form butonları */}
+      {formButtonsList.length > 0 && (
+        <Box>
+          <Typography variant="caption" color="text.secondary" fontWeight={600} sx={{ display: "block", mb: 1 }}>
+            📄 Formdan gelen butonlar
           </Typography>
-        </Paper>
-      ) : (
-        <>
           <div className="grid gap-4">
-            {formButtons.map((button) => {
+            {formButtonsList.map((button) => {
               const isVisible = buttonSettings[button.id]?.visible !== false;
               return (
                 <div
                   key={button.id}
-                  className="flex items-center gap-6 p-6 bg-white border border-slate-200 rounded-[2.5rem] hover:shadow-xl transition-all group relative border-l-8 border-l-slate-100 hover:border-l-blue-500"
+                  className="flex items-center gap-6 p-6 bg-white border border-slate-200 rounded-[2.5rem] hover:shadow-xl transition-all group relative border-l-8 border-l-slate-200 hover:border-l-blue-500"
                 >
                   <div
                     className={`w-12 h-12 rounded-2xl ${
@@ -2818,16 +2921,116 @@ if (gunSayisi && gunlukUcret) {
               );
             })}
           </div>
-          <Box mt={2}>
-            <Typography variant="caption" color="textSecondary">
-              Görünür: {formButtons.filter(btn => buttonSettings[btn.id]?.visible !== false).length} / {formButtons.length} buton
-            </Typography>
-            <Typography variant="caption" color="warning.main" display="block" mt={0.5}>
-              ⚠️ Görünür butonlar için çıkış handle&apos;ları oluşturulacaktır
-            </Typography>
-          </Box>
-        </>
+        </Box>
       )}
+
+      {/* Sürece eklenen butonlar - düzenlenebilir */}
+      {userButtonsList.length > 0 && (
+        <Box>
+          <Typography variant="caption" color="text.secondary" fontWeight={600} sx={{ display: "block", mb: 1 }}>
+            ➕ Sürece eklenen butonlar (düzenlenebilir)
+          </Typography>
+          <div className="grid gap-4">
+            {userButtonsList.map((button) => {
+              const isVisible = buttonSettings[button.id]?.visible !== false;
+              return (
+                <div
+                  key={button.id}
+                  className="flex items-center gap-6 p-6 bg-amber-50/50 border border-amber-200 rounded-[2.5rem] hover:shadow-xl transition-all group relative border-l-8 border-l-amber-500 hover:border-l-amber-600"
+                >
+                  <div
+                    className={`w-12 h-12 rounded-2xl ${
+                      isVisible ? "bg-amber-600" : "bg-slate-400"
+                    } flex items-center justify-center text-white shadow-xl transition-transform group-hover:scale-105`}
+                  >
+                    <AddIcon fontSize="small" />
+                  </div>
+                  <div className="flex-1">
+                    <div className="text-base font-black text-slate-800">
+                      {button.label || button.name || "Buton"}
+                    </div>
+                    {button.description && (
+                      <p className="text-xs text-slate-500 mt-1">{button.description}</p>
+                    )}
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      {button.action && (
+                        <span className="text-[10px] font-bold bg-amber-100 text-amber-800 px-2 py-1 rounded-full border border-amber-200">
+                          {button.action}
+                        </span>
+                      )}
+                      {button.type && (
+                        <span className="text-[10px] font-bold bg-slate-100 text-slate-600 px-2 py-1 rounded-full border border-slate-200">
+                          {button.type}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <Box sx={{ display: "flex", gap: 1 }}>
+                    <IconButton
+                      size="small"
+                      onClick={() => setEditingUserButton(button)}
+                      sx={{ bgcolor: "amber.100", "&:hover": { bgcolor: "amber.200" } }}
+                      title="Düzenle"
+                    >
+                      <EditIcon fontSize="small" />
+                    </IconButton>
+                    <IconButton
+                      size="small"
+                      onClick={() => handleDeleteUserButton(button.id)}
+                      sx={{ bgcolor: "error.light", color: "error.main", "&:hover": { bgcolor: "error.main", color: "white" } }}
+                      title="Sil"
+                    >
+                      <DeleteIcon fontSize="small" />
+                    </IconButton>
+                    <button
+                      type="button"
+                      onClick={() => handleButtonVisibilityChange(button.id, !isVisible)}
+                      className={`p-4 rounded-[1.5rem] transition-all transform active:scale-90 shadow-md ${
+                        isVisible
+                          ? "text-blue-600 bg-blue-50 hover:bg-blue-100"
+                          : "text-slate-400 bg-slate-100 hover:bg-slate-200 opacity-50"
+                      }`}
+                    >
+                      {isVisible ? <VisibilityIcon fontSize="small" /> : <VisibilityOffIcon fontSize="small" />}
+                    </button>
+                  </Box>
+                </div>
+              );
+            })}
+          </div>
+        </Box>
+      )}
+
+      {formButtons.length === 0 ? (
+        <Paper sx={{ p: 2, textAlign: "center", bgcolor: "grey.100" }}>
+          <Typography variant="body2" color="textSecondary">
+            Bu formda buton bulunmuyor. FormTaskNode&apos;a sağ tıklayıp &quot;Buton ekle&quot; ile sürece buton ekleyebilirsiniz.
+          </Typography>
+        </Paper>
+      ) : null}
+
+      <Box mt={2}>
+        <Typography variant="caption" color="textSecondary">
+          Görünür: {formButtons.filter(btn => buttonSettings[btn.id]?.visible !== false).length} / {formButtons.length} buton
+        </Typography>
+        <Typography variant="caption" color="warning.main" display="block" mt={0.5}>
+          ⚠️ Görünür butonlar için çıkış handle&apos;ları oluşturulacaktır
+        </Typography>
+      </Box>
+
+      {/* Sürece eklenen buton düzenleme dialog */}
+      <Dialog open={Boolean(editingUserButton)} onClose={() => setEditingUserButton(null)} maxWidth="xs" fullWidth>
+        <DialogTitle>Butonu Düzenle</DialogTitle>
+        <DialogContent>
+          {editingUserButton && (
+            <EditUserButtonForm
+              button={editingUserButton}
+              onSave={(data) => handleUpdateUserButton({ ...editingUserButton, ...data })}
+              onCancel={() => setEditingUserButton(null)}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 

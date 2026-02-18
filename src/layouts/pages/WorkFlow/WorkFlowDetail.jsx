@@ -69,7 +69,6 @@ import {
   ButtonType,
   CheckBox,
   DatePicker,
-  Dialog,
   DynamicPage,
   DynamicPageHeader,
   DynamicPageTitle,
@@ -113,8 +112,8 @@ import {
   WorkFlowDefinationApi,
   FormDataApi,
 } from "api/generated";
-import { TextField, Menu, MenuItem, ListItemIcon, ListItemText } from "@mui/material";
-import { Delete as DeleteIcon } from "@mui/icons-material";
+import { TextField, Menu, MenuItem, ListItemIcon, ListItemText, Dialog, DialogTitle, DialogContent, DialogActions, FormControl, InputLabel, NativeSelect, Box } from "@mui/material";
+import { Delete as DeleteIcon, Add as AddIcon } from "@mui/icons-material";
 import DashboardLayout from "examples/LayoutContainers/DashboardLayout";
 import DashboardNavbar from "examples/Navbars/DashboardNavbar";
 import Footer from "examples/Footer";
@@ -189,6 +188,107 @@ function generateUUID() {
 
 var globalArray = [];
 
+// ✅ FormTaskNode'a eklenecek buton için basit dialog
+function AddButtonDialog({ open, onClose, onSave }) {
+  const [label, setLabel] = useState("");
+  const [action, setAction] = useState("");
+  const [type, setType] = useState("default");
+  const [color, setColor] = useState("primary");
+  const [description, setDescription] = useState("");
+
+  const handleSave = () => {
+    if (!label?.trim()) return;
+    onSave({
+      id: `btn-${generateUUID()}`,
+      label: label.trim(),
+      action: action.trim() || label.trim().toUpperCase().replace(/\s/g, "_"),
+      type,
+      color,
+      description: description.trim(),
+    });
+    setLabel("");
+    setAction("");
+    setType("default");
+    setColor("primary");
+    setDescription("");
+  };
+
+  const handleClose = () => {
+    setLabel("");
+    setAction("");
+    setType("default");
+    setColor("primary");
+    setDescription("");
+    onClose();
+  };
+
+  return (
+    <Dialog open={open} onClose={handleClose} maxWidth="xs" fullWidth>
+      <DialogTitle>Yeni Buton Ekle</DialogTitle>
+      <DialogContent>
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 2, pt: 1 }}>
+          <TextField
+            label="Ad"
+            value={label}
+            onChange={(e) => setLabel(e.target.value)}
+            placeholder="Örn: Onayla, Reddet"
+            fullWidth
+            size="small"
+          />
+          <TextField
+            label="Action (işlem kodu)"
+            value={action}
+            onChange={(e) => setAction(e.target.value)}
+            placeholder="Boş bırakılırsa addan üretilir"
+            fullWidth
+            size="small"
+          />
+          <FormControl fullWidth size="small" variant="outlined">
+            <InputLabel htmlFor="add-btn-type">Tip</InputLabel>
+            <NativeSelect value={type} onChange={(e) => setType(e.target.value)} label="Tip" inputProps={{ id: "add-btn-type" }}>
+              <option value="primary">Primary</option>
+              <option value="default">Default</option>
+              <option value="success">Success</option>
+              <option value="warning">Warning</option>
+              <option value="danger">Danger</option>
+              <option value="info">Info</option>
+            </NativeSelect>
+          </FormControl>
+          <FormControl fullWidth size="small" variant="outlined">
+            <InputLabel htmlFor="add-btn-color">Renk</InputLabel>
+            <NativeSelect value={color} onChange={(e) => setColor(e.target.value)} label="Renk" inputProps={{ id: "add-btn-color" }}>
+              <option value="primary">Primary</option>
+              <option value="success">Success</option>
+              <option value="warning">Warning</option>
+              <option value="error">Error</option>
+              <option value="info">Info</option>
+              <option value="default">Default</option>
+            </NativeSelect>
+          </FormControl>
+          <TextField
+            label="Açıklama"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            placeholder="Buton hakkında kısa açıklama"
+            fullWidth
+            size="small"
+            multiline
+            rows={2}
+          />
+        </Box>
+      </DialogContent>
+      <DialogActions sx={{ px: 3, pb: 2 }}>
+        <MDButton variant="outlined" onClick={handleClose}>
+          Vazgeç
+        </MDButton>
+        <MDButton variant="gradient" color="info" onClick={handleSave} disabled={!label?.trim()}>
+          Ekle
+        </MDButton>
+      </DialogActions>
+    </Dialog>
+  );
+}
+
 function Flow(props) {
   const { onRegisterActions, isPropertiesOpen, workflowName, setWorkflowName, isActiveWorkflow, setIsActiveWorkflow } = props;
   const navigate = useNavigate();
@@ -214,6 +314,8 @@ function Flow(props) {
   const [msgOpen, setmsgOpen] = useState(false);
   const [contextMenu, setContextMenu] = useState(null);
   const [contextMenuNode, setContextMenuNode] = useState(null);
+  const [addButtonDialogOpen, setAddButtonDialogOpen] = useState(false);
+  const addButtonNodeRef = useRef(null); // Dialog açıldığında menü kapanır, node'u korumak için
   const [edgeContextMenu, setEdgeContextMenu] = useState(null);
   const [contextMenuEdge, setContextMenuEdge] = useState(null);
   const [scriptModalOpen, setScriptModalOpen] = useState(false);
@@ -1211,6 +1313,7 @@ function Flow(props) {
   const handleCloseContextMenu = () => {
     setContextMenu(null);
     setContextMenuNode(null);
+    setAddButtonDialogOpen(false);
   };
 
   // ✅ Edge context menu'yu kapat
@@ -1278,6 +1381,56 @@ function Flow(props) {
 
     handleCloseContextMenu();
   }, [contextMenuNode, setNodes, setEdges, selectedNode, dispatchAlert]);
+
+  // ✅ FormTaskNode'a buton ekle
+  const handleAddButtonClick = useCallback(() => {
+    if (contextMenuNode?.type === "formTaskNode") {
+      addButtonNodeRef.current = contextMenuNode; // Menü kapanınca kaybolmasın diye ref'e al
+      setAddButtonDialogOpen(true);
+    }
+  }, [contextMenuNode]);
+
+  const handleAddButtonSave = useCallback(
+    (buttonData) => {
+      const node = addButtonNodeRef.current;
+      if (!node || node.type !== "formTaskNode") return;
+
+      const currentButtons = node.data?.buttons || [];
+      const currentAllButtons = node.data?.allButtons || [];
+
+      const newButton = {
+        id: buttonData.id || `btn-${generateUUID()}`,
+        label: buttonData.label || "Yeni Buton",
+        name: buttonData.label || "Yeni Buton",
+        action: buttonData.action || (buttonData.label || "Yeni Buton").toUpperCase().replace(/\s/g, "_"),
+        type: buttonData.type || "default",
+        color: buttonData.color || "primary",
+        description: buttonData.description || "",
+        visible: true,
+        source: "user", // Formdan gelenlerle ayrım için
+      };
+
+      const updatedButtons = [...currentButtons, newButton];
+      const updatedAllButtons = [...currentAllButtons, newButton];
+
+      handlePropertiesChange({
+        id: node.id,
+        data: {
+          ...node.data,
+          buttons: updatedButtons,
+          allButtons: updatedAllButtons,
+          visibleButtonsCount: updatedButtons.length,
+          totalButtonsCount: updatedAllButtons.length,
+        },
+      });
+
+      addButtonNodeRef.current = null;
+      setAddButtonDialogOpen(false);
+      handleCloseContextMenu();
+    },
+    [handlePropertiesChange, handleCloseContextMenu]
+  );
+
   const onConnect = useCallback(
     (params) => {
       const getNodes = reactFlowInstance.getNodes();
@@ -1338,6 +1491,8 @@ function Flow(props) {
               onEdgeClick={onEdgeClick}
               onEdgeContextMenu={onEdgeContextMenu}
               fitView
+              fitViewOptions={{ padding: 0.2, maxZoom: 0.8, duration: 300 }}
+              defaultViewport={{ x: 0, y: 0, zoom: 0.8 }}
               snapToGrid
               snapGrid={[16, 16]}
             >
@@ -1358,6 +1513,14 @@ function Flow(props) {
                 : undefined
             }
           >
+            {contextMenuNode?.type === "formTaskNode" && (
+              <MenuItem onClick={handleAddButtonClick}>
+                <ListItemIcon>
+                  <AddIcon fontSize="small" />
+                </ListItemIcon>
+                <ListItemText>Buton ekle</ListItemText>
+              </MenuItem>
+            )}
             <MenuItem onClick={handleDeleteNode}>
               <ListItemIcon>
                 <DeleteIcon fontSize="small" />
@@ -1365,6 +1528,17 @@ function Flow(props) {
               <ListItemText>Sil</ListItemText>
             </MenuItem>
           </Menu>
+
+          {/* Buton ekle dialog */}
+          <AddButtonDialog
+            open={addButtonDialogOpen}
+            onClose={() => {
+              addButtonNodeRef.current = null;
+              setAddButtonDialogOpen(false);
+              handleCloseContextMenu();
+            }}
+            onSave={handleAddButtonSave}
+          />
 
           {/* Edge Context Menu */}
           <Menu
