@@ -334,6 +334,7 @@ export default function ProcessHub(): JSX.Element {
       if (finalIsFormTask) {
         navigate(`/workflows/runtime/${workflowInstanceId}`, {
           state: {
+            returnTo: "/process-hub",
             workflowInstance: {
               id: workflowInstanceId,
               workflowId: taskDetail.workflowHeadId || task.workflowHeadId || "",
@@ -353,6 +354,7 @@ export default function ProcessHub(): JSX.Element {
       } else if (finalIsUserTask) {
         navigate(`/workflows/runtime/${workflowInstanceId}`, {
           state: {
+            returnTo: "/process-hub",
             workflowInstance: {
               id: workflowInstanceId,
               workflowId: taskDetail.workflowHeadId || task.workflowHeadId || "",
@@ -374,6 +376,7 @@ export default function ProcessHub(): JSX.Element {
         console.warn("Görev tipi belirlenemedi, varsayılan olarak runtime'a yönlendiriliyor");
         navigate(`/workflows/runtime/${workflowInstanceId}`, {
           state: {
+            returnTo: "/process-hub",
             workflowInstance: {
               id: workflowInstanceId,
               workflowId: task.workflowHeadId || "",
@@ -477,6 +480,7 @@ export default function ProcessHub(): JSX.Element {
       // ✅ Form sayfasına yönlendir
       navigate(`/workflows/runtime/new`, {
         state: {
+          returnTo: "/process-hub",
           workflowInstance: {
             workflowId: currentWorkflow.workflowGuid,
             workflowName: currentWorkflow.label || "İş Akışı",

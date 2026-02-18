@@ -101,6 +101,7 @@ export default function WorkflowRuntime(): JSX.Element {
   const workflowInstance = location.state?.workflowInstance;
   const isNewInstance = location.state?.isNewInstance || false;
   const taskDetail = location.state?.taskDetail;
+  const returnTo = location.state?.returnTo as string | undefined; // ProcessHub'dan gelindiyse /process-hub
 
   const form = useMemo(() => createForm(), []);
   const workflowScope = useFormWorkflowScope(form);
@@ -1091,10 +1092,11 @@ export default function WorkflowRuntime(): JSX.Element {
         // result.formNodeCompleted - Form node tamamlandı mı
         // result.completedFormNodeId - Tamamlanan form node ID
 
-        // Yeni instance ID ile görevlerim sayfasına yönlendir
+        // Yönlendir: ProcessHub'dan gelindiyse /process-hub, değilse /workflows/my-tasks
+        const targetPath = returnTo || "/workflows/my-tasks";
         setTimeout(() => {
-          navigate("/workflows/my-tasks", {
-            state: {
+          navigate(targetPath, {
+            state: targetPath === "/process-hub" ? undefined : {
               newInstanceId: result.id,
               buttonAction: normalizedAction,
               workflowStatus: result.workFlowStatus,
@@ -1105,10 +1107,11 @@ export default function WorkflowRuntime(): JSX.Element {
         return;
       }
 
-      // Görevlerim sayfasına yönlendir (continue durumu için)
+      // Görevlerim sayfasına veya ProcessHub'a yönlendir (continue durumu için)
+      const targetPath = returnTo || "/workflows/my-tasks";
       setTimeout(() => {
-        navigate("/workflows/my-tasks", {
-          state: {
+        navigate(targetPath, {
+          state: targetPath === "/process-hub" ? undefined : {
             buttonAction: normalizedAction,
           },
         });
@@ -1181,7 +1184,7 @@ export default function WorkflowRuntime(): JSX.Element {
           <Card>
             <CardContent sx={{ textAlign: "center", py: 4 }}>
               <Typography color="error">{error}</Typography>
-              <Button onClick={() => navigate("/workflows/my-tasks")} sx={{ mt: 2 }}>
+              <Button onClick={() => navigate(returnTo || "/workflows/my-tasks")} sx={{ mt: 2 }}>
                 Geri Dön
               </Button>
             </CardContent>

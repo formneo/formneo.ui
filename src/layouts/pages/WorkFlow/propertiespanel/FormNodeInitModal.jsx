@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import {
   Dialog,
+  DialogTitle,
   DialogContent,
   Box,
   Typography,
@@ -55,6 +56,53 @@ import { ParametreSelectExport as ParametreSelect, DepartmentSelect, PositionSel
 import "antd/dist/antd.css";
 
 /**
+ * Sürece eklenen buton düzenleme formu
+ */
+function EditUserButtonForm({ button, onSave, onCancel }) {
+  const [label, setLabel] = useState(button?.label || "");
+  const [action, setAction] = useState(button?.action || "");
+  const [type, setType] = useState(button?.type || "default");
+  const [color, setColor] = useState(button?.color || "primary");
+  const [description, setDescription] = useState(button?.description || "");
+
+  return (
+    <Box sx={{ display: "flex", flexDirection: "column", gap: 2, pt: 1 }}>
+      <TextField label="Ad" value={label} onChange={(e) => setLabel(e.target.value)} fullWidth size="small" />
+      <TextField label="Action" value={action} onChange={(e) => setAction(e.target.value)} fullWidth size="small" />
+      <FormControl fullWidth size="small">
+        <InputLabel>Tip</InputLabel>
+        <Select value={type} label="Tip" onChange={(e) => setType(e.target.value)}>
+          <MenuItem value="primary">Primary</MenuItem>
+          <MenuItem value="default">Default</MenuItem>
+          <MenuItem value="success">Success</MenuItem>
+          <MenuItem value="warning">Warning</MenuItem>
+          <MenuItem value="danger">Danger</MenuItem>
+          <MenuItem value="info">Info</MenuItem>
+        </Select>
+      </FormControl>
+      <FormControl fullWidth size="small">
+        <InputLabel>Renk</InputLabel>
+        <Select value={color} label="Renk" onChange={(e) => setColor(e.target.value)}>
+          <MenuItem value="primary">Primary</MenuItem>
+          <MenuItem value="success">Success</MenuItem>
+          <MenuItem value="warning">Warning</MenuItem>
+          <MenuItem value="error">Error</MenuItem>
+          <MenuItem value="info">Info</MenuItem>
+          <MenuItem value="default">Default</MenuItem>
+        </Select>
+      </FormControl>
+      <TextField label="Açıklama" value={description} onChange={(e) => setDescription(e.target.value)} fullWidth size="small" multiline rows={2} />
+      <Box sx={{ display: "flex", gap: 2, justifyContent: "flex-end", mt: 2 }}>
+        <MDButton variant="outlined" onClick={onCancel}>Vazgeç</MDButton>
+        <MDButton variant="gradient" color="info" onClick={() => onSave({ label, action, type, color, description })} disabled={!label?.trim()}>
+          Kaydet
+        </MDButton>
+      </Box>
+    </Box>
+  );
+}
+
+/**
  * ✅ FormNode Init Modal - Kapsamlı Versiyon
  * 
  * Özellikler:
@@ -74,6 +122,7 @@ const FormNodeInitModal = ({ open, onClose, initialValues, node, workflowFormId,
   const [testPreviewOpen, setTestPreviewOpen] = useState(false);
   const [formButtons, setFormButtons] = useState([]); // Form butonları
   const [buttonVisibilitySettings, setButtonVisibilitySettings] = useState({}); // { buttonId: true/false }
+  const [editingUserButton, setEditingUserButton] = useState(null); // Düzenlenen sürece eklenen buton
 
   // Test form instance
   const testForm = useMemo(() => createForm(), []);
@@ -186,8 +235,10 @@ const FormNodeInitModal = ({ open, onClose, initialValues, node, workflowFormId,
             setVisibilitySettings(defaultVisibility);
           }
           
-          // Form butonlarını yükle
-          const buttons = design?.buttonPanel?.buttons || [];
+          // Form butonlarını yükle + sürece eklenen (source: user) butonları birleştir
+          const formDesignButtons = (design?.buttonPanel?.buttons || []).map(b => ({ ...b, source: "form" }));
+          const userAddedButtons = (node?.data?.buttons || initialValues?.buttons || []).filter(b => b.source === "user");
+          const buttons = [...formDesignButtons, ...userAddedButtons];
           setFormButtons(buttons);
           
           // Varsayılan buton görünürlük ayarları
@@ -206,6 +257,22 @@ const FormNodeInitModal = ({ open, onClose, initialValues, node, workflowFormId,
       loadFormFields();
     }
   }, [open, workflowFormId, initialValues, node]);
+
+  // Form yoksa (formId yok) ama sürece eklenen butonlar varsa onları yükle
+  useEffect(() => {
+    const formId = initialValues?.formId || node?.data?.formId || workflowFormId;
+    if (open && !formId && node?.data?.buttons?.length) {
+      const userBtns = node.data.buttons.filter(b => b.source === "user");
+      if (userBtns.length > 0) {
+        setFormButtons(userBtns);
+        const defaultButtonVisibility = {};
+        userBtns.forEach(b => {
+          defaultButtonVisibility[b.id] = initialValues?.buttonVisibilitySettings?.[b.id] ?? true;
+        });
+        setButtonVisibilitySettings(defaultButtonVisibility);
+      }
+    }
+  }, [open, workflowFormId, initialValues?.formId, initialValues?.buttonVisibilitySettings, node?.data?.formId, node?.data?.buttons]);
 
   // ===== DEĞER ATAMA =====
   const handleAddRule = () => {
@@ -549,6 +616,22 @@ const FormNodeInitModal = ({ open, onClose, initialValues, node, workflowFormId,
     }
   };
 
+  // Sürece eklenen butonu düzenle
+  const handleUpdateUserButton = (updatedButton) => {
+    setFormButtons(prev => prev.map(b => b.id === updatedButton.id ? { ...b, ...updatedButton, source: "user" } : b));
+    setEditingUserButton(null);
+  };
+
+  // Sürece eklenen butonu sil
+  const handleDeleteUserButton = (buttonId) => {
+    setFormButtons(prev => prev.filter(b => b.id !== buttonId));
+    setButtonVisibilitySettings(prev => {
+      const next = { ...prev };
+      delete next[buttonId];
+      return next;
+    });
+  };
+
   // Kaydet
   const handleSave = () => {
     const script = generateScript();
@@ -558,6 +641,7 @@ const FormNodeInitModal = ({ open, onClose, initialValues, node, workflowFormId,
         id: node.id,
         data: {
           ...initialValues,
+          buttons: formButtons, // Form + sürece eklenen butonlar
           initScript: script,
           visibilitySettings: visibilitySettings,
           buttonVisibilitySettings: buttonVisibilitySettings,
@@ -1219,120 +1303,169 @@ const FormNodeInitModal = ({ open, onClose, initialValues, node, workflowFormId,
                 </Button>
               </Box>
 
-              <Paper sx={{ p: 2 }} elevation={0}>
-                {formButtons.length === 0 ? (
-                  <Box sx={{ textAlign: "center", py: 6 }}>
-                    <Typography color="text.secondary">
-                      Bu formda buton tanımlanmamış.
-                    </Typography>
-                  </Box>
-                ) : (
-                  <>
-                    <Box sx={{ mb: 2, display: "flex", gap: 1 }}>
-                      <Chip 
-                        icon={<VisibilityIcon />}
-                        label={`Görünür: ${Object.values(buttonVisibilitySettings).filter(v => v === true || v === undefined).length}`}
-                        color="success"
-                        size="small"
-                        sx={{ fontWeight: 600 }}
-                      />
-                      <Chip 
-                        icon={<VisibilityOffIcon />}
-                        label={`Gizli: ${Object.values(buttonVisibilitySettings).filter(v => v === false).length}`}
-                        color="error"
-                        size="small"
-                        sx={{ fontWeight: 600 }}
-                      />
-                    </Box>
-                    <Box sx={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: 2 }}>
-                      {formButtons.map(button => {
-                        const isVisible = buttonVisibilitySettings[button.id] !== false;
-                        const bgColor = isVisible ? "#e8f5e9" : "#ffebee";
-                        const borderColor = isVisible ? "#66bb6a" : "#ef5350";
-                        
-                        return (
-                          <Card 
-                            key={button.id} 
-                            variant="outlined"
-                            sx={{ 
-                              p: 2,
-                              backgroundColor: bgColor,
-                              borderColor: borderColor,
-                              borderWidth: 2,
-                              transition: "all 0.2s",
-                              "&:hover": {
-                                boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
-                                transform: "translateY(-2px)"
-                              }
-                            }}
-                          >
-                            <Box sx={{ mb: 1.5 }}>
-                              <Typography variant="body2" fontWeight={700} sx={{ color: "#2c3e50" }}>
-                                {button.label || button.name || "Buton"}
-                              </Typography>
-                              <Typography variant="caption" color="textSecondary">
-                                ID: {button.id}
-                              </Typography>
+              {(() => {
+                const formButtonsList = formButtons.filter(b => b.source !== "user");
+                const userButtonsList = formButtons.filter(b => b.source === "user");
+                return (
+                  <Paper sx={{ p: 2 }} elevation={0}>
+                    {formButtons.length === 0 ? (
+                      <Box sx={{ textAlign: "center", py: 6 }}>
+                        <Typography color="text.secondary">
+                          Bu formda buton tanımlanmamış. FormNode&apos;a sağ tıklayıp &quot;Buton ekle&quot; ile sürece buton ekleyebilirsiniz.
+                        </Typography>
+                      </Box>
+                    ) : (
+                      <>
+                        <Box sx={{ mb: 2, display: "flex", gap: 1 }}>
+                          <Chip 
+                            icon={<VisibilityIcon />}
+                            label={`Görünür: ${Object.values(buttonVisibilitySettings).filter(v => v === true || v === undefined).length}`}
+                            color="success"
+                            size="small"
+                            sx={{ fontWeight: 600 }}
+                          />
+                          <Chip 
+                            icon={<VisibilityOffIcon />}
+                            label={`Gizli: ${Object.values(buttonVisibilitySettings).filter(v => v === false).length}`}
+                            color="error"
+                            size="small"
+                            sx={{ fontWeight: 600 }}
+                          />
+                        </Box>
+
+                        {/* Form butonları */}
+                        {formButtonsList.length > 0 && (
+                          <Box sx={{ mb: 3 }}>
+                            <Typography variant="caption" color="text.secondary" fontWeight={600} sx={{ display: "block", mb: 1 }}>
+                              📄 Formdan gelen butonlar
+                            </Typography>
+                            <Box sx={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: 2 }}>
+                              {formButtonsList.map(button => (
+                                <Card 
+                                  key={button.id} 
+                                  variant="outlined"
+                                  sx={{ 
+                                    p: 2,
+                                    backgroundColor: buttonVisibilitySettings[button.id] !== false ? "#e8f5e9" : "#ffebee",
+                                    borderColor: buttonVisibilitySettings[button.id] !== false ? "#66bb6a" : "#ef5350",
+                                    borderWidth: 2,
+                                    transition: "all 0.2s",
+                                    "&:hover": { boxShadow: "0 4px 12px rgba(0,0,0,0.15)", transform: "translateY(-2px)" }
+                                  }}
+                                >
+                                  <Box sx={{ mb: 1.5 }}>
+                                    <Typography variant="body2" fontWeight={700} sx={{ color: "#2c3e50" }}>
+                                      {button.label || button.name || "Buton"}
+                                    </Typography>
+                                    <Typography variant="caption" color="textSecondary">ID: {button.id}</Typography>
+                                  </Box>
+                                  <ToggleButtonGroup
+                                    value={buttonVisibilitySettings[button.id] !== false ? "visible" : "hidden"}
+                                    exclusive
+                                    onChange={(e, newState) => {
+                                      if (newState !== null) {
+                                        setButtonVisibilitySettings({ ...buttonVisibilitySettings, [button.id]: newState === "visible" });
+                                      }
+                                    }}
+                                    size="small"
+                                    fullWidth
+                                  >
+                                    <ToggleButton value="visible" sx={{ textTransform: "none", fontWeight: 600, fontSize: "11px", "&.Mui-selected": { backgroundColor: "#66bb6a", color: "white" } }}>
+                                      <VisibilityIcon sx={{ fontSize: 16, mr: 0.5 }} /> Görünür
+                                    </ToggleButton>
+                                    <ToggleButton value="hidden" sx={{ textTransform: "none", fontWeight: 600, fontSize: "11px", "&.Mui-selected": { backgroundColor: "#ef5350", color: "white" } }}>
+                                      <VisibilityOffIcon sx={{ fontSize: 16, mr: 0.5 }} /> Gizli
+                                    </ToggleButton>
+                                  </ToggleButtonGroup>
+                                </Card>
+                              ))}
                             </Box>
-                            
-                            <ToggleButtonGroup
-                              value={isVisible ? "visible" : "hidden"}
-                              exclusive
-                              onChange={(e, newState) => {
-                                if (newState !== null) {
-                                  setButtonVisibilitySettings({
-                                    ...buttonVisibilitySettings,
-                                    [button.id]: newState === "visible"
-                                  });
-                                }
-                              }}
-                              size="small"
-                              fullWidth
-                            >
-                              <ToggleButton 
-                                value="visible" 
-                                sx={{ 
-                                  textTransform: "none",
-                                  fontWeight: 600,
-                                  fontSize: "11px",
-                                  "&.Mui-selected": {
-                                    backgroundColor: "#66bb6a",
-                                    color: "white",
-                                    "&:hover": {
-                                      backgroundColor: "#57a55a"
-                                    }
-                                  }
-                                }}
-                              >
-                                <VisibilityIcon sx={{ fontSize: 16, mr: 0.5 }} />
-                                Görünür
-                              </ToggleButton>
-                              <ToggleButton 
-                                value="hidden"
-                                sx={{ 
-                                  textTransform: "none",
-                                  fontWeight: 600,
-                                  fontSize: "11px",
-                                  "&.Mui-selected": {
-                                    backgroundColor: "#ef5350",
-                                    color: "white",
-                                    "&:hover": {
-                                      backgroundColor: "#e53935"
-                                    }
-                                  }
-                                }}
-                              >
-                                <VisibilityOffIcon sx={{ fontSize: 16, mr: 0.5 }} />
-                                Gizli
-                              </ToggleButton>
-                            </ToggleButtonGroup>
-                          </Card>
-                        );
-                      })}
-                    </Box>
-                  </>
-                )}
-              </Paper>
+                          </Box>
+                        )}
+
+                        {/* Sürece eklenen butonlar - düzenlenebilir */}
+                        {userButtonsList.length > 0 && (
+                          <Box>
+                            <Typography variant="caption" color="text.secondary" fontWeight={600} sx={{ display: "block", mb: 1 }}>
+                              ➕ Sürece eklenen butonlar (düzenlenebilir)
+                            </Typography>
+                            <Box sx={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: 2 }}>
+                              {userButtonsList.map(button => {
+                                const isVisible = buttonVisibilitySettings[button.id] !== false;
+                                return (
+                                  <Card 
+                                    key={button.id} 
+                                    variant="outlined"
+                                    sx={{ 
+                                      p: 2,
+                                      backgroundColor: isVisible ? "#fff8e1" : "#ffebee",
+                                      borderColor: isVisible ? "#ffa726" : "#ef5350",
+                                      borderWidth: 2,
+                                      borderLeft: "6px solid #ff9800",
+                                      transition: "all 0.2s",
+                                      "&:hover": { boxShadow: "0 4px 12px rgba(0,0,0,0.15)", transform: "translateY(-2px)" }
+                                    }}
+                                  >
+                                    <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", mb: 1.5 }}>
+                                      <Box>
+                                        <Typography variant="body2" fontWeight={700} sx={{ color: "#2c3e50" }}>
+                                          {button.label || button.name || "Buton"}
+                                        </Typography>
+                                        {button.description && <Typography variant="caption" color="textSecondary" display="block">{button.description}</Typography>}
+                                        <Typography variant="caption" color="textSecondary">ID: {button.id}</Typography>
+                                      </Box>
+                                      <Box sx={{ display: "flex", gap: 0.5 }}>
+                                        <IconButton size="small" onClick={() => setEditingUserButton(button)} sx={{ bgcolor: "warning.light", "&:hover": { bgcolor: "warning.main", color: "white" } }} title="Düzenle">
+                                          <EditIcon fontSize="small" />
+                                        </IconButton>
+                                        <IconButton size="small" onClick={() => handleDeleteUserButton(button.id)} sx={{ bgcolor: "error.light", color: "error.main", "&:hover": { bgcolor: "error.main", color: "white" } }} title="Sil">
+                                          <DeleteIcon fontSize="small" />
+                                        </IconButton>
+                                      </Box>
+                                    </Box>
+                                    <ToggleButtonGroup
+                                      value={isVisible ? "visible" : "hidden"}
+                                      exclusive
+                                      onChange={(e, newState) => {
+                                        if (newState !== null) {
+                                          setButtonVisibilitySettings({ ...buttonVisibilitySettings, [button.id]: newState === "visible" });
+                                        }
+                                      }}
+                                      size="small"
+                                      fullWidth
+                                    >
+                                      <ToggleButton value="visible" sx={{ textTransform: "none", fontWeight: 600, fontSize: "11px", "&.Mui-selected": { backgroundColor: "#66bb6a", color: "white" } }}>
+                                        <VisibilityIcon sx={{ fontSize: 16, mr: 0.5 }} /> Görünür
+                                      </ToggleButton>
+                                      <ToggleButton value="hidden" sx={{ textTransform: "none", fontWeight: 600, fontSize: "11px", "&.Mui-selected": { backgroundColor: "#ef5350", color: "white" } }}>
+                                        <VisibilityOffIcon sx={{ fontSize: 16, mr: 0.5 }} /> Gizli
+                                      </ToggleButton>
+                                    </ToggleButtonGroup>
+                                  </Card>
+                                );
+                              })}
+                            </Box>
+                          </Box>
+                        )}
+                      </>
+                    )}
+                  </Paper>
+                );
+              })()}
+
+              {/* Sürece eklenen buton düzenleme dialog */}
+              <Dialog open={Boolean(editingUserButton)} onClose={() => setEditingUserButton(null)} maxWidth="xs" fullWidth>
+                <DialogTitle>Butonu Düzenle</DialogTitle>
+                <DialogContent>
+                  {editingUserButton && (
+                    <EditUserButtonForm
+                      button={editingUserButton}
+                      onSave={(data) => handleUpdateUserButton({ ...editingUserButton, ...data })}
+                      onCancel={() => setEditingUserButton(null)}
+                    />
+                  )}
+                </DialogContent>
+              </Dialog>
             </Box>
           )}
 

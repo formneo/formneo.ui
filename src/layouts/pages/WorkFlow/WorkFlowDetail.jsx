@@ -1382,9 +1382,9 @@ function Flow(props) {
     handleCloseContextMenu();
   }, [contextMenuNode, setNodes, setEdges, selectedNode, dispatchAlert]);
 
-  // ✅ FormTaskNode'a buton ekle
+  // ✅ FormTaskNode veya FormNode'a buton ekle
   const handleAddButtonClick = useCallback(() => {
-    if (contextMenuNode?.type === "formTaskNode") {
+    if (contextMenuNode?.type === "formTaskNode" || contextMenuNode?.type === "formNode") {
       addButtonNodeRef.current = contextMenuNode; // Menü kapanınca kaybolmasın diye ref'e al
       setAddButtonDialogOpen(true);
     }
@@ -1393,10 +1393,7 @@ function Flow(props) {
   const handleAddButtonSave = useCallback(
     (buttonData) => {
       const node = addButtonNodeRef.current;
-      if (!node || node.type !== "formTaskNode") return;
-
-      const currentButtons = node.data?.buttons || [];
-      const currentAllButtons = node.data?.allButtons || [];
+      if (!node || (node.type !== "formTaskNode" && node.type !== "formNode")) return;
 
       const newButton = {
         id: buttonData.id || `btn-${generateUUID()}`,
@@ -1410,19 +1407,33 @@ function Flow(props) {
         source: "user", // Formdan gelenlerle ayrım için
       };
 
-      const updatedButtons = [...currentButtons, newButton];
-      const updatedAllButtons = [...currentAllButtons, newButton];
-
-      handlePropertiesChange({
-        id: node.id,
-        data: {
-          ...node.data,
-          buttons: updatedButtons,
-          allButtons: updatedAllButtons,
-          visibleButtonsCount: updatedButtons.length,
-          totalButtonsCount: updatedAllButtons.length,
-        },
-      });
+      if (node.type === "formTaskNode") {
+        const currentButtons = node.data?.buttons || [];
+        const currentAllButtons = node.data?.allButtons || [];
+        const updatedButtons = [...currentButtons, newButton];
+        const updatedAllButtons = [...currentAllButtons, newButton];
+        handlePropertiesChange({
+          id: node.id,
+          data: {
+            ...node.data,
+            buttons: updatedButtons,
+            allButtons: updatedAllButtons,
+            visibleButtonsCount: updatedButtons.length,
+            totalButtonsCount: updatedAllButtons.length,
+          },
+        });
+      } else {
+        // FormNode - sadece buttons
+        const currentButtons = node.data?.buttons || [];
+        const updatedButtons = [...currentButtons, newButton];
+        handlePropertiesChange({
+          id: node.id,
+          data: {
+            ...node.data,
+            buttons: updatedButtons,
+          },
+        });
+      }
 
       addButtonNodeRef.current = null;
       setAddButtonDialogOpen(false);
@@ -1513,7 +1524,7 @@ function Flow(props) {
                 : undefined
             }
           >
-            {contextMenuNode?.type === "formTaskNode" && (
+            {(contextMenuNode?.type === "formTaskNode" || contextMenuNode?.type === "formNode") && (
               <MenuItem onClick={handleAddButtonClick}>
                 <ListItemIcon>
                   <AddIcon fontSize="small" />
