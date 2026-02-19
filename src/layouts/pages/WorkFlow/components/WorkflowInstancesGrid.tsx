@@ -102,16 +102,24 @@ function formatCellValue(
   return String(value);
 }
 
+const VALID_VALUE_EDITOR_TYPES: FormDesignField["valueEditorType"][] = ["text", "number", "date", "time", "select", "radio", "checkbox", "multiselect"];
+
+function toValidValueEditorType(v: string | undefined): FormDesignField["valueEditorType"] {
+  return (v && VALID_VALUE_EDITOR_TYPES.includes(v as FormDesignField["valueEditorType"]))
+    ? (v as FormDesignField["valueEditorType"])
+    : "text";
+}
+
 /** GridColumnSchema'yı FormDesignField formatına çevir (formatCellValue uyumluluğu) */
 function schemaToFieldLike(col: GridColumnSchema): FormDesignField & GridColumnSchema {
   return {
+    ...col,
     name: col.fieldKey,
     label: col.label,
     type: col.type || "string",
-    valueEditorType: (col.valueEditorType as FormDesignField["valueEditorType"]) || "text",
+    valueEditorType: toValidValueEditorType(col.valueEditorType),
     operators: [],
     values: col.values,
-    ...col,
   };
 }
 
