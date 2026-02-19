@@ -30896,6 +30896,13 @@
           "initScript": {
             "type": "string",
             "nullable": true
+          },
+          "buttons": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FormTaskNodeButtonDto"
+            },
+            "nullable": true
           }
         },
         "additionalProperties": false

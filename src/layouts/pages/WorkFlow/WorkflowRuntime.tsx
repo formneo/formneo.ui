@@ -71,6 +71,44 @@ function mapToFormButton(btn: FormTaskNodeButtonDto | Record<string, any>, index
 }
 
 /**
+ * WorkFlowDefinationWithInitScriptDto.buttons veya defination'dan formNode butonlarını çıkarır.
+ * - DTO buttons: nodeType===formNode olanları veya nested {buttons:[]} yapısını destekler
+ * - Fallback: defination JSON'dan type==="formNode" node'larının data.buttons'ını toplar
+ */
+function getFormNodeButtonsFromDto(
+  dtoButtons: any[] | null | undefined,
+  defination: string | null | undefined
+): FormTaskNodeButtonDto[] {
+  if (dtoButtons && Array.isArray(dtoButtons) && dtoButtons.length > 0) {
+    const result: FormTaskNodeButtonDto[] = [];
+    for (const item of dtoButtons) {
+      if (item && typeof item === "object") {
+        if ("nodeType" in item && item.nodeType !== "formNode") continue;
+        if (Array.isArray(item.buttons)) {
+          result.push(...item.buttons);
+        } else {
+          result.push(item);
+        }
+      }
+    }
+    if (result.length > 0) return result;
+  }
+  if (defination) {
+    try {
+      const parsed = JSON.parse(defination);
+      const formNodes = (parsed?.nodes || []).filter((n: any) => n?.type === "formNode");
+      const buttons: FormTaskNodeButtonDto[] = [];
+      formNodes.forEach((node: any) => {
+        const nodeButtons = node?.data?.buttons || [];
+        if (Array.isArray(nodeButtons)) buttons.push(...nodeButtons);
+      });
+      return buttons;
+    } catch { /* ignore */ }
+  }
+  return [];
+}
+
+/**
  * ✅ Workflow Runtime Sayfası
  * 
  * Bu sayfa workflow instance'ını çalıştırır ve formu gösterir.
@@ -710,7 +748,9 @@ export default function WorkflowRuntime(): JSX.Element {
             const standardButtons = Array.isArray(parsed.buttonPanel?.buttons)
               ? parsed.buttonPanel.buttons.map((btn: any, i: number) => mapToFormButton(btn, i))
               : [];
-            const dtoButtons = (taskDetail?.buttons ?? form?.buttons ?? []) as FormTaskNodeButtonDto[];
+            const dtoButtons = isNewInstance
+              ? getFormNodeButtonsFromDto((workflowInstance as any)?.buttons, (workflowInstance as any)?.defination)
+              : (taskDetail?.buttons ?? form?.buttons ?? []) as FormTaskNodeButtonDto[];
             const dtoMapped = dtoButtons.map((btn, i) => mapToFormButton(btn, i));
             // Merge: standart base + DTO (aynı id varsa güncelle, yoksa ekle)
             const mergedById = new Map<string, FormButton>();
@@ -737,7 +777,9 @@ export default function WorkflowRuntime(): JSX.Element {
             const standardButtons = Array.isArray(parsed.buttonPanel?.buttons)
               ? parsed.buttonPanel.buttons.map((btn: any, i: number) => mapToFormButton(btn, i))
               : [];
-            const dtoButtons = (taskDetail?.buttons ?? form?.buttons ?? []) as FormTaskNodeButtonDto[];
+            const dtoButtons = isNewInstance
+              ? getFormNodeButtonsFromDto((workflowInstance as any)?.buttons, (workflowInstance as any)?.defination)
+              : (taskDetail?.buttons ?? form?.buttons ?? []) as FormTaskNodeButtonDto[];
             const dtoMapped = dtoButtons.map((btn, i) => mapToFormButton(btn, i));
             const mergedById = new Map<string, FormButton>();
             standardButtons.forEach((b: FormButton) => mergedById.set(b.id, b));
@@ -749,7 +791,9 @@ export default function WorkflowRuntime(): JSX.Element {
           const standardButtons = Array.isArray(parsed.buttonPanel?.buttons)
             ? parsed.buttonPanel.buttons.map((btn: any, i: number) => mapToFormButton(btn, i))
             : [];
-          const dtoButtons = (taskDetail?.buttons ?? form?.buttons ?? []) as FormTaskNodeButtonDto[];
+          const dtoButtons = isNewInstance
+            ? getFormNodeButtonsFromDto((workflowInstance as any)?.buttons, (workflowInstance as any)?.defination)
+            : (taskDetail?.buttons ?? form?.buttons ?? []) as FormTaskNodeButtonDto[];
           const dtoMapped = dtoButtons.map((btn, i) => mapToFormButton(btn, i));
           const mergedById = new Map<string, FormButton>();
           standardButtons.forEach((b: FormButton) => mergedById.set(b.id, b));
@@ -775,7 +819,7 @@ export default function WorkflowRuntime(): JSX.Element {
     };
 
     load();
-  }, [workflowInstance?.formId, isNewInstance, (workflowInstance as any)?.initScript, taskDetail?.fieldScript, taskDetail?.buttons]);
+  }, [workflowInstance?.formId, isNewInstance, (workflowInstance as any)?.initScript, (workflowInstance as any)?.buttons, (workflowInstance as any)?.defination, taskDetail?.fieldScript, taskDetail?.buttons]);
 
   // ✅ FormData'yı location.state'den al ve form'a initial values olarak ver
   // Schema yüklendikten SONRA formData'yı set et (Formily için önemli)

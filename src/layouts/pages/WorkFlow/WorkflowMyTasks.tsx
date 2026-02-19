@@ -547,21 +547,21 @@ function WorkflowMyTasks() {
       }
 
 
-    alert(formId);
-      // ✅ Form sayfasına yönlendir
-    navigate(`/workflows/runtime/new`, {
-      state: {
-        workflowInstance: {
-          workflowId: workflow.id,
-          workflowName: workflow.workflowName,
-          formId: formId,
-          formName: formName,
-          defination: workflowData?.defination || null,
-          initScript: initScript, // ✅ API'den gelen initScript (yeni workflow için)
+      // ✅ Form sayfasına yönlendir (WorkFlowDefinationWithInitScriptDto.buttons - formNode butonları)
+      navigate(`/workflows/runtime/new`, {
+        state: {
+          workflowInstance: {
+            workflowId: workflow.id,
+            workflowName: workflow.workflowName,
+            formId: formId,
+            formName: formName,
+            defination: workflowData?.defination || null,
+            initScript: initScript, // ✅ API'den gelen initScript (yeni workflow için)
+            buttons: workflowData?.buttons ?? null, // ✅ DTO'dan formNode butonları
+          },
+          isNewInstance: true,
         },
-        isNewInstance: true,
-      },
-    });
+      });
     
     console.log("🚀 Yeni workflow başlatılıyor:", {
       workflowId: workflow.id,

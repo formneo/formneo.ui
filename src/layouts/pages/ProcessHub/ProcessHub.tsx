@@ -477,7 +477,7 @@ export default function ProcessHub(): JSX.Element {
         return;
       }
 
-      // ✅ Form sayfasına yönlendir
+      // ✅ Form sayfasına yönlendir (WorkFlowDefinationWithInitScriptDto.buttons - formNode butonları)
       navigate(`/workflows/runtime/new`, {
         state: {
           returnTo: "/process-hub",
@@ -488,6 +488,7 @@ export default function ProcessHub(): JSX.Element {
             formName: formName,
             defination: workflowData?.defination || null,
             initScript: initScript, // ✅ API'den gelen initScript (yeni workflow için)
+            buttons: workflowData?.buttons ?? null, // ✅ DTO'dan formNode butonları
           },
           isNewInstance: true,
         },

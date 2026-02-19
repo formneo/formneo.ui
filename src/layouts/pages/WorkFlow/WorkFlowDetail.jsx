@@ -111,8 +111,9 @@ import {
   WorkFlowDefinationListDto,
   WorkFlowDefinationApi,
   FormDataApi,
+  WorkFlowApi,
 } from "api/generated";
-import { TextField, Menu, MenuItem, ListItemIcon, ListItemText, Dialog, DialogTitle, DialogContent, DialogActions, FormControl, InputLabel, NativeSelect, Box } from "@mui/material";
+import { TextField, Menu, MenuItem, ListItemIcon, ListItemText, Dialog, DialogTitle, DialogContent, DialogActions, FormControl, InputLabel, NativeSelect, Box, Tabs, Tab, Typography } from "@mui/material";
 import { Delete as DeleteIcon, Add as AddIcon } from "@mui/icons-material";
 import DashboardLayout from "examples/LayoutContainers/DashboardLayout";
 import DashboardNavbar from "examples/Navbars/DashboardNavbar";
@@ -134,6 +135,8 @@ import MailNode from "./components/MailNode";
 import MailTab from "./propertiespanel/MailTab";
 import HttpPostNode from "./components/HttpPostNode";
 import HttpPostTab from "./propertiespanel/HttpPostTab";
+import WorkflowInstancesGrid from "./components/WorkflowInstancesGrid";
+import GridSchemaEditor from "./components/GridSchemaEditor";
 const nodeTypes = {
   smartMenuNode: SmartMenuNode,
   teamNode: TeamNode,
@@ -290,7 +293,7 @@ function AddButtonDialog({ open, onClose, onSave }) {
 }
 
 function Flow(props) {
-  const { onRegisterActions, isPropertiesOpen, workflowName, setWorkflowName, isActiveWorkflow, setIsActiveWorkflow } = props;
+  const { onRegisterActions, isPropertiesOpen, workflowName, setWorkflowName, isActiveWorkflow, setIsActiveWorkflow, gridSchema, onGridSchemaChange } = props;
   const navigate = useNavigate();
   const dispatchBusy = useBusy();
   const location = useLocation();
@@ -389,6 +392,9 @@ function Flow(props) {
           setNodes(flow.nodes || []);
           setEdges(flow.edges || []);
           setViewport({ x, y, zoom });
+          if (typeof onGridSchemaChange === "function") {
+            onGridSchemaChange(Array.isArray(flow.gridSchema) ? flow.gridSchema : []);
+          }
           
           // ✅ Workflow metadata'sını güncelle
           setWorkflowData((prev) => ({
@@ -1113,7 +1119,7 @@ function Flow(props) {
     }
 
     
-    const flow = { ...reactFlowInstance.toObject(), firstNode };
+    const flow = { ...reactFlowInstance.toObject(), firstNode, gridSchema: gridSchema || [] };
     const conf = getConfiguration();
     const api = new WorkFlowDefinationApi(conf);
 
@@ -1163,7 +1169,7 @@ function Flow(props) {
           });
         });
     }
-  }, [reactFlowInstance, isEdit, id, selectedForm, workflowName, isActiveWorkflow, dispatchAlert]);
+  }, [reactFlowInstance, isEdit, id, selectedForm, workflowName, isActiveWorkflow, gridSchema, dispatchAlert]);
 
   useEffect(() => {
     if (typeof onRegisterActions === "function") {
@@ -1978,6 +1984,10 @@ function WorkFlowDetail(props) {
   const [isPropertiesOpen, setIsPropertiesOpen] = useState(true);
   const [saveFlow, setSaveFlow] = useState(null);
   const [cancelFlow, setCancelFlow] = useState(null);
+  const [detailTab, setDetailTab] = useState(0); // 0: Tasarım, 1: Örnekler
+  const [processHubViewType, setProcessHubViewType] = useState("all");
+  const [gridSchema, setGridSchema] = useState([]); // Grid kolon şeması - DB'ye kaydedilir
+  const [gridSchemaEditorOpen, setGridSchemaEditorOpen] = useState(false);
 
   // 👇 Bu state seçilen formun tüm verisini tutar
   const [selectedForm, setSelectedForm] = useState(null);
@@ -1989,6 +1999,114 @@ function WorkFlowDetail(props) {
   
   // ✅ Edit modu kontrolü (id varsa edit, yoksa yeni kayıt)
   const isEdit = !!id;
+
+  // ✅ ProcessHub viewType - menüden workflow'un ilk view'ını bul
+  useEffect(() => {
+    if (!id) return;
+    const fetchViewType = async () => {
+      try {
+        const conf = getConfiguration();
+        const api = new WorkFlowDefinationApi(conf);
+        const res = await api.apiWorkFlowDefinationMenuStructureGet();
+        const menus = res.data?.menus || [];
+        for (const cat of menus) {
+          for (const wf of cat.children || []) {
+            if (wf.workflowGuid === id && wf.views?.length > 0) {
+              setProcessHubViewType(wf.views[0].id || "all");
+              return;
+            }
+          }
+        }
+      } catch (e) {
+        console.warn("Menü yapısı alınamadı, viewType=all kullanılıyor:", e);
+      }
+    };
+    fetchViewType();
+  }, [id]);
+
+  // ✅ Grid satırına tıklandığında - runtime'a yönlendir
+  const handleWorkflowInstanceClick = async (row) => {
+    try {
+      const conf = getConfiguration();
+      const workflowApi = new WorkFlowApi(conf);
+      const workflowItemId = row.workflowItemId || row.id;
+      if (!workflowItemId) {
+        dispatchAlert({ message: "Görev detayı alınamadı.", type: MessageBoxType.Error });
+        return;
+      }
+      const response = await workflowApi.apiWorkFlowGetTaskDetailByWorkflowItemIdWorkflowitemWorkflowItemIdTaskDetailGet(workflowItemId);
+      const taskDetail = response.data;
+      const isFormTask = taskDetail.formItemId != null || (taskDetail.nodeType || "").toLowerCase().includes("form");
+      const isUserTask = taskDetail.approveItemId != null || (taskDetail.nodeType || "").toLowerCase().includes("user");
+      const workflowInstanceId = taskDetail.workflowItemId || workflowItemId;
+      const task = { ...row, workflowItemId, workflowHeadId: row.id };
+      const returnPath = id ? `/WorkFlowList/detail/${id}` : "/WorkFlowList";
+
+      if (isFormTask) {
+        navigate(`/workflows/runtime/${workflowInstanceId}`, {
+          state: {
+            returnTo: returnPath,
+            workflowInstance: {
+              id: workflowInstanceId,
+              workflowId: taskDetail.workflowHeadId || task.workflowHeadId || "",
+              workflowName: taskDetail.workflowName || "İş Akışı",
+              formId: taskDetail.formId || task.formId || "",
+              formName: taskDetail.formName || "Form",
+              taskId: taskDetail.formItemId || task.id,
+              taskType: "formTask",
+              formDesign: taskDetail.formDesign || task.formDesign,
+              formData: taskDetail.formData,
+              workflowItemId: taskDetail.workflowItemId || workflowItemId,
+            },
+            task,
+            taskDetail,
+          },
+        });
+      } else if (isUserTask) {
+        navigate(`/workflows/runtime/${workflowInstanceId}`, {
+          state: {
+            returnTo: returnPath,
+            workflowInstance: {
+              id: workflowInstanceId,
+              workflowId: taskDetail.workflowHeadId || task.workflowHeadId || "",
+              workflowName: taskDetail.workflowName || "İş Akışı",
+              formId: taskDetail.formId || task.formId || "",
+              formName: taskDetail.formName || "Kullanıcı Görevi",
+              taskId: taskDetail.approveItemId || task.id,
+              taskType: "userTask",
+              workflowItemId: taskDetail.workflowItemId || workflowItemId,
+              approveUser: taskDetail.approveUser,
+              approveUserNameSurname: taskDetail.approveUserNameSurname,
+              approverStatus: taskDetail.approverStatus,
+            },
+            task,
+            taskDetail,
+          },
+        });
+      } else {
+        navigate(`/workflows/runtime/${workflowInstanceId}`, {
+          state: {
+            returnTo: returnPath,
+            workflowInstance: {
+              id: workflowInstanceId,
+              workflowId: task.workflowHeadId || "",
+              workflowName: task.workflowName || "İş Akışı",
+              formId: task.formId || "",
+              formName: task.formName || "Form",
+              taskId: task.id,
+              taskType: task.type,
+              formDesign: task.formDesign,
+            },
+            task,
+            taskDetail,
+          },
+        });
+      }
+    } catch (error) {
+      console.error("Görev detayı çekilirken hata:", error);
+      dispatchAlert({ message: "Görev detayı alınamadı. Lütfen tekrar deneyin.", type: MessageBoxType.Error });
+    }
+  };
 
   const handleWizardConfirm = (selectedType) => {
     setWorkflowType(selectedType);
@@ -2424,6 +2542,12 @@ function WorkFlowDetail(props) {
               Form Seç
             </MDButton>
           )}
+          {isEdit && selectedForm && (
+            <Tabs value={detailTab} onChange={(_, v) => setDetailTab(v)} sx={{ minHeight: 36 }}>
+              <Tab label="Tasarım" sx={{ minHeight: 36, py: 0 }} />
+              <Tab label="Örnekler" sx={{ minHeight: 36, py: 0 }} />
+            </Tabs>
+          )}
           <MDButton color="dark" variant="outlined" onClick={() => setIsPropertiesOpen((v) => !v)}>
             <MuiIcon sx={{ mr: .5 }}>view_sidebar</MuiIcon> Özellikler
           </MDButton>
@@ -2449,28 +2573,69 @@ function WorkFlowDetail(props) {
       </MDBox>
 
       <div style={{ width: "100%", height: "calc(100vh - 200px)", display: "flex", overflow: "auto" }}>
-        <ReactFlowProvider>
-          <Sidebar disabled={disabled} />
-          {/* Form badge kaldırıldı - artık header'da gösteriliyor */}
-          <Flow
-            parentCallback={setDisabled}
-            parsedFormDesign={parsedFormDesign}
-            selectedForm={selectedForm}
-            setSelectedForm={setSelectedForm}
-            setParsedFormDesign={setParsedFormDesign}
-            workflowName={workflowName}
-            setWorkflowName={setWorkflowName}
-            isActiveWorkflow={isActiveWorkflow}
-            setIsActiveWorkflow={setIsActiveWorkflow}
-            onRegisterActions={({ onSave, onCancel }) => {
-              setSaveFlow(() => onSave);
-              setCancelFlow(() => onCancel);
-            }}
-            isPropertiesOpen={isPropertiesOpen}
-            {...props}
-          />
-        </ReactFlowProvider>
+        <Box sx={{ display: detailTab === 1 ? "none" : "flex", flex: 1, minWidth: 0 }}>
+          <ReactFlowProvider>
+            <Sidebar disabled={disabled} />
+            <Flow
+              parentCallback={setDisabled}
+              parsedFormDesign={parsedFormDesign}
+              selectedForm={selectedForm}
+              setSelectedForm={setSelectedForm}
+              setParsedFormDesign={setParsedFormDesign}
+              workflowName={workflowName}
+              setWorkflowName={setWorkflowName}
+              isActiveWorkflow={isActiveWorkflow}
+              setIsActiveWorkflow={setIsActiveWorkflow}
+              gridSchema={gridSchema}
+              onGridSchemaChange={setGridSchema}
+              onRegisterActions={({ onSave, onCancel }) => {
+                setSaveFlow(() => onSave);
+                setCancelFlow(() => onCancel);
+              }}
+              isPropertiesOpen={isPropertiesOpen}
+              {...props}
+            />
+          </ReactFlowProvider>
+        </Box>
+        {detailTab === 1 && isEdit && id && selectedForm && (
+          <Box sx={{ flex: 1, p: 2, display: "flex", flexDirection: "column", minHeight: 0 }}>
+            <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 1 }}>
+              <Typography variant="subtitle2" color="text.secondary">
+                Bu workflow&apos;a ait örnekler - form alanlarına göre listeleniyor
+              </Typography>
+              <MDButton
+                color="info"
+                variant="outlined"
+                size="small"
+                onClick={() => setGridSchemaEditorOpen(true)}
+              >
+                <MuiIcon sx={{ mr: 0.5, fontSize: "18px !important" }}>tune</MuiIcon>
+                Grid Düzenle
+              </MDButton>
+            </Box>
+            <WorkflowInstancesGrid
+              workflowId={id}
+              formDesign={selectedForm.formDesign || parsedFormDesign}
+              gridSchema={gridSchema.length > 0 ? gridSchema : null}
+              viewType={processHubViewType}
+              onRowClick={handleWorkflowInstanceClick}
+              returnTo={id ? `/WorkFlowList/detail/${id}` : "/WorkFlowList"}
+              height={Math.max(400, typeof window !== "undefined" ? window.innerHeight - 320 : 400)}
+            />
+          </Box>
+        )}
       </div>
+
+      <GridSchemaEditor
+        open={gridSchemaEditorOpen}
+        onClose={() => setGridSchemaEditorOpen(false)}
+        onSave={(schema) => {
+          setGridSchema(schema);
+          setGridSchemaEditorOpen(false);
+        }}
+        initialSchema={gridSchema}
+        formDesign={selectedForm?.formDesign || parsedFormDesign}
+      />
       <Footer />
     </DashboardLayout>
   );

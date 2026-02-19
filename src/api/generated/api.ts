@@ -4077,6 +4077,7 @@ export interface WorkFlowDefinationWithInitScriptDto {
     'formName'?: string | null;
     'formRevision'?: number | null;
     'initScript'?: string | null;
+    'buttons'?: Array<FormTaskNodeButtonDto> | null;
 }
 export interface WorkFlowHeadDetailDto {
     'id'?: string | null;
