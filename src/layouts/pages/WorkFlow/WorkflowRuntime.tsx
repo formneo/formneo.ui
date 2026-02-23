@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useMemo, useRef } from "react";
 import { useParams, useLocation, useNavigate } from "react-router-dom";
-import { FormDataApi, WorkFlowApi, UserApi, WorkFlowStartApiDto, AlertNodeInfo, WorkFlowItemApi, WorkFlowItemDtoWithApproveItems, FormTaskNodeButtonDto } from "api/generated";
+import { FormDataApi, WorkFlowApi, UserApi, WorkFlowStartApiDto, AlertNodeInfo, WorkFlowItemApi, WorkFlowItemDtoWithApproveItems, FormTaskNodeButtonDto, WorkflowClientAction, WorkflowMessageAction, WorkflowPageAction, FormItemsDto, ApproveItemsDto } from "api/generated";
 import getConfiguration from "confiuration";
 import { showWorkflowAlert } from "./utils/workflowAlert";
 
@@ -1009,6 +1009,170 @@ export default function WorkflowRuntime(): JSX.Element {
   }, [isNewInstance, (workflowInstance as any)?.initScript, taskDetail?.fieldScript, form, schema, loading, formData, currentUser]);
 
   /**
+   * WorkFlowHeadDtoResultStartOrContinue.clientAction'a göre işlem yapar
+   * 0: Redirect (liste sayfasına)
+   * 1: ShowForm - Sonraki form görevini getir ve runtime'a yönlendir
+   * 2: Redirect - behaviorMessage URL ise oraya, değilse listeye
+   * 3: Complete - Tamamlandı, listeye yönlendir
+   * 4: Stay - Formda kal (behaviorMessage gösterilebilir)
+   */
+  const processWorkflowResult = async (
+    result: any,
+    normalizedAction: string,
+    buttonLabel: string,
+    currentInstanceId: string | undefined,
+    mode: "start" | "continue"
+  ) => {
+    const targetPath = returnTo || "/workflows/my-tasks";
+    const navState = targetPath === "/process-hub" ? undefined : {
+      newInstanceId: result.id,
+      buttonAction: normalizedAction,
+      workflowStatus: result.workFlowStatus,
+      pendingNodeId: result.pendingNodeId,
+    };
+
+    if (result.alertInfo) {
+      const alertInfo: AlertNodeInfo = result.alertInfo;
+      const t = String(alertInfo.type || "info").toLowerCase();
+      const alertType: "info" | "success" | "warning" | "error" =
+        t === "success" || t === "warning" || t === "error" ? t : "info";
+      showWorkflowAlert({
+        title: alertInfo.title || "Bildirim",
+        message: alertInfo.message || "Mesaj yok",
+        type: alertType,
+      });
+      setSubmitting(false);
+      return;
+    }
+
+    const clientAction = result.clientAction as WorkflowClientAction | undefined;
+    const messageAction = result.messageAction as WorkflowMessageAction | undefined;
+    const pageAction = result.pageAction as WorkflowPageAction | undefined;
+
+    /** messageAction: 0=info, 1=warning, 2=success | pageAction: 0=stay, 1=redirect list, 2=redirect URL (behaviorMessage) */
+    const showBehaviorMessage = (msg: string, defaultType: "success" | "warning" | "info" = "success") => {
+      const t = messageAction === 1 ? "warning" : messageAction === 2 ? "success" : defaultType;
+      if (t === "success") message.success(msg, 3);
+      else if (t === "warning") message.warning(msg, 4);
+      else message.info(msg, 4);
+    };
+
+    const shouldStay = pageAction === 0;
+    const redirectToUrl = pageAction === 2 && result.behaviorMessage && (result.behaviorMessage.startsWith("/") || result.behaviorMessage.startsWith("http"));
+
+    const doNavigate = () => {
+      if (redirectToUrl) navigate(result.behaviorMessage!);
+      else navigate(targetPath, { state: navState });
+    };
+
+    switch (clientAction) {
+      case 1: {
+        if (result.id && result.pendingNodeId) {
+          try {
+            const conf = getConfiguration();
+            const workflowItemApi = new WorkFlowItemApi(conf);
+            const workflowApi = new WorkFlowApi(conf);
+            const itemsRes = await workflowItemApi.apiWorkFlowItemGetApproveItemsWorkFlowHeadIdGet(result.id);
+            const items = itemsRes.data || [];
+            const pendingItem = items.find(
+              (i: WorkFlowItemDtoWithApproveItems) => i.nodeId === result.pendingNodeId
+            );
+            const item = pendingItem ?? items[items.length - 1];
+            const workflowItemId =
+              (item?.formItems?.[0] as FormItemsDto | undefined)?.workflowItemId ??
+              (item?.approveItems?.[0] as ApproveItemsDto | undefined)?.workflowItemId;
+            if (workflowItemId) {
+              const taskRes = await workflowApi.apiWorkFlowGetTaskDetailByWorkflowItemIdWorkflowitemWorkflowItemIdTaskDetailGet(workflowItemId);
+              const taskDetail = taskRes.data;
+              const isFormTask = taskDetail.formItemId != null || (taskDetail.nodeType || "").toLowerCase().includes("form");
+              const isUserTask = taskDetail.approveItemId != null || (taskDetail.nodeType || "").toLowerCase().includes("user");
+              const wfInstanceId = taskDetail.workflowItemId ?? workflowItemId;
+              if (isFormTask || isUserTask) {
+                message.success(isFormTask ? "Sonraki form yükleniyor..." : "Onay görevi yükleniyor...", 2);
+                setTimeout(() => {
+                  navigate(`/workflows/runtime/${wfInstanceId}`, {
+                    state: {
+                      returnTo: targetPath,
+                      workflowInstance: {
+                        id: wfInstanceId,
+                        workflowId: taskDetail.workflowHeadId ?? result.id,
+                        workflowName: taskDetail.nodeName ?? "İş Akışı",
+                        formId: taskDetail.formId ?? undefined,
+                        formName: taskDetail.nodeName ?? (isFormTask ? "Form" : "Onay Görevi"),
+                        taskId: isFormTask ? taskDetail.formItemId : taskDetail.approveItemId,
+                        taskType: isFormTask ? "formTask" : "userTask",
+                        formDesign: taskDetail.formDesign,
+                        formData: taskDetail.formData,
+                        workflowItemId: wfInstanceId,
+                        approveUser: taskDetail.approveUser,
+                        approveUserNameSurname: taskDetail.approveUserNameSurname,
+                        approverStatus: taskDetail.approverStatus,
+                      },
+                      taskDetail,
+                    },
+                  });
+                }, 800);
+                return;
+              }
+            }
+          } catch (err) {
+            console.warn("clientAction=1 (ShowForm) işlenirken hata:", err);
+          }
+        }
+        if (shouldStay) {
+          if (result.behaviorMessage) showBehaviorMessage(result.behaviorMessage, "success");
+          setSubmitting(false);
+          return;
+        }
+        setTimeout(doNavigate, 1500);
+        break;
+      }
+      case 2:
+        if (shouldStay) {
+          if (result.behaviorMessage) showBehaviorMessage(result.behaviorMessage, "success");
+          setSubmitting(false);
+          return;
+        }
+        if (result.behaviorMessage) showBehaviorMessage(result.behaviorMessage, "success");
+        setTimeout(doNavigate, 1500);
+        break;
+      case 3: {
+        const msg = result.behaviorMessage || "Workflow başarıyla tamamlandı.";
+        showBehaviorMessage(msg, messageAction === 1 ? "warning" : "success");
+        if (shouldStay) {
+          setSubmitting(false);
+          return;
+        }
+        setTimeout(doNavigate, 1500);
+        break;
+      }
+      case 4:
+        if (result.behaviorMessage) showBehaviorMessage(result.behaviorMessage, "info");
+        if (shouldStay) {
+          setSubmitting(false);
+          return;
+        }
+        setTimeout(doNavigate, 1500);
+        break;
+      case 0:
+      default:
+        if (result.behaviorMessage) showBehaviorMessage(result.behaviorMessage, "success");
+        else message.success(
+          mode === "start"
+            ? `${buttonLabel} butonuna tıklandı. Workflow başlatıldı.`
+            : `${buttonLabel} butonuna tıklandı. Workflow devam ediyor.`,
+          3
+        );
+        if (shouldStay) {
+          setSubmitting(false);
+          return;
+        }
+        setTimeout(doNavigate, 1500);
+        break;
+    }
+  };
+
+  /**
    * ✅ Form butonuna tıklandığında - Backend'e workflow başlatma isteği gönder
    * BMP Modülü için: Hangi butondan tıklandıysa o butonun action kodu gönderilir
    * 
@@ -1074,25 +1238,7 @@ export default function WorkflowRuntime(): JSX.Element {
         }
 
         const result = response.data;
-
-        // ✅ Response'dan gelen alertInfo varsa göster ve formu kapatma (uyarı mesajı)
-        if (result.alertInfo) {
-          const alertInfo: AlertNodeInfo = result.alertInfo;
-          showWorkflowAlert({
-            title: alertInfo.title || "Bildirim",
-            message: alertInfo.message || "Mesaj yok",
-            type: (alertInfo.type as any) || "info",
-          });
-          // ✅ alertInfo geldiğinde formu kapatma, kullanıcı mesajı görsün ve form açık kalsın
-          setSubmitting(false);
-          return;
-        } else {
-          // Alert yoksa normal başarı mesajı göster
-          message.success(
-            `${button.label} butonuna tıklandı (Action: ${normalizedAction}). Workflow devam ediyor.`,
-            3
-          );
-        }
+        await processWorkflowResult(result, normalizedAction, button.label, instanceId, "continue");
       } else {
         // ✅ Yeni instance - Workflow başlat
         const startDto: WorkFlowStartApiDto = {
@@ -1110,56 +1256,8 @@ export default function WorkflowRuntime(): JSX.Element {
         }
 
         const result = response.data;
-
-        // ✅ Response'dan gelen alertInfo varsa göster ve formu kapatma (uyarı mesajı)
-        if (result.alertInfo) {
-          const alertInfo: AlertNodeInfo = result.alertInfo;
-          showWorkflowAlert({
-            title: alertInfo.title || "Bildirim",
-            message: alertInfo.message || "Mesaj yok",
-            type: (alertInfo.type as any) || "info",
-          });
-          // ✅ alertInfo geldiğinde formu kapatma, kullanıcı mesajı görsün ve form açık kalsın
-          setSubmitting(false);
-          return;
-        } else {
-          // Alert yoksa normal başarı mesajı göster
-          message.success(
-            `${button.label} butonuna tıklandı (Action: ${normalizedAction}). Workflow başlatıldı.`,
-            3
-          );
-        }
-
-        // ✅ Response'dan gelen diğer bilgileri logla (gerekirse)
-        // result.workFlowStatus - Workflow durumu
-        // result.pendingNodeId - Bekleyen node ID
-        // result.formNodeCompleted - Form node tamamlandı mı
-        // result.completedFormNodeId - Tamamlanan form node ID
-
-        // Yönlendir: ProcessHub'dan gelindiyse /process-hub, değilse /workflows/my-tasks
-        const targetPath = returnTo || "/workflows/my-tasks";
-        setTimeout(() => {
-          navigate(targetPath, {
-            state: targetPath === "/process-hub" ? undefined : {
-              newInstanceId: result.id,
-              buttonAction: normalizedAction,
-              workflowStatus: result.workFlowStatus,
-              pendingNodeId: result.pendingNodeId,
-            },
-          });
-        }, 1500);
-        return;
+        await processWorkflowResult(result, normalizedAction, button.label, undefined, "start");
       }
-
-      // Görevlerim sayfasına veya ProcessHub'a yönlendir (continue durumu için)
-      const targetPath = returnTo || "/workflows/my-tasks";
-      setTimeout(() => {
-        navigate(targetPath, {
-          state: targetPath === "/process-hub" ? undefined : {
-            buttonAction: normalizedAction,
-          },
-        });
-      }, 1500);
     } catch (error: any) {
       // ✅ Detaylı hata mesajı oluştur
       let errorMessage = "Workflow başlatılırken bir hata oluştu";

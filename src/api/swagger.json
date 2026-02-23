@@ -23420,6 +23420,14 @@
           "source": {
             "type": "string",
             "nullable": true
+          },
+          "nodeId": {
+            "type": "string",
+            "nullable": true
+          },
+          "nodeType": {
+            "type": "string",
+            "nullable": true
           }
         },
         "additionalProperties": false
@@ -25953,10 +25961,19 @@
       "ProcessHubDataResponseDto": {
         "type": "object",
         "properties": {
+          "schemaId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "dataGridSchema": {
+            "type": "string",
+            "nullable": true
+          },
           "data": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/ProcessHubItemDto"
+              "type": "object",
+              "additionalProperties": { }
             },
             "nullable": true
           },
@@ -30706,6 +30723,10 @@
             "type": "string",
             "nullable": true
           },
+          "dataGridSchema": {
+            "type": "string",
+            "nullable": true
+          },
           "isActive": {
             "type": "boolean"
           },
@@ -30746,6 +30767,10 @@
             "type": "string",
             "nullable": true
           },
+          "dataGridSchema": {
+            "type": "string",
+            "nullable": true
+          },
           "isActive": {
             "type": "boolean"
           },
@@ -30778,6 +30803,10 @@
             "nullable": true
           },
           "defination": {
+            "type": "string",
+            "nullable": true
+          },
+          "dataGridSchema": {
             "type": "string",
             "nullable": true
           },
@@ -30843,6 +30872,10 @@
             "nullable": true
           },
           "defination": {
+            "type": "string",
+            "nullable": true
+          },
+          "dataGridSchema": {
             "type": "string",
             "nullable": true
           },
@@ -31024,6 +31057,19 @@
           },
           "isSuccessfullyCompleted": {
             "type": "boolean"
+          },
+          "messageAction": {
+            "$ref": "#/components/schemas/WorkflowMessageAction"
+          },
+          "pageAction": {
+            "$ref": "#/components/schemas/WorkflowPageAction"
+          },
+          "behaviorMessage": {
+            "type": "string",
+            "nullable": true
+          },
+          "clientAction": {
+            "$ref": "#/components/schemas/WorkflowClientAction"
           },
           "alertInfo": {
             "$ref": "#/components/schemas/AlertNodeInfo"
@@ -31291,6 +31337,17 @@
           }
         },
         "additionalProperties": false
+      },
+      "WorkflowClientAction": {
+        "enum": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ],
+        "type": "integer",
+        "format": "int32"
       },
       "WorkflowHead": {
         "type": "object",
@@ -31611,13 +31668,31 @@
         },
         "additionalProperties": false
       },
-      "WorkflowStatus": {
+      "WorkflowMessageAction": {
         "enum": [
           0,
           1,
+          2
+        ],
+        "type": "integer",
+        "format": "int32"
+      },
+      "WorkflowPageAction": {
+        "enum": [
+          0,
+          1,
+          2
+        ],
+        "type": "integer",
+        "format": "int32"
+      },
+      "WorkflowStatus": {
+        "enum": [
+          1,
           2,
           3,
-          4
+          5,
+          6
         ],
         "type": "integer",
         "format": "int32"

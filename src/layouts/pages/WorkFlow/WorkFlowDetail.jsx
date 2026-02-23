@@ -660,16 +660,28 @@ function Flow(props) {
           };
           break;
 
-        case "formNode":
-          const formButtons = parsedFormDesign?.buttons || [];
+        case "formNode": {
+          let formNodeButtons = parsedFormDesign?.buttons || [];
+          if (formNodeButtons.length === 0 && parsedFormDesign?.raw?.buttonPanel?.buttons) {
+            formNodeButtons = parsedFormDesign.raw.buttonPanel.buttons;
+          }
+          if (formNodeButtons.length === 0 && selectedForm?.formDesign) {
+            try {
+              const parsedFormData = JSON.parse(selectedForm.formDesign);
+              formNodeButtons = parsedFormData?.buttonPanel?.buttons || [];
+            } catch (err) {
+              console.error("❌ formNode parse hatası:", err);
+            }
+          }
           nodeData = {
             name: selectedForm?.formName || "Form",
             formId: selectedForm?.id,
             formName: selectedForm?.formName,
-            buttons: formButtons,
+            buttons: formNodeButtons,
             ...baseFormInfo,
           };
           break;
+        }
 
         case "alertNode":
           nodeData = {
@@ -938,7 +950,18 @@ function Flow(props) {
   // Form seçildiğinde otomatik FormNode oluştur
   useEffect(() => {
     if (selectedForm && parsedFormDesign) {
-      const buttons = parsedFormDesign?.buttons || [];
+      let buttons = parsedFormDesign?.buttons || [];
+      if (buttons.length === 0 && parsedFormDesign?.raw?.buttonPanel?.buttons) {
+        buttons = parsedFormDesign.raw.buttonPanel.buttons;
+      }
+      if (buttons.length === 0 && selectedForm?.formDesign) {
+        try {
+          const parsedFormData = JSON.parse(selectedForm.formDesign);
+          buttons = parsedFormData?.buttonPanel?.buttons || [];
+        } catch (err) {
+          console.error("❌ formNode buttons parse hatası:", err);
+        }
+      }
       const existingFormNode = nodes.find((n) => n.type === "formNode" && n.data?.formId === selectedForm.id);
       
       // Eğer bu form için zaten bir FormNode yoksa oluştur
@@ -980,7 +1003,9 @@ function Flow(props) {
           setEdges((eds) => [...eds, newEdge]);
         }
       } else {
-        // Mevcut FormNode'u güncelle (butonlar değişmiş olabilir)
+        // Mevcut FormNode'u güncelle - form butonları + sağ tıkla eklenen (source: user) butonları koru
+        const userAddedButtons = (existingFormNode.data?.buttons || []).filter((b) => b.source === "user");
+        const mergedButtons = [...buttons, ...userAddedButtons];
         setNodes((nds) =>
           nds.map((node) =>
             node.id === existingFormNode.id
@@ -988,7 +1013,7 @@ function Flow(props) {
                   ...node,
                   data: {
                     ...node.data,
-                    buttons: buttons,
+                    buttons: mergedButtons,
                   },
                 }
               : node
@@ -1128,6 +1153,7 @@ function Flow(props) {
         id,
         workflowName: currentWorkflowName,
         defination: JSON.stringify(flow),
+        dataGridSchema: JSON.stringify(gridSchema || []), // ProcessHub API için ayrı alan
         isActive: isActiveWorkflow, // ✅ Kullanıcının seçtiği durum
         revision: 0,
         formId: selectedForm?.id || null, // ✅ FormId eklendi
@@ -1148,6 +1174,7 @@ function Flow(props) {
       const dto = {
         workflowName: currentWorkflowName,
         defination: JSON.stringify(flow),
+        dataGridSchema: JSON.stringify(gridSchema || []), // ProcessHub API için ayrı alan
         isActive: isActiveWorkflow, // ✅ Kullanıcının seçtiği durum
         revision: 0,
         formId: selectedForm?.id || null, // ✅ FormId eklendi

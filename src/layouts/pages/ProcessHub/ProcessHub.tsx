@@ -29,7 +29,6 @@ import {
   Alert,
   Grid,
 } from "@mui/material";
-import { DataGrid, GridColDef, GridRenderCellParams } from "@mui/x-data-grid";
 import * as MuiIcons from "@mui/icons-material";
 import DashboardLayout from "examples/LayoutContainers/DashboardLayout";
 import DashboardNavbar from "examples/Navbars/DashboardNavbar";
@@ -47,6 +46,7 @@ import {
   WorkFlowMenuViewDto,
 } from "api/generated/api";
 import getConfiguration from "confiuration";
+import WorkflowInstancesGrid from "../WorkFlow/components/WorkflowInstancesGrid";
 
 // Icon mapping helper - API'den gelen string icon ismini MUI icon'a çevir
 const getIconComponent = (iconName?: string | null): React.ReactNode => {
@@ -98,10 +98,7 @@ export default function ProcessHub(): JSX.Element {
   const [expandedCategories, setExpandedCategories] = useState<Record<string, boolean>>({});
   const [expandedWorkflows, setExpandedWorkflows] = useState<Record<string, boolean>>({});
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [gridData, setGridData] = useState<any[]>([]);
-  const [gridLoading, setGridLoading] = useState(false);
-  const [pageInfo, setPageInfo] = useState({ total: 0, page: 0, pageSize: 25 });
-  
+
   // History Dialog State
   const [historyDialogOpen, setHistoryDialogOpen] = useState(false);
   const [selectedWorkflowForHistory, setSelectedWorkflowForHistory] = useState<any>(null);
@@ -150,59 +147,6 @@ export default function ProcessHub(): JSX.Element {
 
     loadMenuStructure();
   }, []);
-
-  // Grid verilerini yükle (workflowId ve viewType varsa)
-  useEffect(() => {
-    const workflowIdParam = searchParams.get("workflowId");
-    const viewTypeParam = searchParams.get("viewType");
-
-    if (!workflowIdParam || !viewTypeParam) {
-      // Parametreler yoksa grid'i temizle
-      setGridData([]);
-      return;
-    }
-
-    const fetchGridData = async () => {
-      try {
-        setGridLoading(true);
-        
-        console.log("🚀 Grid API çağrısı başlatılıyor:", {
-          workflowId: workflowIdParam,
-          viewType: viewTypeParam,
-          page: pageInfo.page + 1,
-          pageSize: pageInfo.pageSize,
-        });
-        
-        // ProcessHubApi kullanarak veri çekme
-        const conf = getConfiguration();
-        const api = new ProcessHubApi(conf);
-        const response = await api.apiProcessHubDataGet(
-          workflowIdParam || undefined,
-          viewTypeParam || undefined,
-          pageInfo.page + 1, // Backend 1-based pagination
-          pageInfo.pageSize
-        );
-        
-        console.log("✅ Grid API yanıtı alındı:", response.data);
-        
-        const data = response.data;
-        setGridData(data.data || []);
-        setPageInfo({
-          total: data.totalCount || 0,
-          page: (data.page || 1) - 1, // MUI DataGrid 0-based
-          pageSize: data.pageSize || pageInfo.pageSize,
-        });
-        
-      } catch (error: any) {
-        console.error("❌ Grid verisi yüklenirken hata:", error);
-        setGridData([]);
-      } finally {
-        setGridLoading(false);
-      }
-    };
-
-    fetchGridData();
-  }, [searchParams.get("workflowId"), searchParams.get("viewType"), pageInfo.page, pageInfo.pageSize]);
 
   // Kategori genişlet/daralt
   const handleToggleCategory = (categoryId: string) => {
@@ -311,7 +255,7 @@ export default function ProcessHub(): JSX.Element {
       const conf = getConfiguration();
       const workflowApi = new WorkFlowApi(conf);
 
-      const workflowItemId = row.workflowItemId || row.workflowItemId || row.id;
+      const workflowItemId = row.workflowItemId ?? row._workflowItemId ?? row.workflowHeadId ?? row._workflowHeadId ?? row.id;
       if (!workflowItemId) {
         alert("Görev detayı alınamadı: WorkflowItemId bulunamadı");
         return;
@@ -328,8 +272,9 @@ export default function ProcessHub(): JSX.Element {
       const finalIsFormTask = isFormTask || (isFormTaskByType && !isUserTask);
       const finalIsUserTask = isUserTask || (isUserTaskByType && !isFormTask);
 
-      const workflowInstanceId = taskDetail.workflowItemId || row.currentWorkflowItemId || row.workflowItemId || workflowItemId || row.id;
-      const task = { ...row, workflowItemId, workflowHeadId: row.id };
+      const workflowInstanceId = taskDetail.workflowItemId ?? row.currentWorkflowItemId ?? row.workflowItemId ?? row._workflowItemId ?? workflowItemId ?? row.id;
+      const workflowHeadId = row._workflowHeadId ?? row.workflowHeadId ?? row.id;
+      const task = { ...row, workflowItemId, workflowHeadId };
 
       if (finalIsFormTask) {
         navigate(`/workflows/runtime/${workflowInstanceId}`, {
@@ -513,100 +458,6 @@ export default function ProcessHub(): JSX.Element {
   const currentCategoryIndex = menuData.findIndex((c) => c.id === selectedCategory);
   const currentColor = currentCategoryIndex >= 0 ? getCategoryColor(currentCategoryIndex) : categoryColors[0];
 
-  // DataGrid kolonları - Minimal tasarım: Sadece gerekli bilgiler (detaylar zaten history'de görünüyor)
-  const gridColumns: GridColDef[] = [
-    {
-      field: "formName",
-      headerName: "Form Adı",
-      flex: 1,
-      minWidth: 250,
-      renderCell: (params: GridRenderCellParams) => (
-        <Typography variant="body2" fontWeight={500}>
-          {params.value || "Form Adı Yok"}
-        </Typography>
-      ),
-    },
-    {
-      field: "currentNodeName",
-      headerName: "Güncel Adım",
-      width: 160,
-      renderCell: (params: GridRenderCellParams) => (
-        <Chip
-          label={params.value || "Başlangıç"}
-          size="small"
-          variant="outlined"
-          color="primary"
-        />
-      ),
-    },
-    {
-      field: "workFlowStatusText",
-      headerName: "Durum",
-      width: 140,
-      renderCell: (params: GridRenderCellParams) => {
-        const status = params.value || "Beklemede";
-        const color = 
-          status.includes("Tamamlan") || status.includes("Onaylan") ? "success" :
-          status.includes("Red") || status.includes("İptal") ? "error" :
-          status.includes("Bekl") ? "warning" : "default";
-        
-        return (
-          <Chip
-            label={status}
-            size="small"
-            color={color}
-          />
-        );
-      },
-    },
-    {
-      field: "createdDate",
-      headerName: "Oluşturma Tarihi",
-      width: 150,
-      renderCell: (params: GridRenderCellParams) => (
-        <Typography variant="caption">
-          {params.value ? new Date(params.value).toLocaleDateString("tr-TR") : "-"}
-        </Typography>
-      ),
-    },
-    {
-      field: "actions",
-      headerName: "İşlemler",
-      width: 100,
-      sortable: false,
-      renderCell: (params: GridRenderCellParams) => (
-        <Box sx={{ display: "flex", gap: 0.5 }}>
-          <Tooltip title="Görüntüle">
-            <IconButton 
-              size="small" 
-              onClick={(e) => {
-                e.stopPropagation();
-                handleWorkflowClick(params.row);
-              }}
-            >
-              <MuiIcons.Visibility fontSize="small" />
-            </IconButton>
-          </Tooltip>
-          <Tooltip title="Süreç Geçmişi">
-            <IconButton 
-              size="small"
-              color="primary"
-              onClick={(e) => {
-                e.stopPropagation();
-                // History dialog'unu aç
-                if (params.row.id) {
-                  setSelectedWorkflowForHistory(params.row);
-                  handleOpenHistory(params.row.id);
-                }
-              }}
-            >
-              <MuiIcons.History fontSize="small" />
-            </IconButton>
-          </Tooltip>
-        </Box>
-      ),
-    },
-  ];
 
 
   // Sidebar içeriği
@@ -961,9 +812,9 @@ export default function ProcessHub(): JSX.Element {
               </Box>
             </Paper>
 
-            {/* DataGrid - Workflow verilerini göster */}
+            {/* Grid - API'den dataGridSchema ile dinamik kolonlar */}
             {searchParams.get("workflowId") && searchParams.get("viewType") ? (
-              <Paper
+              <Box
                 sx={{
                   flex: 1,
                   minHeight: 0,
@@ -971,68 +822,40 @@ export default function ProcessHub(): JSX.Element {
                   overflow: "hidden",
                   display: "flex",
                   flexDirection: "column",
+                  "& .MuiPaper-root": { height: "100%", borderRadius: "16px" },
+                  "& .MuiDataGrid-row:hover": { backgroundColor: `${currentColor}11` },
                 }}
               >
-                <DataGrid
-                  rows={gridData}
-                  columns={gridColumns}
-                  loading={gridLoading}
-                  pageSizeOptions={[10, 25, 50, 100]}
-                  paginationModel={{
-                    page: pageInfo.page,
-                    pageSize: pageInfo.pageSize,
-                  }}
-                  onPaginationModelChange={(model) => {
-                    setPageInfo((prev) => ({ ...prev, page: model.page, pageSize: model.pageSize }));
-                  }}
-                  rowCount={pageInfo.total}
-                  paginationMode="server"
-                  checkboxSelection
-                  disableRowSelectionOnClick
-                  sx={{
-                    flex: 1,
-                    border: "none",
-                    "& .MuiDataGrid-cell": {
-                      borderBottom: "1px solid #f0f0f0",
-                    },
-                    "& .MuiDataGrid-columnHeaders": {
-                      backgroundColor: "#f8f9fa",
-                      borderBottom: "2px solid #e0e0e0",
-                      fontWeight: 700,
-                    },
-                    "& .MuiDataGrid-row:hover": {
-                      backgroundColor: `${currentColor}11`,
-                    },
-                    "& .MuiDataGrid-cell:focus": {
-                      outline: "none",
-                    },
-                    "& .MuiDataGrid-row": {
-                      cursor: "pointer",
-                    },
-                  }}
-                  onRowClick={(params) => {
-                    handleWorkflowClick(params.row);
-                  }}
-                  localeText={{
-                    noRowsLabel: "Kayıt bulunamadı",
-                    noResultsOverlayLabel: "Sonuç bulunamadı",
-                    toolbarColumns: "Sütunlar",
-                    toolbarFilters: "Filtreler",
-                    columnMenuLabel: "Menü",
-                    columnMenuShowColumns: "Sütunları göster",
-                    columnMenuFilter: "Filtrele",
-                    columnMenuHideColumn: "Gizle",
-                    columnMenuSortAsc: "Artan sırala",
-                    columnMenuSortDesc: "Azalan sırala",
-                    footerRowSelected: (count) => `${count} satır seçildi`,
-                    MuiTablePagination: {
-                      labelRowsPerPage: "Sayfa başına:",
-                      labelDisplayedRows: ({ from, to, count }) =>
-                        `${from}-${to} / ${count !== -1 ? count : `${to}+`}`,
-                    },
+                <WorkflowInstancesGrid
+                  workflowId={searchParams.get("workflowId")!}
+                  viewType={searchParams.get("viewType")!}
+                  formDesign={null}
+                  height={600}
+                  onRowClick={handleWorkflowClick}
+                  onEditClick={handleWorkflowClick}
+                  renderExtraActions={(params) => {
+                    const row = params.row as any;
+                    const headId = row._workflowHeadId ?? row.workflowHeadId ?? row.id;
+                    return (
+                      <Tooltip title="Süreç Geçmişi">
+                        <IconButton
+                          size="small"
+                          color="primary"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (headId) {
+                              setSelectedWorkflowForHistory(row);
+                              handleOpenHistory(headId);
+                            }
+                          }}
+                        >
+                          <MuiIcons.History fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                    );
                   }}
                 />
-              </Paper>
+              </Box>
             ) : (
               // Boş durum - Henüz view seçilmemiş
               <Paper

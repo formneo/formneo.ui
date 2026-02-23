@@ -1965,6 +1965,8 @@ export interface FormTaskNodeButtonDto {
     'description'?: string | null;
     'visible'?: boolean | null;
     'source'?: string | null;
+    'nodeId'?: string | null;
+    'nodeType'?: string | null;
 }
 export interface FormTenantRoleListDto {
     'id'?: string;
@@ -2729,7 +2731,9 @@ export interface Positions {
     'userApps'?: Array<UserApp> | null;
 }
 export interface ProcessHubDataResponseDto {
-    'data'?: Array<ProcessHubItemDto> | null;
+    'schemaId'?: string;
+    'dataGridSchema'?: string | null;
+    'data'?: Array<{ [key: string]: any; }> | null;
     'totalCount'?: number;
     'page'?: number;
     'pageSize'?: number;
@@ -4028,6 +4032,7 @@ export interface WorkFlowDefination {
     'concurrencyToken'?: number;
     'workflowName'?: string | null;
     'defination'?: string | null;
+    'dataGridSchema'?: string | null;
     'isActive'?: boolean;
     'revision'?: number;
     'workflows'?: Array<WorkflowHead> | null;
@@ -4038,6 +4043,7 @@ export interface WorkFlowDefinationDetailDto {
     'id'?: string;
     'workflowName'?: string | null;
     'defination'?: string | null;
+    'dataGridSchema'?: string | null;
     'isActive'?: boolean;
     'revision'?: number;
     'formId'?: string | null;
@@ -4047,6 +4053,7 @@ export interface WorkFlowDefinationDetailDto {
 export interface WorkFlowDefinationInsertDto {
     'workflowName'?: string | null;
     'defination'?: string | null;
+    'dataGridSchema'?: string | null;
     'isActive'?: boolean;
     'revision'?: number;
     'formId'?: string | null;
@@ -4064,6 +4071,7 @@ export interface WorkFlowDefinationUpdateDto {
     'id'?: string;
     'workflowName'?: string | null;
     'defination'?: string | null;
+    'dataGridSchema'?: string | null;
     'isActive'?: boolean;
     'revision'?: number;
     'formId'?: string | null;
@@ -4114,6 +4122,10 @@ export interface WorkFlowHeadDtoResultStartOrContinue {
     'currentNodeInfo'?: NodeResultInfo;
     'isCompleted'?: boolean;
     'isSuccessfullyCompleted'?: boolean;
+    'messageAction'?: WorkflowMessageAction;
+    'pageAction'?: WorkflowPageAction;
+    'behaviorMessage'?: string | null;
+    'clientAction'?: WorkflowClientAction;
     'alertInfo'?: AlertNodeInfo;
     /**
      * @deprecated
@@ -4196,6 +4208,18 @@ export interface WorkFlowStartApiDto {
     'action'?: string | null;
     'note'?: string | null;
 }
+
+export const WorkflowClientAction = {
+    NUMBER_0: 0,
+    NUMBER_1: 1,
+    NUMBER_2: 2,
+    NUMBER_3: 3,
+    NUMBER_4: 4
+} as const;
+
+export type WorkflowClientAction = typeof WorkflowClientAction[keyof typeof WorkflowClientAction];
+
+
 export interface WorkflowHead {
     'id'?: string;
     'mainClientId'?: string | null;
@@ -4281,12 +4305,32 @@ export interface WorkflowItemHistoryDto {
     'updatedDate'?: string | null;
 }
 
-export const WorkflowStatus = {
+export const WorkflowMessageAction = {
     NUMBER_0: 0,
+    NUMBER_1: 1,
+    NUMBER_2: 2
+} as const;
+
+export type WorkflowMessageAction = typeof WorkflowMessageAction[keyof typeof WorkflowMessageAction];
+
+
+
+export const WorkflowPageAction = {
+    NUMBER_0: 0,
+    NUMBER_1: 1,
+    NUMBER_2: 2
+} as const;
+
+export type WorkflowPageAction = typeof WorkflowPageAction[keyof typeof WorkflowPageAction];
+
+
+
+export const WorkflowStatus = {
     NUMBER_1: 1,
     NUMBER_2: 2,
     NUMBER_3: 3,
-    NUMBER_4: 4
+    NUMBER_5: 5,
+    NUMBER_6: 6
 } as const;
 
 export type WorkflowStatus = typeof WorkflowStatus[keyof typeof WorkflowStatus];
