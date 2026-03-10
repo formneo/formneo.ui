@@ -8,7 +8,14 @@
  * her render'da yeniden oluşturulur ve focus kaybı olur (react-querybuilder common mistake).
  */
 import React, { useMemo, useCallback, createContext, useContext } from "react";
-import { QueryBuilder, RuleGroupType, Field, formatQuery } from "react-querybuilder";
+import { 
+  QueryBuilder, 
+  RuleGroupType, 
+  Field, 
+  formatQuery,
+  FullOperator,
+  FlexibleOptionList 
+} from "react-querybuilder";
 import "react-querybuilder/dist/query-builder.css";
 import {
   TextField,
@@ -320,9 +327,26 @@ export default function FormConditionBuilder({
   );
 
   const getOperators = useCallback(
-    (fieldName: string) => {
+    (fieldName: string, misc: any): FlexibleOptionList<FullOperator<string>> => {
       const fd = fields.find((f) => f.name === fieldName);
-      return fd?.operators ?? ["=", "!="];
+      const operators = fd?.operators ?? ["=", "!="];
+      // react-querybuilder'ın beklediği format: {name, label} objesi array'i
+      return operators.map(op => ({ 
+        name: op, 
+        label: op === "=" ? "Eşittir" : 
+               op === "!=" ? "Eşit Değil" :
+               op === "contains" ? "İçerir" :
+               op === "beginsWith" ? "İle Başlar" :
+               op === "endsWith" ? "İle Biter" :
+               op === "<" ? "Küçüktür" :
+               op === ">" ? "Büyüktür" :
+               op === "<=" ? "Küçük Eşit" :
+               op === ">=" ? "Büyük Eşit" :
+               op === "null" ? "Boş" :
+               op === "notNull" ? "Boş Değil" :
+               op === "in" ? "İçinde" :
+               op === "notIn" ? "İçinde Değil" : op
+      }));
     },
     [fields]
   );
@@ -415,16 +439,6 @@ export default function FormConditionBuilder({
           controlElements={{
             valueEditor: FormConditionValueEditor,
           }}
-        translations={{
-          addRule: { label: "+ Kural", title: "Kural ekle" },
-          addGroup: { label: "+ Grup", title: "Grup ekle" },
-          removeRule: { label: "✕", title: "Kuralı kaldır" },
-          removeGroup: { label: "✕", title: "Grubu kaldır" },
-          combinators: { title: "Mantık" },
-          fields: { title: "Alan", placeholderName: "------", placeholderLabel: "Alan seçin" },
-          operators: { title: "Operatör", placeholderName: "------", placeholderLabel: "Operatör seçin" },
-          values: { title: "Değer", placeholderName: "------", placeholderLabel: "Değer seçin" },
-        }}
         showCombinatorsBetweenRules
         addRuleToNewGroups
         disabled={disabled}

@@ -43,7 +43,7 @@ export async function publishForm(id: string) {
 
 export async function getVersions(parentId: string) {
   const api = new FormDataApi(getConfiguration());
-  const res = await api.apiFormDataVersionsParentIdGet(parentId);
+  const res = await api.apiFormDataAllVersionsParentIdGet(parentId);
   return res.data || [];
 }
 

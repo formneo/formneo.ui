@@ -75,6 +75,7 @@ import {
   ListSubheader,
   ListItemButton,
   Divider,
+  MenuItem,
 } from "@mui/material";
 import MDButton from "components/MDButton";
 import MDTypography from "components/MDTypography";
@@ -95,6 +96,28 @@ import { useAlert } from "layouts/pages/hooks/useAlert";
 import { useBusy } from "layouts/pages/hooks/useBusy";
 import { themes } from "examples/Sidenav";
 import { useRootMenus } from "hooks/useRootMenus";
+import { useMenuAuth } from "hooks/useMenuAuth";
+import { useUserTenants } from "hooks/useUserTenants";
+import "primeicons/primeicons.css";
+
+// Menü ikonunu Material Icons veya PrimeIcons olarak render eder (Sidenav ile uyumlu)
+const renderNavMenuIcon = (rawIconName: string | null | undefined, color: string, fontSize?: number): React.ReactNode => {
+  const size = fontSize ?? 20;
+  const iconName = String(rawIconName || "").trim();
+  if (!iconName) return <Icon sx={{ color, fontSize: size }}>folder</Icon>;
+  const lower = iconName.toLowerCase();
+  if (lower.startsWith("mi:") || lower.startsWith("material:")) {
+    const name = iconName.split(":")[1] || "";
+    return <Icon sx={{ color, fontSize: size }}>{name}</Icon>;
+  }
+  if (lower.startsWith("pi:") || lower.startsWith("prime:")) {
+    const name = iconName.split(":")[1] || "";
+    return <i className={`pi pi-${name}`} style={{ color, fontSize: size - 2 }} />;
+  }
+  const materialLikely = iconName.includes("_") || ["home", "dashboard", "menu", "business", "group", "apps", "settings", "edit"].includes(lower);
+  if (materialLikely) return <Icon sx={{ color, fontSize: size }}>{iconName}</Icon>;
+  return <i className={`pi pi-${iconName}`} style={{ color, fontSize: size - 2 }} />;
+};
 
 // Declaring prop types for DashboardNavbar
 interface Props {
@@ -130,7 +153,12 @@ function DashboardNavbar({ absolute, light, isMini }: Props): JSX.Element {
   const currentPath = useLocation().pathname;
   const [menuData, setMenuData] = useState<any>(null);
   const [filteredMenuData, setFilteredMenuData] = useState<any>(null);
+  const [menuDropdownAnchor, setMenuDropdownAnchor] = useState<null | HTMLElement>(null);
+  const [menuDropdownMenuId, setMenuDropdownMenuId] = useState<string | null>(null);
+  const [menuDropdownSubs, setMenuDropdownSubs] = useState<any[]>([]);
+  const [menuDropdownLoading, setMenuDropdownLoading] = useState(false);
   const navigate = useNavigate();
+  const { data: menuAuth = [] } = useMenuAuth();
 
   const [theme, setTheme] = useState<Theme>(
     (localStorage.getItem("themePreference") as Theme) || "light"
@@ -218,92 +246,91 @@ function DashboardNavbar({ absolute, light, isMini }: Props): JSX.Element {
   //   }
   // }, [localStorage.getItem("themePreference")]);
 
+  const isSpecialRoute = currentPath.startsWith("/authentication") || currentPath.startsWith("/NotAuthorization");
+  const { data: tenantOpts = [], isSuccess: tenantOptsLoaded } = useUserTenants(!isSpecialRoute);
+
+  // Tenant listesi cache'den gelince sadece seçili tenant'ı localStorage ile senkronize et
   useEffect(() => {
-    const isSpecialRoute = currentPath.startsWith("/authentication") || currentPath.startsWith("/NotAuthorization");
-    if (isSpecialRoute) return;
-
-
-    // Tenant options for ShellBar search field
-    (async () => {
-      try {
-        if (isSpecialRoute) return;
-        const conf = getConfiguration();
-        const userApi = new UserApi(conf);
-        const user = await userApi.apiUserGetLoginUserDetailGet();
-        const userId = String((user as any)?.data?.id || (user as any)?.data?.userId || "");
-        if (!userId) {
-          setTenants([]);
-          setSelectedTenant(null);
-          localStorage.removeItem("selectedTenantId");
-          localStorage.removeItem("selectedTenantLabel");
-          setSelectedTenantId(dispatch as any, null as any);
-          return;
-        }
-        const utApi = new UserTenantsApi(conf);
-        const res = await utApi.apiUserTenantsByUserUserIdGet(userId);
-        const upayload: any = (res as any)?.data;
-        const ulist: any[] = Array.isArray(upayload)
-          ? upayload
-          : Array.isArray(upayload?.items)
-            ? upayload.items
-            : Array.isArray(upayload?.data)
-              ? upayload.data
-              : Array.isArray(upayload?.result)
-                ? upayload.result
-                : [];
-        // Ağır tüm-şirket çekimi kaldırıldı; kullanıcı-tenant kaydındaki adları kullan
-
-        const opts = Array.from(
-          new Map(
-            (ulist || []).map((r: any) => {
-              const id = String(r.tenantId || r.id || r.clientId || r.uid || "");
-              const label = r.tenantName || r.name || r.clientName || r.title || "-";
-              return [id, { id, label, name: label }];
-            })
-          ).values()
-        );
-        setTenants(opts);
-        const savedTenantId = localStorage.getItem("selectedTenantId");
-        if (savedTenantId && opts.some((o) => o.id === savedTenantId)) {
-          const match = opts.find((o) => o.id === savedTenantId) || null;
-          setSelectedTenant(match);
+    if (isSpecialRoute || !tenantOptsLoaded) return;
+    const opts = tenantOpts;
+    setTenants(opts);
+    if (opts.length === 0) {
+      setSelectedTenant(null);
+      localStorage.removeItem("selectedTenantId");
+      localStorage.removeItem("selectedTenantLabel");
+      setSelectedTenantId(dispatch as any, null as any);
+      return;
+    }
+    const savedTenantId = localStorage.getItem("selectedTenantId");
+    if (savedTenantId && opts.some((o) => o.id === savedTenantId)) {
+      const match = opts.find((o) => o.id === savedTenantId) || null;
+      setSelectedTenant(match);
+      setSelectedTenantId(dispatch as any, savedTenantId);
+      if (match?.label) localStorage.setItem("selectedTenantLabel", match.label);
+    } else if (savedTenantId) {
+      (async () => {
+        try {
+          const conf = getConfiguration();
+          const clientsApi = new ClientApi(conf);
+          const one = await clientsApi.apiClientIdGet(savedTenantId);
+          const payloadOne: any = (one as any)?.data;
+          const label = payloadOne?.name || payloadOne?.clientName || payloadOne?.title || "-";
+          const fallback: any = { id: savedTenantId, label, name: label };
+          setTenants((curr) => (curr.some((c) => c.id === savedTenantId) ? curr : [...curr, fallback]));
+          setSelectedTenant(fallback);
           setSelectedTenantId(dispatch as any, savedTenantId);
-          if (match?.label) localStorage.setItem("selectedTenantLabel", match.label);
-        } else if (savedTenantId) {
-          // Kayit yoksa id'ye göre şirket adını çekip placeholder ekle
-          try {
-            const conf = getConfiguration();
-            const clientsApi = new ClientApi(conf);
-            const one = await clientsApi.apiClientIdGet(savedTenantId);
-            const payloadOne: any = (one as any)?.data;
-            const label = payloadOne?.name || payloadOne?.clientName || payloadOne?.title || "-";
-            const fallback: any = { id: savedTenantId, label, name: label };
-            setTenants((curr) => (curr.some((c) => c.id === savedTenantId) ? curr : [...curr, fallback]));
-            setSelectedTenant(fallback);
-            setSelectedTenantId(dispatch as any, savedTenantId);
-            localStorage.setItem("selectedTenantLabel", label);
-          } catch {
-            const fallback: any = { id: savedTenantId, label: "-", name: "-" };
-            setTenants((curr) => (curr.some((c) => c.id === savedTenantId) ? curr : [...curr, fallback]));
-            setSelectedTenant(fallback);
-            setSelectedTenantId(dispatch as any, savedTenantId);
-            localStorage.setItem("selectedTenantLabel", "-");
-          }
-        } else {
-          // Hiç tenant yoksa global mod
-          setSelectedTenant(null);
-          localStorage.removeItem("selectedTenantId");
-          localStorage.removeItem("selectedTenantLabel");
-          setSelectedTenantId(dispatch as any, null as any);
+          localStorage.setItem("selectedTenantLabel", label);
+        } catch {
+          const fallback: any = { id: savedTenantId, label: "-", name: "-" };
+          setTenants((curr) => (curr.some((c) => c.id === savedTenantId) ? curr : [...curr, fallback]));
+          setSelectedTenant(fallback);
+          setSelectedTenantId(dispatch as any, savedTenantId);
+          localStorage.setItem("selectedTenantLabel", "-");
         }
-      } catch (e) {
-        setTenants([]);
-      }
-    })();
-  }, []);
+      })();
+    } else {
+      setSelectedTenant(null);
+      localStorage.removeItem("selectedTenantId");
+      localStorage.removeItem("selectedTenantLabel");
+      setSelectedTenantId(dispatch as any, null as any);
+    }
+  }, [isSpecialRoute, tenantOptsLoaded, tenantOpts, dispatch]);
 
   // ✅ Ana menüleri cache'lenmiş hook'tan al (tekrar çağrı yapmaz)
   const { data: rootMenus = [] } = useRootMenus();
+
+  // Navbar dropdown açıldığında alt menüleri çek
+  useEffect(() => {
+    if (!menuDropdownAnchor || !menuDropdownMenuId) {
+      setMenuDropdownSubs([]);
+      return;
+    }
+    let cancelled = false;
+    setMenuDropdownLoading(true);
+    const api = new MenuApi(getConfiguration());
+    api
+      .apiMenuSubMenusMenuIdGet(menuDropdownMenuId)
+      .then((res) => {
+        if (cancelled) return;
+        const raw = res.data || [];
+        const hasAuth = (m: any) => {
+          const href = (m.href && String(m.href).trim()) || (m.route && String(m.route).trim()) || "";
+          const norm = "/" + href.split("/").slice(1, 2).join("/");
+          return menuAuth.some((a: any) => ("/" + String(a.href || "").split("/").slice(1, 2).join("/")) === norm);
+        };
+        const filtered = raw.filter((m: any) => hasAuth(m));
+        setMenuDropdownSubs(filtered.sort((a: any, b: any) => (a.order || 0) - (b.order || 0)));
+      })
+      .catch(() => {
+        if (!cancelled) setMenuDropdownSubs([]);
+      })
+      .finally(() => {
+        if (!cancelled) setMenuDropdownLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [menuDropdownAnchor, menuDropdownMenuId, menuAuth]);
 
   useEffect(() => {
     const isSpecialRoute = currentPath.startsWith("/authentication") || currentPath.startsWith("/NotAuthorization");
@@ -883,23 +910,20 @@ function DashboardNavbar({ absolute, light, isMini }: Props): JSX.Element {
         </ShellBar>
       </MDBox>
 
-      {/* ShellBar altı: dinamik üst menüler (SideNav ile aynı kaynak) */}
+      {/* Üst navbar menü: veritabanından gelen menüler, ikon + metin */}
       {(() => {
         const menus: any[] = Array.isArray(menuData) ? menuData : [];
         if (!menus.length) return null;
 
-        // Kök: bir üst menüsü (parentMenuId) olmayanlar
         const rawRoots = menus.filter((m: any) => !m.parentMenuId || String(m.parentMenuId).trim() === "");
         const roots = rawRoots
           .filter((m: any) => (m.isActive ?? true))
           .sort((a: any, b: any) => (a.order || 0) - (b.order || 0));
 
         const resolveHref = (m: any): string => {
-          // Kural: Kök menüler (parentMenuId yok/boş) daima hub'a gider
           if (!m.parentMenuId || String(m.parentMenuId).trim() === "") {
             return `/menu/${m.id || m.menuCode}`;
           }
-          // Alt menüsü olan ara düğümler de hub'a gidebilir
           if (Array.isArray(m.subMenus) && m.subMenus.length > 0) {
             return `/menu/${m.id || m.menuCode}`;
           }
@@ -907,6 +931,10 @@ function DashboardNavbar({ absolute, light, isMini }: Props): JSX.Element {
           return h || "#";
         };
         const isActiveTab = (href: string) => href !== "#" && (currentPath === href || currentPath.startsWith(href + "/"));
+        const iconColor = (active: boolean) =>
+          active ? (darkMode ? "#38bdf8" : "#0284c7") : darkMode ? "#94a3b8" : "#64748b";
+        const textColor = (active: boolean) =>
+          active ? (darkMode ? "#7dd3fc" : "#0369a1") : darkMode ? "#cbd5e1" : "#475569";
 
         return (
           <MDBox
@@ -917,22 +945,31 @@ function DashboardNavbar({ absolute, light, isMini }: Props): JSX.Element {
               marginLeft: "-50vw",
               marginRight: "-50vw",
               width: "100vw",
-              backgroundColor: darkMode ? "#1a2035" : "#ffffff",
-              borderBottom: darkMode ? "1px solid #2d3748" : "1px solid #e5e7eb",
+              // Üst navbar menü arka planı: açıkta beyaza yakın, koyu modda çubuk belirgin
+              backgroundColor: darkMode
+                ? "#1e293b"
+                : "#ffffff",
+              borderBottom: darkMode ? "1px solid #334155" : "1px solid #e2e8f0",
+              boxShadow: darkMode
+                ? "0 2px 8px rgba(0,0,0,0.2)"
+                : "0 1px 3px rgba(0,0,0,0.06)",
               zIndex: 3,
               pointerEvents: "auto",
             }}
           >
             <MDBox
+              component="nav"
               sx={{
                 display: "flex",
                 alignItems: "center",
-                gap: 0.5,
-                height: 40,
-                px: 1.5,
+                gap: 0,
+                height: 48,
+                px: 2,
+                maxWidth: 1400,
+                margin: "0 auto",
                 overflowX: "auto",
                 whiteSpace: "nowrap",
-                "&::-webkit-scrollbar": { height: 6 },
+                "&::-webkit-scrollbar": { height: 5 },
                 "&::-webkit-scrollbar-thumb": {
                   backgroundColor: darkMode ? "#334155" : "#cbd5e1",
                   borderRadius: 8,
@@ -941,37 +978,49 @@ function DashboardNavbar({ absolute, light, isMini }: Props): JSX.Element {
             >
               {roots.map((m: any) => {
                 const href = resolveHref(m);
-                const active = isActiveTab(href);
+                const isHubLink = href.startsWith("/menu/");
+                const active = isActiveTab(href) || (isHubLink && currentPath.startsWith(href));
+                const color = textColor(active);
+                const iconClr = iconColor(active);
+                const openDropdown = (e: React.MouseEvent<HTMLElement>) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  if (isHubLink) {
+                    setMenuDropdownAnchor(e.currentTarget);
+                    setMenuDropdownMenuId(String(m.id || m.menuCode));
+                  } else if (href !== "#") {
+                    navigate(href);
+                  }
+                };
                 return (
                   <MDBox
                     key={String(m.id || m.menuCode || m.name)}
-                    onClick={(e: any) => { e.preventDefault(); e.stopPropagation(); if (href !== "#") navigate(href); }}
+                    onClick={openDropdown}
                     sx={{
                       display: "inline-flex",
                       alignItems: "center",
-                      px: 1.5,
-                      height: 40,
+                      gap: 1,
+                      px: 2,
+                      height: 48,
                       cursor: href === "#" ? "default" : "pointer",
                       borderBottom: active
-                        ? `2px solid ${darkMode ? "#38bdf8" : "#0284c7"}`
-                        : "2px solid transparent",
-                      color: active
-                        ? darkMode
-                          ? "#7dd3fc"
-                          : "#0369a1"
-                        : darkMode
-                          ? "#cbd5e1"
-                          : "#475569",
+                        ? `3px solid ${darkMode ? "#38bdf8" : "#0284c7"}`
+                        : "3px solid transparent",
+                      color,
                       fontWeight: active ? 600 : 500,
                       fontSize: 14,
-                      transition: "color .15s ease, transform .15s ease",
-                      '&:hover': {
-                        color: active ? undefined : (darkMode ? '#e2e8f0' : '#0f172a'),
-                        transform: active || href === "#" ? undefined : 'translateY(-1px)'
-                      }
+                      transition: "color .2s ease, border-color .2s ease, background-color .2s ease",
+                      borderRadius: "8px 8px 0 0",
+                      "&:hover": {
+                        color: href === "#" ? color : (darkMode ? "#e2e8f0" : "#0f172a"),
+                        backgroundColor: href === "#" ? "transparent" : (darkMode ? "rgba(56,189,248,0.08)" : "rgba(2,132,199,0.06)"),
+                      },
                     }}
+                    title={m.name}
                   >
-                    {m.name}
+                    {renderNavMenuIcon(m.icon, iconClr)}
+                    <span>{m.name}</span>
+                    {isHubLink && <Icon sx={{ fontSize: 16, ml: 0.25, opacity: 0.8 }}>arrow_drop_down</Icon>}
                   </MDBox>
                 );
               })}
@@ -979,6 +1028,99 @@ function DashboardNavbar({ absolute, light, isMini }: Props): JSX.Element {
           </MDBox>
         );
       })()}
+
+      {/* Navbar alt menü dropdown (gerçek uygulamalardaki gibi) */}
+      <Menu
+        anchorEl={menuDropdownAnchor}
+        open={Boolean(menuDropdownAnchor)}
+        onClose={() => {
+          setMenuDropdownAnchor(null);
+          setMenuDropdownMenuId(null);
+        }}
+        anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
+        transformOrigin={{ vertical: "top", horizontal: "left" }}
+        PaperProps={{
+          sx: {
+            minWidth: 280,
+            maxHeight: 400,
+            mt: 1.5,
+            borderRadius: 2,
+            boxShadow: darkMode ? "0 8px 32px rgba(0,0,0,0.4)" : "0 8px 24px rgba(0,0,0,0.12)",
+            bgcolor: darkMode ? "#1e293b" : "#ffffff",
+            border: darkMode ? "1px solid #334155" : "1px solid #e2e8f0",
+            "& .MuiList-root": { py: 0.5 },
+          },
+        }}
+      >
+        {menuDropdownLoading ? (
+          <MenuItem disabled sx={{ justifyContent: "center", py: 3, color: darkMode ? "#94a3b8" : "#64748b" }}>
+            Yükleniyor…
+          </MenuItem>
+        ) : (
+          <>
+            {menuDropdownSubs.map((sub: any) => {
+              const subHref = (sub.href && String(sub.href).trim()) || (sub.route && String(sub.route).trim()) || "#";
+              const canGo = subHref !== "#";
+              return (
+                <MenuItem
+                  key={String(sub.id || sub.menuCode)}
+                  onClick={() => {
+                    if (canGo) {
+                      navigate(subHref);
+                      setMenuDropdownAnchor(null);
+                      setMenuDropdownMenuId(null);
+                    }
+                  }}
+                  sx={{
+                    py: 1.25,
+                    px: 2,
+                    gap: 1.5,
+                    color: darkMode ? "#e2e8f0" : "#0f172a",
+                    "&:hover": { bgcolor: darkMode ? "rgba(56,189,248,0.12)" : "rgba(2,132,199,0.08)" },
+                  }}
+                  disabled={!canGo}
+                >
+                  <MDBox sx={{ display: "flex", alignItems: "center", justifyContent: "center", width: 32, height: 32, borderRadius: 1, bgcolor: darkMode ? "rgba(56,189,248,0.15)" : "rgba(2,132,199,0.1)" }}>
+                    {renderNavMenuIcon(sub.icon, darkMode ? "#38bdf8" : "#0284c7", 18)}
+                  </MDBox>
+                  <MDBox sx={{ flex: 1, minWidth: 0 }}>
+                    <MDTypography variant="body2" fontWeight={500}>
+                      {sub.name}
+                    </MDTypography>
+                    {sub.description && (
+                      <MDTypography variant="caption" sx={{ color: darkMode ? "#94a3b8" : "#64748b", display: "block" }}>
+                        {sub.description}
+                      </MDTypography>
+                    )}
+                  </MDBox>
+                </MenuItem>
+              );
+            })}
+            {menuDropdownMenuId && (
+              <>
+                <Divider sx={{ my: 0.5 }} />
+                <MenuItem
+                  onClick={() => {
+                    navigate(`/menu/${menuDropdownMenuId}`);
+                    setMenuDropdownAnchor(null);
+                    setMenuDropdownMenuId(null);
+                  }}
+                  sx={{
+                    py: 1,
+                    px: 2,
+                    color: darkMode ? "#38bdf8" : "#0284c7",
+                    fontWeight: 600,
+                    "&:hover": { bgcolor: darkMode ? "rgba(56,189,248,0.12)" : "rgba(2,132,199,0.08)" },
+                  }}
+                >
+                  <Icon sx={{ fontSize: 20, mr: 1 }}>apps</Icon>
+                  Tümünü gör
+                </MenuItem>
+              </>
+            )}
+          </>
+        )}
+      </Menu>
 
       <Popover
         open={popoverOpen}

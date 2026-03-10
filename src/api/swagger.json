@@ -5517,6 +5517,376 @@
         }
       }
     },
+    "/api/FormData/latest-names-only": {
+      "get": {
+        "tags": [
+          "FormData"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FormSimpleDto"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FormSimpleDto"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FormSimpleDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/FormData/light": {
+      "get": {
+        "tags": [
+          "FormData"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FormDataLightDto"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FormDataLightDto"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FormDataLightDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/FormData/paged": {
+      "get": {
+        "tags": [
+          "FormData"
+        ],
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 1
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 20
+            }
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/FormPublicationStatus"
+            }
+          },
+          {
+            "name": "isActive",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/FormDataPagedDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FormDataPagedDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FormDataPagedDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/FormData/paged-optimized": {
+      "get": {
+        "tags": [
+          "FormData"
+        ],
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 1
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 20
+            }
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/FormPublicationStatus"
+            }
+          },
+          {
+            "name": "isActive",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/FormDataPagedDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FormDataPagedDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FormDataPagedDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/FormData/groups": {
+      "get": {
+        "tags": [
+          "FormData"
+        ],
+        "parameters": [
+          {
+            "name": "search",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FormGroupDto"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FormGroupDto"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FormGroupDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/FormData/versions/{parentFormId}": {
+      "get": {
+        "tags": [
+          "FormData"
+        ],
+        "parameters": [
+          {
+            "name": "parentFormId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FormVersionDto"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FormVersionDto"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FormVersionDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/FormData/revisions/{parentFormId}": {
+      "get": {
+        "tags": [
+          "FormData"
+        ],
+        "parameters": [
+          {
+            "name": "parentFormId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 1
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 20
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/FormDataPagedDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FormDataPagedDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FormDataPagedDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/FormData/{id}": {
       "get": {
         "tags": [
@@ -5623,7 +5993,7 @@
         }
       }
     },
-    "/api/FormData/Versions/{parentId}": {
+    "/api/FormData/all-versions/{parentId}": {
       "get": {
         "tags": [
           "FormData"
@@ -5851,6 +6221,44 @@
                   "type": "array",
                   "items": {
                     "$ref": "#/components/schemas/FormDataListDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/FormData/menu-light": {
+      "get": {
+        "tags": [
+          "FormData"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FormDataLightDto"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FormDataLightDto"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FormDataLightDto"
                   }
                 }
               }
@@ -21518,6 +21926,101 @@
         },
         "additionalProperties": false
       },
+      "FormDataLightDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "createdDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "createdBy": {
+            "type": "string",
+            "nullable": true
+          },
+          "updatedDate": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "updatedBy": {
+            "type": "string",
+            "nullable": true
+          },
+          "concurrencyToken": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "formName": {
+            "type": "string",
+            "nullable": true
+          },
+          "formDescription": {
+            "type": "string",
+            "nullable": true
+          },
+          "revision": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "isActive": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "formType": {
+            "$ref": "#/components/schemas/FormType"
+          },
+          "formTypeText": {
+            "type": "string",
+            "nullable": true
+          },
+          "formCategory": {
+            "$ref": "#/components/schemas/FormCategory"
+          },
+          "formCategoryText": {
+            "type": "string",
+            "nullable": true
+          },
+          "formPriority": {
+            "$ref": "#/components/schemas/FormPriority"
+          },
+          "formPriorityText": {
+            "type": "string",
+            "nullable": true
+          },
+          "workFlowDefinationId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "workFlowName": {
+            "type": "string",
+            "nullable": true
+          },
+          "parentFormId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "canEdit": {
+            "type": "boolean"
+          },
+          "showInMenu": {
+            "type": "boolean"
+          },
+          "publicationStatus": {
+            "$ref": "#/components/schemas/FormPublicationStatus"
+          },
+          "publicationStatusText": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
       "FormDataListDto": {
         "type": "object",
         "properties": {
@@ -21624,6 +22127,41 @@
               "$ref": "#/components/schemas/FormTaskNodeButtonDto"
             },
             "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "FormDataPagedDto": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FormDataLightDto"
+            },
+            "nullable": true
+          },
+          "totalCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageSize": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "hasNext": {
+            "type": "boolean"
+          },
+          "hasPrevious": {
+            "type": "boolean"
           }
         },
         "additionalProperties": false
@@ -22915,6 +23453,37 @@
         },
         "additionalProperties": false
       },
+      "FormGroupDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "formName": {
+            "type": "string",
+            "nullable": true
+          },
+          "formCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "latestRevision": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalRevisions": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "parentFormId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
       "FormInstance": {
         "type": "object",
         "properties": {
@@ -23272,6 +23841,20 @@
         },
         "additionalProperties": false
       },
+      "FormSimpleDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "formName": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
       "FormStatus": {
         "enum": [
           1,
@@ -23470,6 +24053,42 @@
         ],
         "type": "integer",
         "format": "int32"
+      },
+      "FormVersionDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "versionName": {
+            "type": "string",
+            "nullable": true
+          },
+          "status": {
+            "type": "string",
+            "nullable": true
+          },
+          "createdDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "formattedDate": {
+            "type": "string",
+            "nullable": true
+          },
+          "revision": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "publicationStatus": {
+            "$ref": "#/components/schemas/FormPublicationStatus"
+          },
+          "isActive": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
       },
       "GenericList": {
         "enum": [

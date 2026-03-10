@@ -668,7 +668,7 @@ export default function FormEditorV2(): JSX.Element {
       const api = new FormDataApi(conf);
       await api.apiFormDataCreateRevisionIdPost(id);
       const parent = parentFormId || id;
-      const resList = await api.apiFormDataVersionsParentIdGet(parent);
+      const resList = await api.apiFormDataAllVersionsParentIdGet(parent);
       const list = (resList?.data || []) as any[];
       const drafts = list.filter((x: any) => x.publicationStatus === 1);
       const latestDraft = drafts.sort((a: any, b: any) => (b.revision || 0) - (a.revision || 0))[0];
@@ -697,7 +697,7 @@ export default function FormEditorV2(): JSX.Element {
       const conf = getConfiguration();
       const api = new FormDataApi(conf);
       const parent = parentFormId || id;
-      const res = await api.apiFormDataVersionsParentIdGet(parent);
+      const res = await api.apiFormDataAllVersionsParentIdGet(parent);
       const list = (res?.data || []) as any[];
       setVersions(list);
       if (!silent) setVersionsOpen(true);

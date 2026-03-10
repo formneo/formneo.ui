@@ -3,11 +3,15 @@ openapi-generator-cli generate -i  https://api.cfapps.eu20-001.hana.ondemand.com
 set NODE_TLS_REJECT_UNAUTHORIZED=0
 openapi-generator-cli generate -i  https://localhost:44363/swagger/v1/swagger.json -g typescript-axios -o ./generated
 
- curl -k https://localhost:44363/swagger/v1/swagger.json -o swagger.json   
+ curl -k https://localhost:44363/swagger/v1/swagger.json -o swagger.json
 
 openapi-generator generate \
   -i ./swagger.json \
   -g typescript-axios \
   -o ./generated \
   --global-property apiDocs=false,modelDocs=false
-  
+
+
+curl -k https://localhost:44363/swagger/v1/swagger.json -o swagger.json
+
+openapi-generator-cli generate -i ./swagger.json -g typescript-axios -o ./generated --global-property apiDocs=false,modelDocs=false

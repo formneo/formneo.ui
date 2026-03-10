@@ -43,6 +43,7 @@ function DashboardLayout({ children }: { children: ReactNode }): JSX.Element {
         pb: 3,
         pt: 0,
         position: "relative",
+        overflowX: "hidden",
 
         [breakpoints.up("xl")]: {
           marginLeft: 0,
