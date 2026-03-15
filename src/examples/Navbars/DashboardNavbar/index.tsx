@@ -69,6 +69,7 @@ import {
   ListItemText,
   ListItem,
   List,
+  ListItemIcon,
   Modal,
   Paper,
   Popover,
@@ -76,7 +77,21 @@ import {
   ListItemButton,
   Divider,
   MenuItem,
+  Box,
+  Typography,
+  Button,
+  Badge,
+  Tooltip,
+  Drawer,
+  useMediaQuery,
+  Avatar as MuiAvatar,
 } from "@mui/material";
+import {
+  Menu as NavMenuIcon,
+  NotificationsOutlined as NavNotificationsIcon,
+  KeyboardArrowDown as NavArrowDownIcon,
+} from "@mui/icons-material";
+import formneoLogo from "assets/images/formneolog.png";
 import MDButton from "components/MDButton";
 import MDTypography from "components/MDTypography";
 import DashboardLayout from "examples/LayoutContainers/DashboardLayout";
@@ -448,6 +463,26 @@ function DashboardNavbar({ absolute, light, isMini }: Props): JSX.Element {
   const popoverOpen = Boolean(anchorEl);
   const popoverOpenNoNotification = Boolean(anchorElNoNotification);
 
+  // Yeni AppBar için ek state ve handler'lar
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const isNavDesktop = useMediaQuery("(min-width:900px)");
+  const userInitials = (userFullName || "")
+    .split(" ").filter(Boolean).slice(0, 2)
+    .map((w: string) => w[0]?.toUpperCase() ?? "").join("");
+
+  const handleMuiProfileClick = (event: React.MouseEvent<HTMLElement>) => {
+    setAnchorEl(event.currentTarget as any);
+  };
+
+  const handleNotificationClickMui = (event: React.MouseEvent<HTMLElement>) => {
+    if (waitingCount > 0) {
+      navigate("/approve");
+    } else {
+      setAnchorElNoNotification(event.currentTarget as any);
+      setShowNoNotification(true);
+    }
+  };
+
   const handleNoNotificationClick = (event: any) => {
     setAnchorElNoNotification(event.detail.targetRef);
   };
@@ -665,369 +700,200 @@ function DashboardNavbar({ absolute, light, isMini }: Props): JSX.Element {
   };
 
   return (
-    <div style={{ position: "sticky", top: 0, zIndex: 1000, width: "100%" }}>
-      {/* Full-bleed wrapper: ShellBar sol/sağ kenara tam yapışır */}
-      <MDBox
-        sx={{
-          position: "relative",
-          left: "50%",
-          right: "50%",
-          marginLeft: "-50vw",
-          marginRight: "-50vw",
-          width: "100vw",
-        }}
-      >
-        {/* Büyük logo - ShellBar dışında, sola yapışık ve dikey ortalı */}
-        <MDBox
-          sx={{
-            position: "absolute",
-            left: 24,
-            top: "50%",
-            transform: "translateY(-50%)",
-            display: "flex",
-            alignItems: "center",
-            zIndex: 2,
-            cursor: "pointer",
-          }}
-          onClick={() => navigate("/dashboards/analytics")}
-        >
-          <MDBox
-            component="img"
-            src={logoSon}
-            alt="FormNeo"
-            loading="lazy"
-            sx={{
-              height: { xs: 64, sm: 80, md: 92, lg: 104, xl: 112 },
-              width: "auto",
-              display: "block",
-              objectFit: "contain",
-              filter: "none",
-              imageRendering: "-webkit-optimize-contrast",
-            }}
-          />
-        </MDBox>
-        {/* Şirket etiketi: sağda, profile yakın (mobilde gizle) */}
-        {selectedTenant?.label && (
-          <MDBox
-            sx={{
-              position: "absolute",
-              right: 280,
-              top: "50%",
-              transform: "translateY(-50%)",
-              zIndex: 2,
-              display: { xs: "none", md: "flex" },
-              alignItems: "center",
-              maxWidth: "30vw",
-              whiteSpace: "nowrap",
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-              pointerEvents: "none",
-            }}
-          >
-            <span
-              style={{
-                fontSize: 12,
-                fontWeight: 600,
-                color: darkMode ? '#0f172a' : '#0f172a',
-                backgroundColor: darkMode ? '#e2e8f0' : '#e2e8f0',
-                border: `1px solid ${darkMode ? '#cbd5e1' : '#cbd5e1'}`,
-                padding: '4px 10px',
-                borderRadius: 9999,
-                lineHeight: 1.1,
-              }}
-              title={selectedTenant?.label || ''}
-            >
-              {(selectedTenant?.label || '').toString()}{isGlobalMode ? ' · Global' : ''}
-            </span>
-          </MDBox>
+  <>
+    {/* ══════ FORMNEO APPBAR ══════ */}
+    <AppBar
+      position="sticky"
+      elevation={0}
+      sx={{
+        bgcolor: "rgba(255,255,255,0.95)",
+        backdropFilter: "blur(12px)",
+        borderBottom: "1px solid #e2e8f0",
+        color: "#0f172a",
+        zIndex: 1100,
+      }}
+    >
+      <Toolbar sx={{ px: { xs: 2, md: 3 }, gap: 1, minHeight: { xs: 60, sm: 64 } }}>
+        {/* Hamburger — sadece mobil */}
+        {!isNavDesktop && (
+          <IconButton edge="start" onClick={() => setMobileMenuOpen(true)} sx={{ color: "#0f172a", mr: 0.5 }}>
+            <NavMenuIcon />
+          </IconButton>
         )}
-        <ShellBar
-          // backgroundColor: theme == "light" ? themes[theme].menu.menuContent : themes[theme].menu.menuContent
-          style={{
-            paddingLeft: 240,
-            paddingRight: 12,
-            minHeight: 52,
-            ...(isGlobalMode
-              ? {
-                background: darkMode ? "#2b3445" : "#fff8e1",
-                borderBottom: darkMode ? "2px solid #f59e0b" : "2px solid #f59e0b",
-              }
-              : {}),
-          }}
-          // menuItems={<><ListItemStandard data-key="1">Menu Item 1</ListItemStandard><ListItemStandard data-key="2">Menu Item 2</ListItemStandard><ListItemStandard data-key="3">Menu Item 3</ListItemStandard></>}
-          notificationsCount={waitingCount.toString()}
-          onLogoClick={() => navigate("/dashboards/analytics")}
-          onMenuItemClick={function Ki() { }}
-          onNotificationsClick={handleNotificationClick}
-          onProductSwitchClick={function Ki() { }}
-          onProfileClick={handleProfileClick}
-          onSearchButtonClick={function Ki() { }}
-          primaryTitle=""
-          placeholder="Search"
-          profile={
-            <Avatar>
-              {photoSrc ? (
-                <img
-                  src={photoSrc}
-                  alt="Profile"
-                  style={{ width: "100%", height: "100%", objectFit: "cover" }}
-                  loading="lazy"
-                />
-              ) : (
-                <img
-                  src={profile}
-                  alt="Default Avatar"
-                  style={{ width: "100%", height: "100%", objectFit: "cover" }}
-                  loading="lazy"
-                />
-              )}
-            </Avatar>
-          }
-          // searchField={
-          //   <div>
-          //     <InputBase
-          //       sx={{
-          //         border: darkMode ? "1px solid #ffffff40" : "1px solid #e0e0e0",
-          //         borderRadius: "5px",
-          //         fontSize: "16px",
-          //         width: "400px",
-          //         padding: "1px 12px",
-          //         color: darkMode ? "#fff" : "#344767",
-          //         "& input::placeholder": {
-          //           color: darkMode ? "#ffffff80" : "#66666f",
-          //           opacity: 1,
-          //         },
-          //         "&:hover": {
-          //           border: darkMode ? "1px solid #ffffff80" : "1px solid #1383ce",
-          //         },
-          //         "&.Mui-focused": {
-          //           border: "1px solid #1383ce",
-          //           boxShadow: "0 0 0 2px rgba(19, 131, 206, 0.2)",
-          //         },
-          //         transition: "all 0.2s ease-in-out",
-          //       }}
-          //       placeholder="Arama"
-          //       autoComplete="on"
-          //       onKeyDown={(e: React.KeyboardEvent) => {
-          //         if (e.key === "Enter" && filteredMenuData?.length > 0) {
-          //           const searchValue = (e.target as HTMLInputElement).value.toLowerCase();
-          //           const exactMatch = filteredMenuData.find(
-          //             (item: any) => item.menuCode.toLowerCase() === searchValue
-          //           );
-          //           if (exactMatch?.href) {
-          //             navigate(exactMatch.href);
-          //             setFilteredMenuData([]);
-          //           }
-          //         }
-          //       }}
-          //       onChange={(e: any) => {
-          //         if (e.target.value === "") {
-          //           setFilteredMenuData([]);
-          //         } else {
-          //           const searchValue = e.target.value.toLowerCase();
-          //           const filteredData = menuData?.filter(
-          //             (item: any) =>
-          //               item.name.toLowerCase().includes(searchValue) ||
-          //               item.menuCode?.toLowerCase().includes(searchValue)
-          //           );
-          //           setFilteredMenuData(filteredData || []);
-          //         }
-          //       }}
-          //     />
-          //     {filteredMenuData?.length > 0 && (
-          //       <Paper
-          //         style={{
-          //           position: "absolute",
-          //           zIndex: 1,
-          //           width: "400px",
-          //           maxHeight: "auto",
-          //           overflowY: "auto",
-          //         }}
-          //       >
-          //         <List
-          //           subheader={
-          //             <ListSubheader
-          //               component="div"
-          //               id="nested-list-subheader"
-          //               sx={{
-          //                 fontSize: "16px",
-          //                 fontWeight: "bold",
-          //                 color: darkMode ? "#fff" : "#344767",
-          //               }}
-          //             >
-          //               Uygulamalar
-          //             </ListSubheader>
-          //           }
-          //         >
-          //           {filteredMenuData.map((item: any, index: any) =>
-          //             item.href && item.href.trim() !== "" ? (
-          //               <ListItem key={index}>
-          //                 <ListItemButton
-          //                   onClick={() => {
-          //                     navigate(item.href);
-          //                     setFilteredMenuData([]);
-          //                   }}
-          //                   tabIndex={0}
-          //                 >
-          //                   <ListItemText
-          //                     primary={`${item.name} - ${item.menuCode || ""}`}
-          //                     sx={{
-          //                       "& .MuiListItemText-primary": {
-          //                         fontSize: "14px",
-          //                         color: darkMode ? "#fff" : "#344767",
-          //                         "&:hover": {
-          //                           color: "#1383ce",
-          //                         },
-          //                       },
-          //                     }}
-          //                   />
-          //                 </ListItemButton>
-          //               </ListItem>
-          //             ) : null
-          //           )}
-          //         </List>
-          //       </Paper>
-          //     )}
-          //   </div>
-          // }
-          showNotifications
-          showProductSwitch
-          searchField={
-            <div style={{ minWidth: 260 }}>
-              <MDButton variant="outlined" color="info" size="small" onClick={() => navigate('/authentication/tenant-select')}>
-                Şirket Değiştir
-              </MDButton>
-            </div>
-          }
-        >
-          {selectedTenant?.label && (
-            <ShellBarItem
-              text={`Şirket: ${selectedTenant.label}`}
-              icon="building"
-              onClick={() => { }}
-            />
-          )}
-        </ShellBar>
-      </MDBox>
 
-      {/* Üst navbar menü: veritabanından gelen menüler, ikon + metin */}
-      {(() => {
-        const menus: any[] = Array.isArray(menuData) ? menuData : [];
-        if (!menus.length) return null;
+        {/* Logo */}
+        <Box
+          component="img"
+          src={formneoLogo}
+          alt="Formneo"
+          onClick={() => navigate("/dashboards/analytics")}
+          sx={{ height: 34, maxWidth: 130, objectFit: "contain", mr: { md: 3 }, cursor: "pointer", flexShrink: 0 }}
+        />
 
-        const rawRoots = menus.filter((m: any) => !m.parentMenuId || String(m.parentMenuId).trim() === "");
-        const roots = rawRoots
-          .filter((m: any) => (m.isActive ?? true))
-          .sort((a: any, b: any) => (a.order || 0) - (b.order || 0));
-
-        const resolveHref = (m: any): string => {
-          if (!m.parentMenuId || String(m.parentMenuId).trim() === "") {
-            return `/menu/${m.id || m.menuCode}`;
-          }
-          if (Array.isArray(m.subMenus) && m.subMenus.length > 0) {
-            return `/menu/${m.id || m.menuCode}`;
-          }
-          const h = (m.href && String(m.href).trim()) || (m.route && String(m.route).trim());
-          return h || "#";
-        };
-        const isActiveTab = (href: string) => href !== "#" && (currentPath === href || currentPath.startsWith(href + "/"));
-        const iconColor = (active: boolean) =>
-          active ? (darkMode ? "#38bdf8" : "#0284c7") : darkMode ? "#94a3b8" : "#64748b";
-        const textColor = (active: boolean) =>
-          active ? (darkMode ? "#7dd3fc" : "#0369a1") : darkMode ? "#cbd5e1" : "#475569";
-
-        return (
-          <MDBox
-            sx={{
-              position: "relative",
-              left: "50%",
-              right: "50%",
-              marginLeft: "-50vw",
-              marginRight: "-50vw",
-              width: "100vw",
-              // Üst navbar menü arka planı: açıkta beyaza yakın, koyu modda çubuk belirgin
-              backgroundColor: darkMode
-                ? "#1e293b"
-                : "#ffffff",
-              borderBottom: darkMode ? "1px solid #334155" : "1px solid #e2e8f0",
-              boxShadow: darkMode
-                ? "0 2px 8px rgba(0,0,0,0.2)"
-                : "0 1px 3px rgba(0,0,0,0.06)",
-              zIndex: 3,
-              pointerEvents: "auto",
-            }}
-          >
-            <MDBox
-              component="nav"
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                gap: 0,
-                height: 48,
-                px: 2,
-                maxWidth: 1400,
-                margin: "0 auto",
-                overflowX: "auto",
-                whiteSpace: "nowrap",
-                "&::-webkit-scrollbar": { height: 5 },
-                "&::-webkit-scrollbar-thumb": {
-                  backgroundColor: darkMode ? "#334155" : "#cbd5e1",
-                  borderRadius: 8,
-                },
-              }}
-            >
-              {roots.map((m: any) => {
-                const href = resolveHref(m);
-                const isHubLink = href.startsWith("/menu/");
-                const active = isActiveTab(href) || (isHubLink && currentPath.startsWith(href));
-                const color = textColor(active);
-                const iconClr = iconColor(active);
-                const openDropdown = (e: React.MouseEvent<HTMLElement>) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  if (isHubLink) {
-                    setMenuDropdownAnchor(e.currentTarget);
-                    setMenuDropdownMenuId(String(m.id || m.menuCode));
-                  } else if (href !== "#") {
-                    navigate(href);
-                  }
-                };
+        {/* Masaüstü — DB'den gelen root menüler */}
+        {isNavDesktop && (
+          <Box sx={{ display: "flex", gap: 0.5, flexGrow: 1, overflow: "hidden" }}>
+            {(rootMenus as any[])
+              .filter((m: any) => !m.parentMenuId || String(m.parentMenuId).trim() === "")
+              .filter((m: any) => m.isActive ?? true)
+              .sort((a: any, b: any) => (a.order || 0) - (b.order || 0))
+              .map((m: any) => {
+                const href =
+                  (m.href && String(m.href).trim()) ||
+                  (m.route && String(m.route).trim()) ||
+                  "/menu/" + (m.id || m.menuCode);
+                const isHub = href.startsWith("/menu/");
+                const active =
+                  !isHub &&
+                  href !== "#" &&
+                  (currentPath === href || currentPath.startsWith(href + "/"));
                 return (
-                  <MDBox
-                    key={String(m.id || m.menuCode || m.name)}
-                    onClick={openDropdown}
-                    sx={{
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: 1,
-                      px: 2,
-                      height: 48,
-                      cursor: href === "#" ? "default" : "pointer",
-                      borderBottom: active
-                        ? `3px solid ${darkMode ? "#38bdf8" : "#0284c7"}`
-                        : "3px solid transparent",
-                      color,
-                      fontWeight: active ? 600 : 500,
-                      fontSize: 14,
-                      transition: "color .2s ease, border-color .2s ease, background-color .2s ease",
-                      borderRadius: "8px 8px 0 0",
-                      "&:hover": {
-                        color: href === "#" ? color : (darkMode ? "#e2e8f0" : "#0f172a"),
-                        backgroundColor: href === "#" ? "transparent" : (darkMode ? "rgba(56,189,248,0.08)" : "rgba(2,132,199,0.06)"),
-                      },
+                  <Button
+                    key={String(m.id || m.menuCode)}
+                    onClick={(e) => {
+                      if (isHub) {
+                        setMenuDropdownAnchor(e.currentTarget);
+                        setMenuDropdownMenuId(String(m.id || m.menuCode));
+                      } else if (href !== "#") {
+                        navigate(href);
+                      }
                     }}
-                    title={m.name}
+                    sx={{
+                      px: 1.5,
+                      py: 0.75,
+                      borderRadius: 2,
+                      color: active ? "#4f46e5" : "#64748b",
+                      bgcolor: active ? "rgba(79,70,229,0.08)" : "transparent",
+                      fontWeight: active ? 700 : 500,
+                      fontSize: "0.82rem",
+                      whiteSpace: "nowrap",
+                      minWidth: "auto",
+                      textTransform: "none",
+                      "&:hover": { bgcolor: "rgba(79,70,229,0.06)", color: "#4f46e5" },
+                    }}
                   >
-                    {renderNavMenuIcon(m.icon, iconClr)}
-                    <span>{m.name}</span>
-                    {isHubLink && <Icon sx={{ fontSize: 16, ml: 0.25, opacity: 0.8 }}>arrow_drop_down</Icon>}
-                  </MDBox>
+                    <Box component="span" sx={{ display: "flex", alignItems: "center", mr: 0.5 }}>
+                      {renderNavMenuIcon(m.icon, active ? "#4f46e5" : "#64748b", 16)}
+                    </Box>
+                    {m.name}
+                    {isHub && <Icon sx={{ fontSize: 16, ml: -0.25 }}>expand_more</Icon>}
+                  </Button>
                 );
               })}
-            </MDBox>
-          </MDBox>
-        );
-      })()}
+          </Box>
+        )}
+
+        <Box sx={{ flexGrow: isNavDesktop ? 0 : 1 }} />
+
+        {/* Bildirim zili */}
+        <Tooltip title="Bildirimler">
+          <IconButton onClick={handleNotificationClickMui} sx={{ color: "#64748b" }}>
+            <Badge badgeContent={waitingCount || 0} color="error" max={99}>
+              <NavNotificationsIcon />
+            </Badge>
+          </IconButton>
+        </Tooltip>
+
+        {/* Profil */}
+        <Box
+          onClick={handleMuiProfileClick}
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            gap: 1,
+            pl: 1.5,
+            ml: 0.5,
+            borderLeft: "1px solid #e2e8f0",
+            cursor: "pointer",
+            "&:hover": { opacity: 0.8 },
+          }}
+        >
+          <MuiAvatar
+            sx={{ width: 36, height: 36, background: "linear-gradient(135deg, #4f46e5, #7c3aed)", fontSize: "0.78rem", fontWeight: 700 }}
+          >
+            {photoSrc ? (
+              <img src={photoSrc} alt="Profile" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+            ) : (
+              userInitials || "U"
+            )}
+          </MuiAvatar>
+          {isNavDesktop && (
+            <Box>
+              <Typography
+                variant="caption"
+                component="div"
+                sx={{ fontWeight: 700, color: "#0f172a", lineHeight: 1.4, whiteSpace: "nowrap" }}
+              >
+                {userFullName || "Kullanici"}
+              </Typography>
+              <Typography
+                variant="caption"
+                component="div"
+                sx={{ color: "#64748b", fontSize: "0.68rem", lineHeight: 1.4 }}
+              >
+                {selectedTenant?.label || "Formneo"}
+              </Typography>
+            </Box>
+          )}
+          <NavArrowDownIcon sx={{ fontSize: 18, color: "#64748b" }} />
+        </Box>
+      </Toolbar>
+    </AppBar>
+
+    {/* Mobil Drawer */}
+    <Drawer
+      anchor="left"
+      open={mobileMenuOpen}
+      onClose={() => setMobileMenuOpen(false)}
+      PaperProps={{ sx: { width: 265, pt: 2, bgcolor: "#fff" } }}
+    >
+      <Box sx={{ px: 2, mb: 2 }}>
+        <Box
+          component="img"
+          src={formneoLogo}
+          alt="Formneo"
+          sx={{ height: 32, maxWidth: 130, objectFit: "contain" }}
+        />
+      </Box>
+      <Divider sx={{ mb: 1 }} />
+      <List sx={{ px: 1 }}>
+        {(rootMenus as any[])
+          .filter((m: any) => !m.parentMenuId || String(m.parentMenuId).trim() === "")
+          .filter((m: any) => m.isActive ?? true)
+          .sort((a: any, b: any) => (a.order || 0) - (b.order || 0))
+          .map((m: any) => {
+            const href =
+              (m.href && String(m.href).trim()) ||
+              (m.route && String(m.route).trim()) ||
+              "/menu/" + (m.id || m.menuCode);
+            const active = currentPath === href || currentPath.startsWith(href + "/");
+            return (
+              <ListItemButton
+                key={String(m.id || m.menuCode)}
+                selected={active}
+                onClick={() => {
+                  navigate(href);
+                  setMobileMenuOpen(false);
+                }}
+                sx={{
+                  borderRadius: 2,
+                  mb: 0.5,
+                  "&.Mui-selected": { bgcolor: "rgba(79,70,229,0.1)", color: "#4f46e5" },
+                }}
+              >
+                <ListItemIcon sx={{ minWidth: 36 }}>
+                  {renderNavMenuIcon(m.icon, active ? "#4f46e5" : "#64748b", 18)}
+                </ListItemIcon>
+                <ListItemText
+                  primary={m.name}
+                  primaryTypographyProps={{ fontSize: "0.875rem", fontWeight: active ? 700 : 500 }}
+                />
+              </ListItemButton>
+            );
+          })}
+      </List>
+    </Drawer>
+
 
       {/* Navbar alt menü dropdown (gerçek uygulamalardaki gibi) */}
       <Menu
@@ -1126,16 +992,14 @@ function DashboardNavbar({ absolute, light, isMini }: Props): JSX.Element {
         open={popoverOpen}
         onClose={handlePopoverClose}
         anchorEl={anchorEl}
-        anchorOrigin={{
-          vertical: "bottom",
-          horizontal: "left",
-        }}
+        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+        transformOrigin={{ vertical: "top", horizontal: "right" }}
         sx={{
           "& .MuiPopover-paper": {
-            background: darkMode ? "#1a2035" : "white",
-            minWidth: "200px",
-            borderRadius: "10px",
-            boxShadow: "0 8px 16px 0 rgba(0,0,0,0.2)",
+            background: "white",
+            minWidth: "220px",
+            borderRadius: "12px",
+            boxShadow: "0 8px 24px rgba(0,0,0,0.15)",
           },
         }}
       >
@@ -1294,7 +1158,7 @@ function DashboardNavbar({ absolute, light, isMini }: Props): JSX.Element {
           </MDTypography>
         </Popover>
       )}
-    </div>
+  </>
   );
 }
 

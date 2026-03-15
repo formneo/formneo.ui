@@ -11704,6 +11704,44 @@
         }
       }
     },
+    "/api/process-hub/my-pending-approvals": {
+      "get": {
+        "tags": [
+          "ProcessHub"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PendingApprovalSummaryDto"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PendingApprovalSummaryDto"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PendingApprovalSummaryDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/ProjectCategories": {
       "get": {
         "tags": [
@@ -26429,6 +26467,20 @@
             "items": {
               "$ref": "#/components/schemas/OrganizationDto"
             },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "PendingApprovalSummaryDto": {
+        "type": "object",
+        "properties": {
+          "workflowName": {
+            "type": "string",
+            "nullable": true
+          },
+          "stepName": {
+            "type": "string",
             "nullable": true
           }
         },
